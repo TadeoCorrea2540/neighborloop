@@ -1,0 +1,292 @@
+/* ============================================================
+   NeighborLoop — global styles (ported from the design DNA)
+   Coral primary · navy ink · pastel accents · Poppins
+   ============================================================ */
+
+:root {
+  --ink: #18203b;
+  --coral: #ff6f5e;
+  --coral-deep: #f1543f;
+  --mint: #1fae82;
+  --blue: #3a8bf0;
+  --lav: #7a6bf5;
+  --orange: #ff8a3c;
+
+  --muted-1: #5a6685;
+  --muted-2: #6b7799;
+  --muted-3: #9aa3bd;
+  --muted-4: #b3bace;
+
+  --line: rgba(24, 32, 59, 0.06);
+  --line-2: rgba(24, 32, 59, 0.08);
+  --line-3: rgba(24, 32, 59, 0.12);
+
+  --bg-tint: #fbfcfe;
+  --bg-chip: #f1f3f8;
+  --bg-chip-2: #eef0f5;
+  --bg-app: #f6f8fc;
+
+  --grad-coral: linear-gradient(135deg, #ff8a5c, #ff5e7a);
+  --shadow-card: 0 40px 80px -50px rgba(24, 32, 59, 0.55);
+  --shadow-soft: 0 14px 30px -22px rgba(24, 32, 59, 0.4);
+  --shadow-coral: 0 14px 28px -12px rgba(255, 111, 94, 0.8);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--ink);
+  background: #fff;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: #ffd9cf;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  border: none;
+  cursor: pointer;
+}
+
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+/* ---------- keyframes (verbatim from the design) ---------- */
+@keyframes blob {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(26px, -22px) scale(1.12); }
+  66% { transform: translate(-20px, 18px) scale(0.92); }
+}
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-13px); }
+}
+@keyframes floaty2 {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(12px); }
+}
+@keyframes ping {
+  0% { transform: scale(0.5); opacity: 0.85; }
+  75% { transform: scale(2.6); opacity: 0; }
+  100% { opacity: 0; }
+}
+@keyframes gshift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes slidein {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes popin {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { transform: scale(1.14); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes dash {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes scanline {
+  0%, 100% { top: 30px; }
+  50% { top: 182px; }
+}
+
+/* ---------- reusable hover/interaction utilities ----------
+   (inline styles can't express :hover, so the repeated lift &
+   button states live here and are applied via className)        */
+.lift {
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+.lift:hover {
+  transform: translateY(-7px);
+  box-shadow: 0 28px 46px -22px rgba(24, 32, 59, 0.4);
+}
+.lift-sm {
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+.lift-sm:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 24px 42px -22px rgba(24, 32, 59, 0.38);
+}
+
+.btn-coral {
+  background: var(--coral);
+  color: #fff;
+  transition: background 0.2s, transform 0.15s;
+}
+.btn-coral:hover {
+  background: var(--coral-deep);
+}
+.btn-coral:active {
+  transform: translateY(1px);
+}
+
+.btn-ghost {
+  transition: background 0.15s;
+}
+.btn-ghost:hover {
+  background: #f7f9fc;
+}
+
+.row-hover {
+  transition: background 0.15s;
+}
+.row-hover:hover {
+  background: #f7f9fc;
+}
+
+.nav-link {
+  transition: color 0.15s;
+}
+.nav-link:hover {
+  color: var(--coral-deep);
+}
+
+/* fade-up entrance used on page sections */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-up {
+  animation: fadeUp 0.5s ease both;
+}
+
+/* ---------- "How it works" animated SVG icons ---------- */
+.hiw-card {
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+.hiw-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 26px 46px -26px rgba(24, 32, 59, 0.34);
+}
+.hiw-art {
+  transition: transform 0.35s ease;
+}
+.hiw-card:hover .hiw-art {
+  transform: scale(1.08);
+}
+
+.hiw-mag {
+  animation: hiwScan 3.4s ease-in-out infinite;
+}
+.hiw-join {
+  animation: hiwBob 2.8s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center bottom;
+}
+.hiw-plus {
+  animation: hiwPulse 2.4s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.hiw-sprout {
+  animation: hiwGrow 3.2s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center bottom;
+}
+.hiw-leafL {
+  animation: hiwSwayL 2.6s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: 100% 100%;
+}
+.hiw-leafR {
+  animation: hiwSwayR 2.6s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: 0% 100%;
+}
+.hiw-spark {
+  animation: hiwTwinkle 2.2s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.hiw-card:hover .hiw-mag { animation-duration: 1.8s; }
+.hiw-card:hover .hiw-join { animation-duration: 1.4s; }
+.hiw-card:hover .hiw-plus { animation-duration: 1.3s; }
+.hiw-card:hover .hiw-leafL,
+.hiw-card:hover .hiw-leafR { animation-duration: 1.3s; }
+
+@keyframes hiwScan {
+  0%, 100% { transform: translate(0, 0); }
+  30% { transform: translate(2.5px, -2px); }
+  60% { transform: translate(3px, 1px); }
+}
+@keyframes hiwBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2.5px); }
+}
+@keyframes hiwGrow {
+  0%, 100% { transform: scaleY(0.9); }
+  50% { transform: scaleY(1.02); }
+}
+@keyframes hiwSwayL {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-7deg); }
+}
+@keyframes hiwSwayR {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(7deg); }
+}
+@keyframes hiwTwinkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.6); }
+  50% { opacity: 1; transform: scale(1); }
+}
+@keyframes hiwPulse {
+  0%, 100% { opacity: 0.7; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ---------- responsive (replaces the design's dedicated Mobile frame) ---------- */
+@media (max-width: 960px) {
+  .hero-grid { grid-template-columns: 1fr !important; }
+  .hero-visual { min-height: 320px !important; }
+  .counter-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .card-grid-3 { grid-template-columns: 1fr 1fr !important; }
+  .card-grid-4 { grid-template-columns: 1fr 1fr !important; }
+  .dash-split { grid-template-columns: 1fr !important; }
+  .auth-grid { grid-template-columns: 1fr !important; }
+  .auth-aside { display: none !important; }
+  .hiw-grid { grid-template-columns: 1fr !important; }
+  .two-pane { grid-template-columns: 1fr !important; }
+  .detail-split { grid-template-columns: 1fr !important; }
+  .footer-cols { grid-template-columns: 1fr 1fr !important; }
+}
+
+@media (max-width: 720px) {
+  .app-shell { grid-template-columns: 1fr !important; }
+  .app-sidebar { display: none !important; }
+  .card-grid-3,
+  .card-grid-4,
+  .counter-grid { grid-template-columns: 1fr !important; }
+  .footer-cols { grid-template-columns: 1fr 1fr !important; }
+  .public-links { display: none !important; }
+}
