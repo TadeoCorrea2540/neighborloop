@@ -47,22 +47,22 @@ function GrowIcon({ c }: { c: string }) {
 
 const STEPS = [
   {
-    tile: "#fff0dd",
-    accent: "#ff8a3c",
+    tile: "#fdf2ee",
+    accent: "var(--coral-deep)",
     Icon: DiscoverIcon,
     t: "1 · Discover",
     d: "Filter missions by cause, distance, date and difficulty. Save the ones you love.",
   },
   {
-    tile: "#fff0dd",
-    accent: "#ff8a3c",
+    tile: "#fdf2ee",
+    accent: "var(--coral-deep)",
     Icon: JoinIcon,
     t: "2 · Join",
     d: "Tap to apply. Get approved, message the org, and check in with a QR code on the day.",
   },
   {
-    tile: "#fff0dd",
-    accent: "#ff8a3c",
+    tile: "#fdf2ee",
+    accent: "var(--coral-deep)",
     Icon: GrowIcon,
     t: "3 · Grow",
     d: "Track hours, earn badges, download certificates, and share your impact card.",

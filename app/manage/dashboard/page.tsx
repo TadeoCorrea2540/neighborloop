@@ -1,5 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ORG_CHART, MANAGE_ROWS } from "@/lib/data";
+import { requireRole } from "@/lib/auth/server";
+import { getServerSupabase } from "@/lib/supabase/server";
 
 const PENDING = [
   { name: "Maya Rivera", meta: "126 hrs · 4.9★", c1: "#bca6ff", c2: "#7a6bf5" },
@@ -14,7 +17,33 @@ const METRICS = [
   { label: "Impact hours", value: "1,240", sub: "all-time", subColor: "var(--muted-3)", color: "var(--lav)" },
 ];
 
-export default function OrgDashboard() {
+export default async function OrgDashboard() {
+  const { user, role } = await requireRole(["organizer", "admin"]);
+  const supabase = getServerSupabase();
+
+  const { data: memberships } = await supabase
+    .from("organization_members")
+    .select("organization_id")
+    .eq("user_id", user.id)
+    .limit(1);
+
+  // Organizers without an organization yet are sent to onboarding.
+  if (role === "organizer" && (!memberships || memberships.length === 0)) {
+    redirect("/manage/onboarding");
+  }
+
+  let orgName: string | undefined;
+  const orgId = (memberships?.[0] as { organization_id: string } | undefined)?.organization_id;
+  if (orgId) {
+    const { data: orgRow } = await supabase
+      .from("organizations")
+      .select("name")
+      .eq("id", orgId)
+      .maybeSingle();
+    orgName = (orgRow as { name: string } | null)?.name;
+  }
+  const greeting = orgName ? `Welcome back, ${orgName} 🌱` : "Welcome back 🌱";
+
   const maxBar = Math.max(...ORG_CHART.map((c) => c.value));
   const rows = MANAGE_ROWS.slice(0, 3);
 
@@ -23,7 +52,7 @@ export default function OrgDashboard() {
       {/* welcome */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
         <div>
-          <h2 style={{ fontSize: 25, fontWeight: 800, margin: 0, letterSpacing: "-.02em" }}>Welcome back, GreenRoots 🌱</h2>
+          <h2 style={{ fontSize: 25, fontWeight: 800, margin: 0, letterSpacing: "-.02em" }}>{greeting}</h2>
           <p style={{ margin: "4px 0 0", color: "var(--muted-2)", fontSize: 14 }}>6 active missions · 184 volunteers this month</p>
         </div>
         <Link href="/manage/missions/new" className="btn-coral" style={{ color: "#fff", fontWeight: 700, fontSize: 14, padding: "11px 18px", borderRadius: 12, boxShadow: "0 12px 24px -12px rgba(255,111,94,.8)" }}>+ Create mission</Link>

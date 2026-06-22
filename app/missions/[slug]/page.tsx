@@ -1,48 +1,44 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import PublicNav from "@/components/public-nav";
-import {
-  MISSIONS,
-  MISSION_DETAILS,
-  getMission,
-  causeArt,
-  type Mission,
-  type MissionDetail,
-} from "@/lib/data";
+import { causeArt } from "@/lib/data";
+import { loadLiveMissionView } from "@/lib/mission-view";
+import { getCurrentUser, getCurrentUserRole } from "@/lib/auth/server";
+import { getVolunteerApplicationForMission } from "@/lib/data/applications";
+import { getSavedMissionIdsForUser } from "@/lib/data/profiles";
+import MissionActions from "@/components/volunteer/mission-actions";
+import type { ApplicationStatus } from "@/types/database";
 
-/** Build a sensible generic detail from a mission's own fields. */
-function genericDetail(m: Mission): MissionDetail {
-  return {
-    whatYoullDo: `Join ${m.org} for ${m.title}. You'll work alongside a friendly crew making a real difference in your neighborhood. Training and guidance are provided on arrival — newcomers are always welcome. 💚`,
-    bullets: [
-      "Show up ready to lend a hand",
-      "Work as part of a small, supportive team",
-      "Leave the community better than you found it",
-    ],
-    impactGoal: `Help ${m.org} reach more neighbors and make ${m.cause.toLowerCase()} efforts go further this month.`,
-    skills: ["Reliable", "Team player", "No experience needed"],
-    safety:
-      "Closed-toe shoes recommended. Please bring water and dress for the weather. Supplies are provided on site.",
-    coverGrad: causeArt(m),
-    date: m.date,
-    time: m.date,
-    spotsLeft: m.spots,
-    spotsTotal: Math.max(m.spots, m.spots + 5),
-  };
-}
+type ViewerRole = "anon" | "volunteer" | "organizer" | "admin";
 
-export default function MissionDetailPage({
+export default async function MissionDetailPage({
   params,
 }: {
   params: { slug: string };
 }) {
-  const mission = getMission(params.slug);
-  if (!mission) notFound();
+  // Real-only: a published Supabase mission, or 404. No mock fallback.
+  const view = await loadLiveMissionView(params.slug);
+  if (!view) notFound();
+  const { missionId, mission, detail, recs } = view;
 
-  const detail =
-    MISSION_DETAILS[params.slug] ?? genericDetail(mission);
-
-  const recs = MISSIONS.filter((m) => m.slug !== mission.slug).slice(0, 3);
+  // Viewer context drives the apply/save CTA.
+  const user = await getCurrentUser();
+  let role: ViewerRole = "anon";
+  let appStatus: ApplicationStatus | null = null;
+  let appId: string | null = null;
+  let isSaved = false;
+  if (user) {
+    role = (await getCurrentUserRole()) ?? "volunteer";
+    if (role === "volunteer") {
+      const [app, savedIds] = await Promise.all([
+        getVolunteerApplicationForMission(user.id, missionId),
+        getSavedMissionIdsForUser(user.id),
+      ]);
+      appStatus = app?.status ?? null;
+      appId = app?.id ?? null;
+      isSaved = savedIds.includes(missionId);
+    }
+  }
 
   const pct = Math.round((detail.spotsLeft / detail.spotsTotal) * 100);
 
@@ -277,7 +273,7 @@ export default function MissionDetailPage({
                   <div>
                     <div style={{ fontSize: 12, color: "var(--muted-3)" }}>Location</div>
                     <div style={{ fontWeight: 700, fontSize: 14.5 }}>
-                      {mission.org} · {mission.dist} away
+                      {mission.dist === "Virtual" ? "Virtual mission" : mission.dist}
                     </div>
                   </div>
                 </div>
@@ -325,53 +321,14 @@ export default function MissionDetailPage({
                 />
               </div>
 
-              <div
-                className="btn-coral"
-                style={{
-                  color: "#fff",
-                  textAlign: "center",
-                  fontWeight: 700,
-                  fontSize: 16,
-                  padding: 14,
-                  borderRadius: 13,
-                  boxShadow: "0 14px 28px -12px rgba(255,111,94,.8)",
-                }}
-              >
-                Join this mission →
-              </div>
-              <div style={{ display: "flex", gap: 10, marginTop: 11 }}>
-                <span
-                  style={{
-                    flex: 1,
-                    textAlign: "center",
-                    fontSize: 13.5,
-                    fontWeight: 600,
-                    color: "var(--ink)",
-                    border: "1px solid rgba(24,32,59,.12)",
-                    padding: 11,
-                    borderRadius: 12,
-                  }}
-                >
-                  ♡ Save
-                </span>
-                <span
-                  style={{
-                    flex: 1,
-                    textAlign: "center",
-                    fontSize: 13.5,
-                    fontWeight: 600,
-                    color: "var(--ink)",
-                    border: "1px solid rgba(24,32,59,.12)",
-                    padding: 11,
-                    borderRadius: 12,
-                  }}
-                >
-                  💬 Message org
-                </span>
-              </div>
-              <div style={{ marginTop: 16, fontSize: 12, color: "var(--muted-3)", textAlign: "center" }}>
-                🔒 You&apos;ll get a QR check-in code after joining
-              </div>
+              <MissionActions
+                missionId={missionId}
+                missionSlug={params.slug}
+                role={role}
+                initialStatus={appStatus}
+                initialApplicationId={appId}
+                initialSaved={isSaved}
+              />
             </div>
           </div>
         </div>

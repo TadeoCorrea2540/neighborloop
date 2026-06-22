@@ -1,0 +1,17 @@
+# NeighborLoop — Supabase local config
+# Minimal config for CLI workflows (migrations, type generation).
+# `project_id` is a local identifier; the real linked project ref is set
+# via `supabase link --project-ref <ref>` (see docs/supabase-setup.md).
+
+project_id = "neighborloop"
+
+[db]
+# Default local Postgres major version used by `supabase start`.
+major_version = 15
+
+[api]
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+
+[studio]
+enabled = true

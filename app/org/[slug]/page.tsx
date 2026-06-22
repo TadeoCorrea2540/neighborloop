@@ -1,25 +1,13 @@
 import PublicNav from "@/components/public-nav";
+import { loadOrgView } from "@/lib/org-view";
 
+// Demo-only sections below have no DB source yet, so they stay identical for
+// live and mock orgs (noted where rendered).
 const STATS = [
   { v: "312", l: "volunteers hosted", c: "#1fae82" },
   { v: "1,240", l: "hours contributed", c: "#3a8bf0" },
   { v: "18", l: "gardens built", c: "#f1543f" },
   { v: "7 yrs", l: "on NeighborLoop", c: "#7a6bf5" },
-];
-
-const OPPS = [
-  {
-    title: "Community Garden Planting",
-    meta: "📅 Jun 28 · 📍 0.5 mi · Easy",
-    emoji: "🌱",
-    art: "linear-gradient(135deg,#eaf7cf,#c2e58a)",
-  },
-  {
-    title: "Compost Workshop",
-    meta: "📅 Jul 5 · 📍 0.5 mi · Medium",
-    emoji: "🌿",
-    art: "linear-gradient(135deg,#eaf7cf,#c2e58a)",
-  },
 ];
 
 const REVIEWS = [
@@ -46,7 +34,13 @@ const GALLERY = [
   { emoji: "🐝", art: "linear-gradient(135deg,#ffe3da,#ffb09a)" },
 ];
 
-export default function OrgProfile() {
+export default async function OrgProfile({
+  params,
+}: {
+  params: { slug: string };
+}) {
+  // Live-first by slug; falls back to the GreenRoots demo when not a live org.
+  const view = await loadOrgView(params.slug);
   return (
     <div style={{ background: "#fff", minHeight: "100vh" }}>
       <PublicNav />
@@ -107,23 +101,25 @@ export default function OrgProfile() {
               <div style={{ paddingBottom: 6 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <h2 style={{ fontSize: 27, fontWeight: 800, margin: 0, letterSpacing: "-.02em" }}>
-                    GreenRoots Collective
+                    {view.name}
                   </h2>
-                  <span
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: "var(--mint)",
-                      background: "#dff6ea",
-                      padding: "5px 12px",
-                      borderRadius: 99,
-                    }}
-                  >
-                    ✓ Verified nonprofit
-                  </span>
+                  {view.verifiedLabel && (
+                    <span
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: "var(--mint)",
+                        background: "#dff6ea",
+                        padding: "5px 12px",
+                        borderRadius: 99,
+                      }}
+                    >
+                      {view.verifiedLabel}
+                    </span>
+                  )}
                 </div>
                 <div style={{ fontSize: 14, color: "var(--muted-2)", marginTop: 4 }}>
-                  🌍 Community gardens &amp; food security · San Francisco · ★ 4.9 (212 reviews)
+                  {view.metaLine}
                 </div>
               </div>
             </div>
@@ -166,9 +162,7 @@ export default function OrgProfile() {
               margin: "20px 0 24px",
             }}
           >
-            We turn vacant lots into thriving community gardens that feed neighborhoods and bring
-            people together. Since 2019 we&apos;ve grown food, friendships and a greener San Francisco —
-            one raised bed at a time. 🌱
+            {view.description}
           </p>
 
           {/* stats */}
@@ -207,7 +201,22 @@ export default function OrgProfile() {
                 Active opportunities
               </h3>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {OPPS.map((o) => (
+                {view.opps.length === 0 ? (
+                  <div
+                    style={{
+                      border: "1px dashed rgba(24,32,59,.16)",
+                      borderRadius: 16,
+                      padding: "24px 18px",
+                      textAlign: "center",
+                      fontSize: 14,
+                      color: "var(--muted-2)",
+                      background: "#fbfcfe",
+                    }}
+                  >
+                    No active opportunities posted right now — check back soon.
+                  </div>
+                ) : (
+                  view.opps.map((o) => (
                   <div
                     key={o.title}
                     style={{
@@ -254,9 +263,11 @@ export default function OrgProfile() {
                       Join
                     </span>
                   </div>
-                ))}
+                  ))
+                )}
               </div>
 
+              {/* Reviews — demo content, no DB source yet */}
               <h3 style={{ fontSize: 18, fontWeight: 800, margin: "24px 0 14px" }}>Reviews</h3>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {REVIEWS.map((r) => (

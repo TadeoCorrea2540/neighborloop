@@ -4,13 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { VOL_NAV, VOL_STATS } from "@/lib/data";
 import Logo from "./logo";
+import LogoutButton from "./auth/logout-button";
 
 export default function VolunteerShell({
   children,
   search = "Search missions, orgs, causes…",
+  userName = "Neighbor",
+  roleLabel = "Volunteer",
 }: {
   children: React.ReactNode;
   search?: string;
+  userName?: string;
+  roleLabel?: string;
 }) {
   const pathname = usePathname();
   return (
@@ -127,10 +132,23 @@ export default function VolunteerShell({
             }}
           />
           <div>
-            <div style={{ fontWeight: 700, fontSize: 13.5 }}>Maya Rivera</div>
-            <div style={{ fontSize: 12, color: "var(--muted-3)" }}>Volunteer · Lvl 4</div>
+            <div style={{ fontWeight: 700, fontSize: 13.5 }}>{userName}</div>
+            <div style={{ fontSize: 12, color: "var(--muted-3)" }}>{roleLabel}</div>
           </div>
         </div>
+        <LogoutButton
+          style={{
+            width: "100%",
+            marginTop: 8,
+            padding: "9px 12px",
+            borderRadius: 10,
+            border: "1px solid var(--line)",
+            background: "#fff",
+            color: "var(--muted-1)",
+            fontWeight: 600,
+            fontSize: 13,
+          }}
+        />
       </aside>
 
       {/* main column */}

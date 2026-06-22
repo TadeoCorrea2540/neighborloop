@@ -1,140 +1,65 @@
-"use client";
+import { requireAuth } from "@/lib/auth/server";
+import { getVolunteerApplicationsWithMissions } from "@/lib/data/applications";
+import { getVolunteerSavedMissions } from "@/lib/data/profiles";
+import { getMissionCards, type MissionCard } from "@/lib/data/mission-cards";
+import type { MissionSummary } from "@/types/domain";
+import type { ApplicationStatus } from "@/types/database";
+import MyMissionsClient, { type MyRow } from "./my-missions-client";
 
-import { useState } from "react";
-import { MY_TABS, MY_MISSIONS } from "@/lib/data";
+const ACTIVE: ApplicationStatus[] = ["pending", "approved", "waitlisted"];
 
-export default function MyMissions() {
-  const [tab, setTab] = useState<(typeof MY_TABS)[number]>("Upcoming");
-  const missions = MY_MISSIONS[tab] ?? [];
+export default async function MyMissions() {
+  const user = await requireAuth();
+
+  const [apps, saved] = await Promise.all([
+    getVolunteerApplicationsWithMissions(user.id),
+    getVolunteerSavedMissions(user.id),
+  ]);
+
+  // Enrich all referenced missions with org/category/spots via the card pipeline.
+  const missionMap = new Map<string, MissionSummary>();
+  for (const a of apps) if (a.mission) missionMap.set(a.mission.id, a.mission);
+  for (const s of saved) missionMap.set(s.id, s);
+  const cards = await getMissionCards(Array.from(missionMap.values()), { userId: user.id });
+  const cardById = new Map(cards.map((c) => [c.mission.id, c]));
+
+  const now = new Date().toISOString();
+
+  const toRow = (a: (typeof apps)[number]): MyRow => ({
+    applicationId: a.application.id,
+    status: a.application.status,
+    withdrawable: ACTIVE.includes(a.application.status),
+    card: a.mission ? cardById.get(a.mission.id) ?? null : null,
+    title: a.mission?.title ?? null,
+    slug: a.mission?.slug ?? null,
+  });
+
+  const rows = apps.map(toRow);
+  const upcoming = rows.filter(
+    (r) => r.status === "approved" && r.card && r.card.mission.startsAt >= now
+  );
+  const applications = rows.filter((r) => r.status === "pending" || r.status === "waitlisted");
+  const past = rows.filter(
+    (r) =>
+      r.card &&
+      r.card.mission.startsAt < now &&
+      r.status !== "withdrawn" &&
+      r.status !== "cancelled"
+  );
+  const cancelled = rows.filter((r) => r.status === "withdrawn" || r.status === "cancelled");
+
+  // Saved cards in saved order.
+  const savedCards = saved
+    .map((s) => cardById.get(s.id))
+    .filter((c): c is MissionCard => Boolean(c));
 
   return (
-    <div>
-      <h2 style={{ fontSize: 26, fontWeight: 800, margin: "0 0 16px", letterSpacing: "-.02em" }}>
-        My Missions
-      </h2>
-
-      {/* tab pills */}
-      <div style={{ display: "flex", gap: 9, marginBottom: 20 }}>
-        {MY_TABS.map((t) => {
-          const active = t === tab;
-          return (
-            <span
-              key={t}
-              onClick={() => setTab(t)}
-              style={{
-                cursor: "pointer",
-                fontSize: 13.5,
-                fontWeight: 700,
-                padding: "9px 16px",
-                borderRadius: 999,
-                transition: ".18s",
-                background: active ? "#ff6f5e" : "#fff",
-                color: active ? "#fff" : "#5a6685",
-                border: active ? "1px solid #ff6f5e" : "1px solid rgba(24,32,59,.12)",
-              }}
-            >
-              {t}
-            </span>
-          );
-        })}
-      </div>
-
-      {/* mission rows */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
-        {missions.map((m) => (
-          <div
-            key={m.title}
-            style={{
-              background: "#fff",
-              border: "1px solid rgba(24,32,59,.06)",
-              borderRadius: 16,
-              padding: "16px 18px",
-              display: "flex",
-              alignItems: "center",
-              gap: 16,
-            }}
-          >
-            <span
-              style={{
-                width: 52,
-                height: 52,
-                borderRadius: 14,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 24,
-                flexShrink: 0,
-                background: m.art,
-              }}
-            >
-              {m.emoji}
-            </span>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, fontSize: 16 }}>{m.title}</div>
-              <div style={{ fontSize: 13, color: "#9aa3bd", marginTop: 2 }}>
-                📅 {m.date} · 📍 {m.loc}
-              </div>
-            </div>
-            <span
-              style={{
-                fontSize: 12.5,
-                fontWeight: 700,
-                padding: "6px 12px",
-                borderRadius: 999,
-                ...m.pill,
-              }}
-            >
-              {m.status}
-            </span>
-            <div style={{ display: "flex", gap: 9 }}>
-              <span
-                style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: "#18203b",
-                  border: "1px solid rgba(24,32,59,.12)",
-                  padding: "9px 13px",
-                  borderRadius: 11,
-                  cursor: "pointer",
-                }}
-              >
-                QR check-in
-              </span>
-              <span
-                style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: "#5a6685",
-                  border: "1px solid rgba(24,32,59,.12)",
-                  padding: "9px 13px",
-                  borderRadius: 11,
-                  cursor: "pointer",
-                }}
-              >
-                Message
-              </span>
-            </div>
-          </div>
-        ))}
-
-        {missions.length === 0 && (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "54px 20px",
-              background: "#fff",
-              borderRadius: 18,
-              border: "1px dashed rgba(24,32,59,.14)",
-            }}
-          >
-            <div style={{ fontSize: 46 }}>🗂️</div>
-            <div style={{ fontWeight: 700, fontSize: 17, marginTop: 10 }}>Nothing here yet</div>
-            <div style={{ fontSize: 14, color: "#9aa3bd", marginTop: 4 }}>
-              Missions in this tab will show up here.
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+    <MyMissionsClient
+      upcoming={upcoming}
+      applications={applications}
+      saved={savedCards}
+      past={past}
+      cancelled={cancelled}
+    />
   );
 }

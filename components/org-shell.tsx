@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ORG_NAV } from "@/lib/data";
+import LogoutButton from "./auth/logout-button";
 
 export default function OrgShell({
   children,
@@ -126,6 +127,19 @@ export default function OrgShell({
         >
           + Create mission
         </Link>
+        <LogoutButton
+          style={{
+            width: "100%",
+            marginTop: 10,
+            padding: "9px 12px",
+            borderRadius: 10,
+            border: "1px solid var(--line)",
+            background: "#fff",
+            color: "var(--muted-1)",
+            fontWeight: 600,
+            fontSize: 13,
+          }}
+        />
       </aside>
 
       {/* main */}

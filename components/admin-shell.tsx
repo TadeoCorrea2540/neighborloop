@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import LogoutButton from "./auth/logout-button";
 
 /* admin nav (ported from the design's dark sidebar — rendered light here) */
 const ADMIN_NAV: {
@@ -141,6 +142,19 @@ export default function AdminShell({
           <div style={{ fontWeight: 700, color: "var(--ink)", marginBottom: 2 }}>🛡️ Trust &amp; Safety</div>
           All actions are logged.
         </div>
+        <LogoutButton
+          style={{
+            width: "100%",
+            marginTop: 10,
+            padding: "9px 12px",
+            borderRadius: 10,
+            border: "1px solid var(--line)",
+            background: "#fff",
+            color: "var(--muted-1)",
+            fontWeight: 600,
+            fontSize: 13,
+          }}
+        />
       </aside>
 
       {/* main */}

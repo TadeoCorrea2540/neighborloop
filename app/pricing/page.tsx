@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import PublicNav from "@/components/public-nav";
+import PricingMobileExperience from "@/components/pricing/pricing-mobile-experience";
 import { PRICING } from "@/lib/data";
+import "./pricing-mobile.css";
 
 export default function Pricing() {
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
@@ -31,25 +33,29 @@ export default function Pricing() {
   });
 
   return (
-    <div style={{ background: "#fff", minHeight: "100vh" }}>
+    <div className="price-page" style={{ background: "#fff", minHeight: "100vh" }}>
       <PublicNav />
+      <div className="price-mobile-only">
+        <PricingMobileExperience />
+      </div>
 
+      <div className="price-desktop-only">
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
         {/* header */}
         <div
           style={{
-            padding: "54px 36px 24px",
+            padding: "32px 36px 16px",
             textAlign: "center",
             background: "linear-gradient(180deg,#fdf2ee,#fff)",
           }}
         >
           <div style={{ fontSize: 13, fontWeight: 700, color: "var(--coral-deep)", letterSpacing: ".08em" }}>
-            FOR NONPROFITS, SCHOOLS &amp; COMMUNITY GROUPS
+            FOR NONPROFITS, SCHOOLS, LOCAL GROUPS, FAMILIES &amp; EVERYDAY PEOPLE
           </div>
-          <h2 style={{ fontSize: 38, fontWeight: 800, letterSpacing: "-.02em", margin: "10px 0 14px" }}>
+          <h2 style={{ fontSize: 34, fontWeight: 800, letterSpacing: "-.02em", margin: "8px 0 10px" }}>
             Plans that scale with your impact
           </h2>
-          <p style={{ fontSize: 17, color: "var(--muted-1)", margin: "0 auto 24px", maxWidth: 520 }}>
+          <p style={{ fontSize: 16, color: "var(--muted-1)", margin: "0 auto 18px", maxWidth: 520 }}>
             Free forever to get started. Upgrade when you&apos;re ready for analytics, attendance and
             impact reports.
           </p>
@@ -91,7 +97,7 @@ export default function Pricing() {
             display: "grid",
             gridTemplateColumns: "repeat(3,1fr)",
             gap: 20,
-            padding: "24px 36px 20px",
+            padding: "12px 36px 16px",
           }}
           className="card-grid-3"
         >
@@ -100,19 +106,19 @@ export default function Pricing() {
             style={{
               border: "1px solid rgba(24,32,59,.1)",
               borderRadius: 22,
-              padding: "28px 26px",
+              padding: "24px 26px",
             }}
           >
             <div style={{ fontWeight: 700, fontSize: 18 }}>Community</div>
-            <div style={{ fontSize: 13.5, color: "var(--muted-3)", margin: "4px 0 16px" }}>
+            <div style={{ fontSize: 13.5, color: "var(--muted-3)", margin: "3px 0 10px" }}>
               For small grassroots groups
             </div>
             <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-              <span style={{ fontSize: 44, fontWeight: 800, letterSpacing: "-.02em" }}>$0</span>
+              <span style={{ fontSize: 40, fontWeight: 800, letterSpacing: "-.02em" }}>$0</span>
               <span style={{ fontSize: 14, color: "var(--muted-3)" }}>/forever</span>
             </div>
-            <div style={{ marginTop: 18, height: 1, background: "rgba(24,32,59,.07)" }} />
-            <div style={{ display: "flex", flexDirection: "column", gap: 11, margin: "18px 0 22px" }}>
+            <div style={{ marginTop: 16, height: 1, background: "rgba(24,32,59,.07)" }} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, margin: "16px 0 18px" }}>
               <div style={check()}>
                 <span style={{ color: "var(--mint)" }}>✓</span> Post up to 2 active missions
               </div>
@@ -146,7 +152,7 @@ export default function Pricing() {
             style={{
               border: "2px solid #ff6f5e",
               borderRadius: 22,
-              padding: "28px 26px",
+              padding: "24px 26px",
               position: "relative",
               boxShadow: "0 28px 50px -28px rgba(255,111,94,.5)",
             }}
@@ -168,17 +174,17 @@ export default function Pricing() {
               ★ Most popular
             </span>
             <div style={{ fontWeight: 700, fontSize: 18 }}>Pro</div>
-            <div style={{ fontSize: 13.5, color: "var(--muted-3)", margin: "4px 0 16px" }}>
+            <div style={{ fontSize: 13.5, color: "var(--muted-3)", margin: "3px 0 10px" }}>
               For active nonprofits
             </div>
             <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-              <span style={{ fontSize: 44, fontWeight: 800, letterSpacing: "-.02em", color: "var(--coral-deep)" }}>
+              <span style={{ fontSize: 40, fontWeight: 800, letterSpacing: "-.02em", color: "var(--coral-deep)" }}>
                 {proPrice}
               </span>
               <span style={{ fontSize: 14, color: "var(--muted-3)" }}>{billLabel}</span>
             </div>
-            <div style={{ marginTop: 18, height: 1, background: "rgba(24,32,59,.07)" }} />
-            <div style={{ display: "flex", flexDirection: "column", gap: 11, margin: "18px 0 22px" }}>
+            <div style={{ marginTop: 16, height: 1, background: "rgba(24,32,59,.07)" }} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, margin: "16px 0 18px" }}>
               {[
                 "Unlimited missions",
                 "QR code attendance",
@@ -198,7 +204,7 @@ export default function Pricing() {
                 color: "#fff",
                 fontWeight: 700,
                 fontSize: 14.5,
-                padding: 13,
+                padding: 12,
                 borderRadius: 13,
                 boxShadow: "0 14px 28px -12px rgba(255,111,94,.8)",
               }}
@@ -212,19 +218,19 @@ export default function Pricing() {
             style={{
               border: "1px solid rgba(24,32,59,.1)",
               borderRadius: 22,
-              padding: "28px 26px",
+              padding: "24px 26px",
             }}
           >
             <div style={{ fontWeight: 700, fontSize: 18 }}>Impact</div>
-            <div style={{ fontSize: 13.5, color: "var(--muted-3)", margin: "4px 0 16px" }}>
+            <div style={{ fontSize: 13.5, color: "var(--muted-3)", margin: "3px 0 10px" }}>
               For large orgs &amp; school districts
             </div>
             <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-              <span style={{ fontSize: 44, fontWeight: 800, letterSpacing: "-.02em" }}>{impactPrice}</span>
+              <span style={{ fontSize: 40, fontWeight: 800, letterSpacing: "-.02em" }}>{impactPrice}</span>
               <span style={{ fontSize: 14, color: "var(--muted-3)" }}>{billLabel}</span>
             </div>
-            <div style={{ marginTop: 18, height: 1, background: "rgba(24,32,59,.07)" }} />
-            <div style={{ display: "flex", flexDirection: "column", gap: 11, margin: "18px 0 22px" }}>
+            <div style={{ marginTop: 16, height: 1, background: "rgba(24,32,59,.07)" }} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, margin: "16px 0 18px" }}>
               {[
                 "Everything in Pro",
                 "Impact reports & PDF export",
@@ -253,10 +259,11 @@ export default function Pricing() {
           </div>
         </div>
 
-        <div style={{ textAlign: "center", padding: "6px 0 48px", fontSize: 13.5, color: "var(--muted-3)" }}>
+        <div style={{ textAlign: "center", padding: "4px 0 16px", fontSize: 13, color: "var(--muted-3)" }}>
           All plans include verified-org badge, messaging, and bank-grade security. Nonprofits get 30%
           off annual.
         </div>
+      </div>
       </div>
     </div>
   );
