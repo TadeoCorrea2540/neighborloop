@@ -50,7 +50,18 @@ export async function sendMessageAction(conversationId: string, body: string): P
   });
   if (error) return { ok: false, code: "forbidden", error: "You don’t have access to this conversation." };
 
-  await db.from("conversations").update({ last_message_at: new Date().toISOString() }).eq("id", conversationId);
+  const now = new Date().toISOString();
+  await db.from("conversations").update({ last_message_at: now }).eq("id", conversationId);
+
+  // The sender has implicitly "read" up to their own message — advance their
+  // last_read_at so the conversation isn't flagged unread to them (same
+  // timestamp as last_message_at → unread check `last_message_at > last_read_at`
+  // is false for the sender).
+  await db
+    .from("conversation_participants")
+    .update({ last_read_at: now })
+    .eq("conversation_id", conversationId)
+    .eq("user_id", user.id);
 
   // Notify the other participant(s) (role-appropriate link).
   const { data: parts } = await db
