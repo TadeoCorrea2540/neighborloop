@@ -128,9 +128,12 @@ export async function getUserConversations(userId: string): Promise<Conversation
   return items;
 }
 
-export async function getUnreadConversationCount(userId: string): Promise<number> {
-  // Lightweight: just the participant rows + their conversations' last_message_at
-  // (no mission/org/profile decoration — this runs on every page load).
+/**
+ * Number of unread *messages* (not conversations) for the badge: incoming
+ * messages newer than the user's last_read_at in that conversation. Excludes
+ * the user's own messages and system messages.
+ */
+export async function getUnreadMessageCount(userId: string): Promise<number> {
   const db = getServerDb();
   const { data: partRows } = await db
     .from("conversation_participants")
@@ -140,15 +143,17 @@ export async function getUnreadConversationCount(userId: string): Promise<number
   if (parts.length === 0) return 0;
   const lastRead = new Map(parts.map((p) => [p.conversation_id, p.last_read_at]));
 
-  const { data: convRows } = await db
-    .from("conversations")
-    .select("id, last_message_at")
-    .in("id", parts.map((p) => p.conversation_id));
+  const { data: msgs } = await db
+    .from("messages")
+    .select("conversation_id, sender_id, created_at, is_system_message")
+    .in("conversation_id", parts.map((p) => p.conversation_id))
+    .neq("sender_id", userId);
 
   let count = 0;
-  for (const c of (convRows ?? []) as { id: string; last_message_at: string | null }[]) {
-    const lr = lastRead.get(c.id) ?? null;
-    if (c.last_message_at && (!lr || c.last_message_at > lr)) count++;
+  for (const m of (msgs ?? []) as { conversation_id: string; sender_id: string | null; created_at: string; is_system_message: boolean }[]) {
+    if (m.is_system_message) continue;
+    const lr = lastRead.get(m.conversation_id) ?? null;
+    if (!lr || m.created_at > lr) count++;
   }
   return count;
 }

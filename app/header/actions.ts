@@ -7,7 +7,7 @@
  */
 import { getCurrentUser } from "@/lib/auth/server";
 import { getUserNotifications, getUnreadNotificationCount, type NotificationItem } from "@/lib/data/notifications";
-import { getUserConversations, getUnreadConversationCount, type ConversationListItem } from "@/lib/data/conversations";
+import { getUserConversations, getUnreadMessageCount, type ConversationListItem } from "@/lib/data/conversations";
 
 export async function fetchHeaderNotifications(): Promise<{ items: NotificationItem[]; unread: number }> {
   const user = await getCurrentUser();
@@ -23,8 +23,11 @@ export async function fetchHeaderNotifications(): Promise<{ items: NotificationI
 export async function fetchHeaderConversations(): Promise<{ items: ConversationListItem[]; unread: number }> {
   const user = await getCurrentUser();
   if (!user) return { items: [], unread: 0 };
-  const all = await getUserConversations(user.id);
-  return { items: all, unread: all.filter((c) => c.unread).length };
+  const [all, unread] = await Promise.all([
+    getUserConversations(user.id),
+    getUnreadMessageCount(user.id), // badge counts unread messages, not conversations
+  ]);
+  return { items: all, unread };
 }
 
 /** Cheap count-only loaders for keeping the header badges fresh (focus/poll). */
@@ -35,5 +38,5 @@ export async function fetchUnreadNotificationCount(): Promise<number> {
 
 export async function fetchUnreadMessageCount(): Promise<number> {
   const user = await getCurrentUser();
-  return user ? getUnreadConversationCount(user.id) : 0;
+  return user ? getUnreadMessageCount(user.id) : 0;
 }

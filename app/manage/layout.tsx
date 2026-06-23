@@ -3,7 +3,7 @@ import { requireRole } from "@/lib/auth/server";
 import { getPrimaryOrganizationForUser } from "@/lib/data/organization-membership";
 import { getPendingApplicationCount } from "@/lib/data/organization-applications";
 import { getUnreadNotificationCount } from "@/lib/data/notifications";
-import { getUnreadConversationCount } from "@/lib/data/conversations";
+import { getUnreadMessageCount } from "@/lib/data/conversations";
 
 export default async function ManageLayout({
   children,
@@ -21,7 +21,7 @@ export default async function ManageLayout({
   const [pendingCount, notificationCount, messageCount] = await Promise.all([
     org ? getPendingApplicationCount(org.id) : Promise.resolve(0),
     getUnreadNotificationCount(user.id),
-    getUnreadConversationCount(user.id),
+    getUnreadMessageCount(user.id),
   ]);
 
   return (

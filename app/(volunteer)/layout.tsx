@@ -2,7 +2,7 @@ import VolunteerShell from "@/components/volunteer-shell";
 import { requireAuth, getCurrentUserRole, getCurrentProfile } from "@/lib/auth/server";
 import { redirectToDashboardByRole } from "@/lib/auth/redirect-by-role";
 import { getUnreadNotificationCount } from "@/lib/data/notifications";
-import { getUnreadConversationCount } from "@/lib/data/conversations";
+import { getUnreadMessageCount } from "@/lib/data/conversations";
 
 export default async function VolunteerLayout({
   children,
@@ -18,7 +18,7 @@ export default async function VolunteerLayout({
   const [profile, notificationCount, messageCount] = await Promise.all([
     getCurrentProfile(),
     getUnreadNotificationCount(user.id),
-    getUnreadConversationCount(user.id),
+    getUnreadMessageCount(user.id),
   ]);
   return (
     <VolunteerShell
