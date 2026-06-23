@@ -5,6 +5,7 @@ import { getCertificateByIdForUser } from "@/lib/data/certificates";
 import { UUID_RE } from "@/lib/auth/require-organizer";
 import { fmtDate } from "@/components/admin/badges";
 import PrintButton from "@/components/certificates/print-button";
+import Logo from "@/components/logo";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +43,7 @@ export default async function CertificatePage({ params }: { params: { id: string
           <div style={{ position: "absolute", inset: 0, borderRadius: 22, border: "2px solid rgba(255,111,94,.15)", margin: 10, pointerEvents: "none" }} />
 
           <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "center", marginBottom: 28 }}>
-            <span style={{ width: 30, height: 30, borderRadius: 9, background: "linear-gradient(135deg,#ff8a5c,#ff5e7a)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800, fontSize: 14 }}>N</span>
+            <Logo size={30} />
             <span style={{ fontWeight: 800, fontSize: 16, letterSpacing: "-.01em" }}>NeighborLoop</span>
           </div>
 
