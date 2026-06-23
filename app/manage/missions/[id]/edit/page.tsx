@@ -43,6 +43,9 @@ export default async function EditMissionPage({ params }: { params: { id: string
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 18 }}>
         <h2 style={{ fontSize: 25, fontWeight: 800, margin: 0, letterSpacing: "-.02em" }}>Edit mission</h2>
         <div style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
+          <Link href={`/manage/missions/${mission.id}/reports`} style={{ fontSize: 13.5, fontWeight: 700, color: "var(--muted-1)", background: "#fff", border: "1px solid rgba(24,32,59,.12)", padding: "10px 16px", borderRadius: 12 }}>
+            📊 Report
+          </Link>
           <Link href={`/manage/missions/${mission.id}/updates`} style={{ fontSize: 13.5, fontWeight: 700, color: "var(--muted-1)", background: "#fff", border: "1px solid rgba(24,32,59,.12)", padding: "10px 16px", borderRadius: 12 }}>
             📣 Updates
           </Link>
