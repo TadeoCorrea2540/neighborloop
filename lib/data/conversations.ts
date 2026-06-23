@@ -56,7 +56,7 @@ async function decorate(convs: ConvRow[], parts: Map<string, string | null>, use
     missionIds.length ? supabase.from("missions").select("id, title, slug").in("id", missionIds) : Promise.resolve({ data: [] }),
     orgIds.length ? supabase.from("organizations").select("id, name").in("id", orgIds) : Promise.resolve({ data: [] }),
     appIds.length ? supabase.from("applications").select("id, status").in("id", appIds) : Promise.resolve({ data: [] }),
-    db.from("conversation_participants").select("conversation_id, user_id").in("conversation_id", convIds),
+    db.from("conversation_participants").select("conversation_id, user_id, participant_role").in("conversation_id", convIds),
     db.from("messages").select("conversation_id, body, created_at, is_system_message").in("conversation_id", convIds).order("created_at", { ascending: false }),
   ]);
 
@@ -65,11 +65,11 @@ async function decorate(convs: ConvRow[], parts: Map<string, string | null>, use
   const appStatus = new Map(((appsRes.data ?? []) as { id: string; status: string }[]).map((a) => [a.id, a.status]));
 
   // counterpart (the other participant) per conversation
-  const otherByConv = new Map<string, string>();
-  for (const p of (otherPartsRes.data ?? []) as { conversation_id: string; user_id: string }[]) {
-    if (p.user_id !== userId && !otherByConv.has(p.conversation_id)) otherByConv.set(p.conversation_id, p.user_id);
+  const otherByConv = new Map<string, { userId: string; role: string }>();
+  for (const p of (otherPartsRes.data ?? []) as { conversation_id: string; user_id: string; participant_role: string }[]) {
+    if (p.user_id !== userId && !otherByConv.has(p.conversation_id)) otherByConv.set(p.conversation_id, { userId: p.user_id, role: p.participant_role });
   }
-  const otherIds = Array.from(new Set(otherByConv.values()));
+  const otherIds = Array.from(new Set(Array.from(otherByConv.values()).map((o) => o.userId)));
   const { data: profs } = otherIds.length
     ? await supabase.from("profiles").select("id, display_name").in("id", otherIds)
     : { data: [] as { id: string; display_name: string }[] };
@@ -84,15 +84,22 @@ async function decorate(convs: ConvRow[], parts: Map<string, string | null>, use
   return convs.map((c) => {
     const mission = c.mission_id ? mById.get(c.mission_id) : undefined;
     const lastReadAt = parts.get(c.id) ?? null;
-    const otherId = otherByConv.get(c.id);
+    const other = otherByConv.get(c.id);
+    const orgName = c.organization_id ? oName.get(c.organization_id) ?? "Organization" : "Organization";
+    // The org-side participant is shown as the organization, not the person.
+    const counterpartName = other
+      ? other.role === "organizer"
+        ? orgName
+        : nameById.get(other.userId) ?? "Volunteer"
+      : "—";
     return {
       id: c.id,
       missionId: c.mission_id,
       missionTitle: mission?.title ?? "Conversation",
       missionSlug: mission?.slug ?? null,
       organizationId: c.organization_id,
-      organizationName: c.organization_id ? oName.get(c.organization_id) ?? "Organization" : "Organization",
-      counterpartName: otherId ? nameById.get(otherId) ?? "Volunteer" : "—",
+      organizationName: orgName,
+      counterpartName,
       lastPreview: lastByConv.get(c.id)?.body ?? null,
       lastMessageAt: c.last_message_at,
       unread: !!c.last_message_at && (!lastReadAt || c.last_message_at > lastReadAt),
