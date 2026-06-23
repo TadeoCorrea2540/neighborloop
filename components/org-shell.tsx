@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ORG_NAV } from "@/lib/data";
 import LogoutButton from "./auth/logout-button";
+import NotificationBell from "./notifications/notification-bell";
 
 export default function OrgShell({
   children,
@@ -11,12 +12,16 @@ export default function OrgShell({
   orgName,
   verified = false,
   pendingCount = 0,
+  userId,
+  notificationCount = 0,
 }: {
   children: React.ReactNode;
   search?: string;
   orgName?: string | null;
   verified?: boolean;
   pendingCount?: number;
+  userId?: string;
+  notificationCount?: number;
 }) {
   const pathname = usePathname();
   return (
@@ -187,21 +192,11 @@ export default function OrgShell({
             🔎 {search}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16, marginLeft: 16 }}>
-            <span style={{ position: "relative", fontSize: 19 }}>
-              🔔
-              <span
-                style={{
-                  position: "absolute",
-                  top: -3,
-                  right: -4,
-                  width: 9,
-                  height: 9,
-                  borderRadius: "50%",
-                  background: "var(--coral)",
-                  border: "2px solid #fff",
-                }}
-              />
-            </span>
+            {userId ? (
+              <NotificationBell initialCount={notificationCount} userId={userId} />
+            ) : (
+              <Link href="/notifications" style={{ fontSize: 19, textDecoration: "none" }}>🔔</Link>
+            )}
             <span
               style={{
                 width: 38,

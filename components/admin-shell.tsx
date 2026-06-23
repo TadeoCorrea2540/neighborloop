@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import LogoutButton from "./auth/logout-button";
+import NotificationBell from "./notifications/notification-bell";
 
 /* admin nav (ported from the design's dark sidebar — rendered light here) */
 const ADMIN_NAV: {
@@ -25,11 +26,15 @@ export default function AdminShell({
   search = "Search users, orgs, missions…",
   pendingVerifications = 0,
   openReports = 0,
+  userId,
+  notificationCount = 0,
 }: {
   children: React.ReactNode;
   search?: string;
   pendingVerifications?: number;
   openReports?: number;
+  userId?: string;
+  notificationCount?: number;
 }) {
   const pathname = usePathname();
   return (
@@ -197,21 +202,11 @@ export default function AdminShell({
             🔎 {search}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16, marginLeft: 16 }}>
-            <span style={{ position: "relative", fontSize: 19 }}>
-              🔔
-              <span
-                style={{
-                  position: "absolute",
-                  top: -3,
-                  right: -4,
-                  width: 9,
-                  height: 9,
-                  borderRadius: "50%",
-                  background: "var(--coral)",
-                  border: "2px solid #fff",
-                }}
-              />
-            </span>
+            {userId ? (
+              <NotificationBell initialCount={notificationCount} userId={userId} />
+            ) : (
+              <Link href="/notifications" style={{ fontSize: 19, textDecoration: "none" }}>🔔</Link>
+            )}
             <span
               style={{
                 width: 38,

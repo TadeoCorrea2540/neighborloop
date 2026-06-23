@@ -2,6 +2,7 @@ import OrgShell from "@/components/org-shell";
 import { requireRole } from "@/lib/auth/server";
 import { getPrimaryOrganizationForUser } from "@/lib/data/organization-membership";
 import { getPendingApplicationCount } from "@/lib/data/organization-applications";
+import { getUnreadNotificationCount } from "@/lib/data/notifications";
 
 export default async function ManageLayout({
   children,
@@ -16,13 +17,18 @@ export default async function ManageLayout({
   // Resolve the org for the sidebar (name + verified badge + pending count).
   // Null when the organizer hasn't created an org yet (onboarding).
   const org = await getPrimaryOrganizationForUser(user.id);
-  const pendingCount = org ? await getPendingApplicationCount(org.id) : 0;
+  const [pendingCount, notificationCount] = await Promise.all([
+    org ? getPendingApplicationCount(org.id) : Promise.resolve(0),
+    getUnreadNotificationCount(user.id),
+  ]);
 
   return (
     <OrgShell
       orgName={org?.name ?? null}
       verified={org?.verificationStatus === "verified"}
       pendingCount={pendingCount}
+      userId={user.id}
+      notificationCount={notificationCount}
     >
       {children}
     </OrgShell>

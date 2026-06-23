@@ -5,17 +5,22 @@ import { usePathname } from "next/navigation";
 import { VOL_NAV, VOL_STATS } from "@/lib/data";
 import Logo from "./logo";
 import LogoutButton from "./auth/logout-button";
+import NotificationBell from "./notifications/notification-bell";
 
 export default function VolunteerShell({
   children,
   search = "Search missions, orgs, causes…",
   userName = "Neighbor",
   roleLabel = "Volunteer",
+  userId,
+  notificationCount = 0,
 }: {
   children: React.ReactNode;
   search?: string;
   userName?: string;
   roleLabel?: string;
+  userId?: string;
+  notificationCount?: number;
 }) {
   const pathname = usePathname();
   return (
@@ -183,21 +188,11 @@ export default function VolunteerShell({
             🔎 {search}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16, marginLeft: 16 }}>
-            <span style={{ position: "relative", fontSize: 19 }}>
-              🔔
-              <span
-                style={{
-                  position: "absolute",
-                  top: -3,
-                  right: -4,
-                  width: 9,
-                  height: 9,
-                  borderRadius: "50%",
-                  background: "var(--coral)",
-                  border: "2px solid #fff",
-                }}
-              />
-            </span>
+            {userId ? (
+              <NotificationBell initialCount={notificationCount} userId={userId} />
+            ) : (
+              <Link href="/notifications" style={{ fontSize: 19, textDecoration: "none" }}>🔔</Link>
+            )}
             <Link href="/messages" style={{ fontSize: 19 }}>
               ✉️
             </Link>

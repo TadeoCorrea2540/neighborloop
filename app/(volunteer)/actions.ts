@@ -9,6 +9,8 @@
 import { revalidatePath } from "next/cache";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { getCurrentUser, getCurrentUserRole } from "@/lib/auth/server";
+import { createNotificationsForUsers } from "@/lib/data/notifications";
+import { createReminder } from "@/lib/data/reminders";
 import type { ApplicationStatus } from "@/types/database";
 
 export type ActionCode =
@@ -68,6 +70,25 @@ export async function saveMissionAction(missionId: string): Promise<ActionResult
   if (error && error.code !== "23505") {
     return { ok: false, code: "unknown", error: "Couldn’t save this mission. Please try again." };
   }
+
+  // Seed a "before it starts" reminder for newly-saved missions (best-effort, no cron).
+  if (!error) {
+    const { data: m } = await supabase.from("missions").select("starts_at, organization_id").eq("id", missionId).maybeSingle();
+    const startsAt = (m as { starts_at: string | null } | null)?.starts_at;
+    if (startsAt) {
+      const at = Date.parse(startsAt) - 24 * 3_600_000;
+      if (at > Date.now()) {
+        await createReminder({
+          type: "saved_mission_before_deadline",
+          scheduledFor: new Date(at).toISOString(),
+          missionId,
+          userId: guard.userId,
+          organizationId: (m as { organization_id: string }).organization_id,
+        });
+      }
+    }
+  }
+
   revalidateVolunteer();
   return { ok: true };
 }
@@ -111,11 +132,11 @@ export async function applyToMissionAction(
   // Gating fields (RLS returns published/public only).
   const missionRes = await supabase
     .from("missions")
-    .select("id, status, application_mode, volunteer_capacity")
+    .select("id, status, application_mode, volunteer_capacity, organization_id, title")
     .eq("id", missionId)
     .maybeSingle();
   const mission = missionRes.data as
-    | { id: string; status: string; application_mode: string; volunteer_capacity: number | null }
+    | { id: string; status: string; application_mode: string; volunteer_capacity: number | null; organization_id: string; title: string }
     | null;
   if (!mission || mission.status !== "published") {
     return { ok: false, code: "closed", error: "This mission isn’t accepting volunteers." };
@@ -161,6 +182,7 @@ export async function applyToMissionAction(
       .eq("id", existing.id)
       .eq("volunteer_id", guard.userId);
     if (error) return { ok: false, code: "unknown", error: "Couldn’t submit your application." };
+    await notifyOrganizersOfApplication(mission.organization_id, missionId, mission.title);
     revalidateVolunteer();
     return { ok: true, status, applicationId: existing.id };
   }
@@ -182,8 +204,29 @@ export async function applyToMissionAction(
     }
     return { ok: false, code: "unknown", error: "Couldn’t submit your application. Please try again." };
   }
+  await notifyOrganizersOfApplication(mission.organization_id, missionId, mission.title);
   revalidateVolunteer();
   return { ok: true, status, applicationId: (insertRes.data as { id: string }).id };
+}
+
+/**
+ * Notify the org owner that a new application arrived (best-effort). We resolve
+ * the owner from the organizations row (readable for public orgs) rather than
+ * organization_members, which the applying volunteer can't read (RLS).
+ */
+async function notifyOrganizersOfApplication(orgId: string, missionId: string, title: string): Promise<void> {
+  const supabase = getServerSupabase();
+  const { data } = await supabase.from("organizations").select("owner_id").eq("id", orgId).maybeSingle();
+  const ownerId = (data as { owner_id: string } | null)?.owner_id;
+  if (!ownerId) return;
+  await createNotificationsForUsers([ownerId], {
+    type: "application_submitted",
+    title: "New application",
+    body: `A volunteer applied to “${title}”.`,
+    linkUrl: `/manage/missions/${missionId}/applications`,
+    entityType: "mission",
+    entityId: missionId,
+  });
 }
 
 // ---------------------------------------------------------------- withdraw

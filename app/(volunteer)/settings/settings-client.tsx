@@ -78,9 +78,6 @@ export default function SettingsClient({
     setSeq((n) => n + 1);
   };
 
-  const [emailNotif, setEmailNotif] = useState(true);
-  const [pushNotif, setPushNotif] = useState(false);
-  const [smsNotif, setSmsNotif] = useState(true);
 
   function save() {
     start(async () => {
@@ -159,23 +156,14 @@ export default function SettingsClient({
         </button>
       </div>
 
-      {/* Notifications (local preference UI) */}
-      <div style={card}>
-        <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 14 }}>Notification preferences</div>
-        {[
-          { label: "Email notifications", desc: "Mission reminders and updates", on: emailNotif, set: setEmailNotif },
-          { label: "Push notifications", desc: "Real-time alerts on your device", on: pushNotif, set: setPushNotif },
-          { label: "SMS reminders", desc: "Texts the day before a mission", on: smsNotif, set: setSmsNotif },
-        ].map((n) => (
-          <div key={n.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0" }}>
-            <div>
-              <div style={{ fontSize: 14.5, fontWeight: 600 }}>{n.label}</div>
-              <div style={{ fontSize: 12.5, color: "#9aa3bd" }}>{n.desc}</div>
-            </div>
-            <Toggle on={n.on} onClick={() => n.set((v) => !v)} />
-          </div>
-        ))}
-      </div>
+      {/* Notifications → real preferences page */}
+      <a href="/settings/notifications" style={{ ...card, display: "flex", alignItems: "center", justifyContent: "space-between", textDecoration: "none", color: "inherit" }}>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 16 }}>Notification preferences</div>
+          <div style={{ fontSize: 12.5, color: "#9aa3bd", marginTop: 2 }}>Choose what you’re notified about in-app.</div>
+        </div>
+        <span style={{ fontSize: 14, fontWeight: 700, color: "var(--coral-deep)" }}>Manage →</span>
+      </a>
 
       {/* Sign out */}
       <div style={{ ...card, display: "flex", alignItems: "center", justifyContent: "space-between" }}>

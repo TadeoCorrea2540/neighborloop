@@ -13,6 +13,7 @@ import QRCode from "qrcode";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { getServerDb } from "@/lib/supabase/db";
 import { requireOrganizer, UUID_RE, type ActionResult } from "@/lib/auth/require-organizer";
+import { createNotification } from "@/lib/data/notifications";
 
 // ---------- helpers ----------
 function roundQuarter(hours: number): number {
@@ -49,18 +50,26 @@ async function approvedApplicationId(missionId: string, volunteerId: string): Pr
 interface OwnedAttendance {
   id: string;
   missionId: string;
+  volunteerId: string;
   status: string;
   checkedInAt: string | null;
 }
 async function ownedAttendance(orgId: string, attendanceId: string): Promise<OwnedAttendance | null> {
   const { data } = await getServerDb()
     .from("attendance_records")
-    .select("id, mission_id, organization_id, status, checked_in_at")
+    .select("id, mission_id, volunteer_id, organization_id, status, checked_in_at")
     .eq("id", attendanceId)
     .maybeSingle();
-  const a = data as { id: string; mission_id: string; organization_id: string; status: string; checked_in_at: string | null } | null;
+  const a = data as { id: string; mission_id: string; volunteer_id: string; organization_id: string; status: string; checked_in_at: string | null } | null;
   if (!a || a.organization_id !== orgId) return null;
-  return { id: a.id, missionId: a.mission_id, status: a.status, checkedInAt: a.checked_in_at };
+  return { id: a.id, missionId: a.mission_id, volunteerId: a.volunteer_id, status: a.status, checkedInAt: a.checked_in_at };
+}
+
+/** Mission title + slug for notification copy (best-effort). */
+async function missionMeta(missionId: string): Promise<{ title: string; slug: string }> {
+  const { data } = await getServerSupabase().from("missions").select("title, slug").eq("id", missionId).maybeSingle();
+  const m = data as { title: string; slug: string } | null;
+  return { title: m?.title ?? "your mission", slug: m?.slug ?? "" };
 }
 
 function revalidateMission(missionId: string) {
@@ -177,6 +186,17 @@ export async function markCompletedAction(attendanceId: string, hours: number): 
     })
     .eq("id", attendanceId);
   if (error) return { ok: false, code: "unknown", error: "Couldn’t mark this complete." };
+
+  const meta = await missionMeta(att.missionId);
+  await createNotification(att.volunteerId, {
+    type: "attendance_completed",
+    title: "Attendance confirmed ✅",
+    body: `Your ${roundQuarter(hours)} hour${roundQuarter(hours) === 1 ? "" : "s"} for “${meta.title}” are confirmed.`,
+    linkUrl: "/impact",
+    entityType: "mission",
+    entityId: att.missionId,
+  });
+
   revalidateMission(att.missionId);
   revalidatePath("/manage/dashboard");
   return { ok: true };
@@ -258,10 +278,20 @@ export async function issueCertificateAction(attendanceRecordId: string): Promis
       .select("id")
       .single();
     if (!error && inserted) {
+      const certId = (inserted as { id: string }).id;
+      const meta = await missionMeta(att.mission_id);
+      await createNotification(att.volunteer_id, {
+        type: "certificate_issued",
+        title: "Certificate issued 🏅",
+        body: `Your certificate for “${meta.title}” is ready.`,
+        linkUrl: `/certificates/${certId}`,
+        entityType: "certificate",
+        entityId: certId,
+      });
       revalidateMission(att.mission_id);
       revalidatePath("/impact");
       revalidatePath("/my-missions");
-      return { ok: true, certificateId: (inserted as { id: string }).id };
+      return { ok: true, certificateId: certId };
     }
     if (error && error.code !== "23505") {
       return { ok: false, code: "unknown", error: "Couldn’t issue the certificate." };

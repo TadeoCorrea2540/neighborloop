@@ -11,6 +11,7 @@ import { requireOrganizer, UUID_RE, type ActionResult } from "@/lib/auth/require
 import { slugWithSuffix } from "@/lib/slug";
 import { uploadFile, readFile, IMAGE_TYPES } from "@/lib/storage/upload";
 import { BUCKETS, missionCoverPath } from "@/lib/storage/storage-paths";
+import { createNotificationsForUsers } from "@/lib/data/notifications";
 import type { MissionStatus } from "@/types/database";
 
 // ---------- FormData parsing ----------
@@ -265,6 +266,28 @@ async function changeStatus(
     .eq("id", missionId)
     .eq("organization_id", guard.orgId);
   if (error) return { ok: false, code: "unknown", error: "Couldn’t update this mission." };
+
+  // Cancelling notifies approved volunteers (best-effort).
+  if (to === "cancelled") {
+    const { data: appRows } = await supabase
+      .from("applications")
+      .select("volunteer_id, missions!inner(title, slug)")
+      .eq("mission_id", missionId)
+      .eq("status", "approved");
+    const rows = (appRows ?? []) as { volunteer_id: string; missions: { title: string; slug: string } | null }[];
+    if (rows.length > 0) {
+      const title = rows[0].missions?.title ?? "a mission";
+      const slug = rows[0].missions?.slug ?? "";
+      await createNotificationsForUsers(rows.map((r) => r.volunteer_id), {
+        type: "mission_cancelled",
+        title: "Mission cancelled",
+        body: `“${title}” has been cancelled by the organizer.`,
+        linkUrl: slug ? `/missions/${slug}` : "/my-missions",
+        entityType: "mission",
+        entityId: missionId,
+      });
+    }
+  }
 
   revalidateManage();
   revalidatePublic(); // entering/leaving 'published' affects public pages

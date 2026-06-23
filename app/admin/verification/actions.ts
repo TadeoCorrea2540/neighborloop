@@ -11,6 +11,7 @@ import { revalidatePath } from "next/cache";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { requireAdmin, UUID_RE, type ActionResult } from "@/lib/auth/require-admin";
 import { writeAuditEvent } from "@/lib/data/audit";
+import { createNotification } from "@/lib/data/notifications";
 import type { VerificationStatus } from "@/types/database";
 
 interface VerifContext {
@@ -59,9 +60,10 @@ async function applyDecision(
     .from("organizations")
     .update({ verification_status: next, verification_note: opts.publicReason ?? null })
     .eq("id", ctx.organizationId)
-    .select("slug")
+    .select("slug, owner_id, name")
     .maybeSingle();
   if (orgErr) return { ok: false, code: "unknown", error: "Couldn’t update the organization. Please try again." };
+  const org = orgRow as { slug: string; owner_id: string; name: string } | null;
 
   // 2) Decision log row (internal_note is admin-only).
   const { error: verifErr } = await supabase
@@ -84,7 +86,22 @@ async function applyDecision(
     metadata: { verificationId: id, status: next },
   });
 
-  revalidate((orgRow as { slug: string } | null)?.slug ?? null);
+  // Notify the org owner of verified/rejected decisions (safe copy only).
+  if (org?.owner_id && (next === "verified" || next === "rejected")) {
+    await createNotification(org.owner_id, {
+      type: next === "verified" ? "organization_verified" : "organization_rejected",
+      title: next === "verified" ? "Organization verified ✓" : "Verification update",
+      body:
+        next === "verified"
+          ? `${org.name} is now verified — your verified badge is live.`
+          : `Your verification request for ${org.name} wasn’t approved.${opts.publicReason ? ` Reason: ${opts.publicReason}` : ""}`,
+      linkUrl: "/manage/settings",
+      entityType: "organization",
+      entityId: ctx.organizationId,
+    });
+  }
+
+  revalidate(org?.slug ?? null);
   return { ok: true };
 }
 
