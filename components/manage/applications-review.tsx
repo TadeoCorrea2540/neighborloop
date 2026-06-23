@@ -9,6 +9,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import AuthToast from "@/components/auth/auth-toast";
+import MessageButton from "@/components/messaging/message-button";
 import {
   approveApplicationAction,
   declineApplicationAction,
@@ -193,6 +194,10 @@ export default function ApplicationsReview({
                     </button>
                   </div>
                 )}
+
+                <div style={{ marginTop: 12 }}>
+                  <MessageButton applicationId={a.id} basePath="/manage/messages" label="Message volunteer" />
+                </div>
               </div>
             );
           })}

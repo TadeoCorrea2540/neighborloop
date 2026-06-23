@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { iconKeyToEmoji } from "@/lib/categories";
 import { withdrawApplicationAction } from "@/app/(volunteer)/actions";
 import SaveButton from "@/components/volunteer/save-button";
+import MessageButton from "@/components/messaging/message-button";
 import AuthToast from "@/components/auth/auth-toast";
 import type { MissionCard } from "@/lib/data/mission-cards";
 import type { ApplicationStatus } from "@/types/database";
@@ -148,7 +149,8 @@ export default function MyMissionsClient({
         <span style={{ fontSize: 12.5, fontWeight: 700, padding: "6px 12px", borderRadius: 999, background: pill.bg, color: pill.color }}>
           {pill.label}
         </span>
-        <div style={{ display: "flex", gap: 9 }}>
+        <div style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
+          <MessageButton applicationId={row.applicationId} basePath="/messages" label="Organizer" />
           {row.slug && (
             <Link
               href={`/missions/${row.slug}`}

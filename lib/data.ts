@@ -146,7 +146,7 @@ export const ORG_NAV: {
   { label: "Missions", icon: "🎯", href: "/manage/missions" },
   { label: "Applicants", icon: "📋", href: "/manage/applicants", badge: "9" },
   { label: "Attendance", icon: "✅", href: "/manage/attendance" },
-  { label: "Messages", icon: "💬", href: "/messages" },
+  { label: "Messages", icon: "💬", href: "/manage/messages" },
   { label: "Impact reports", icon: "📈", href: "/manage/reports" },
 ];
 
