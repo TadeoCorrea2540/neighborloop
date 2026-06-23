@@ -158,3 +158,108 @@ export function toVolunteerApplication(row: ApplicationRow): VolunteerApplicatio
     reviewedAt: row.reviewed_at,
   };
 }
+
+// ---------- organizer-side (full mission row, owner-only) ----------
+
+/** Every editable mission column — for the organizer create/edit form. */
+export interface MissionFull {
+  id: string;
+  organizationId: string;
+  categoryId: string | null;
+  title: string;
+  slug: string;
+  summary: string;
+  description: string | null;
+  coverImagePath: string | null;
+  status: MissionStatus;
+  isVirtual: boolean;
+  locationLabel: string | null;
+  city: string | null;
+  countryCode: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  startsAt: string;
+  endsAt: string | null;
+  timezone: string;
+  volunteerCapacity: number | null;
+  minimumAge: number | null;
+  estimatedHours: number | null;
+  difficulty: string | null;
+  isBeginnerFriendly: boolean;
+  skills: string[];
+  materialsNeeded: string[];
+  perks: string[];
+  safetyNotes: string | null;
+  applicationMode: string;
+  publishedAt: string | null;
+}
+
+export function toMissionFull(row: MissionRow): MissionFull {
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    categoryId: row.category_id,
+    title: row.title,
+    slug: row.slug,
+    summary: row.summary,
+    description: row.description,
+    coverImagePath: row.cover_image_path,
+    status: row.status,
+    isVirtual: row.is_virtual,
+    locationLabel: row.location_label,
+    city: row.city,
+    countryCode: row.country_code,
+    latitude: row.latitude,
+    longitude: row.longitude,
+    startsAt: row.starts_at,
+    endsAt: row.ends_at,
+    timezone: row.timezone,
+    volunteerCapacity: row.volunteer_capacity,
+    minimumAge: row.minimum_age,
+    estimatedHours: row.estimated_hours,
+    difficulty: row.difficulty,
+    isBeginnerFriendly: row.is_beginner_friendly,
+    skills: row.skills ?? [],
+    materialsNeeded: row.materials_needed ?? [],
+    perks: row.perks ?? [],
+    safetyNotes: row.safety_notes,
+    applicationMode: row.application_mode,
+    publishedAt: row.published_at,
+  };
+}
+
+/** Per-mission summary for the organizer mission list (with app counts). */
+export interface OrganizerMission {
+  id: string;
+  slug: string;
+  title: string;
+  status: MissionStatus;
+  categoryId: string | null;
+  startsAt: string;
+  endsAt: string | null;
+  isVirtual: boolean;
+  locationLabel: string | null;
+  city: string | null;
+  volunteerCapacity: number | null;
+  applicationMode: string;
+  pendingCount: number;
+  approvedCount: number;
+  spotsLeft: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** An application as the organizer reviews it (volunteer may be null if private). */
+export interface OrganizerApplication {
+  id: string;
+  missionId: string;
+  missionTitle: string;
+  missionSlug: string;
+  missionCapacity: number | null;
+  status: ApplicationStatus;
+  message: string | null;
+  organizerNote: string | null;
+  appliedAt: string;
+  reviewedAt: string | null;
+  volunteer: { displayName: string; avatarUrl: string | null; city: string | null } | null;
+}

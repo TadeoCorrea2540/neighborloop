@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import PublicNav from "@/components/public-nav";
@@ -55,6 +55,11 @@ export default function ExploreClient({
   const chips = [ALL_CATEGORY, ...categories];
   const [exView, setExView] = useState<"list" | "map">("list");
   const [q, setQ] = useState(params.q);
+  // Keep the UI responsive while the server re-queries; track the optimistic
+  // selection so the chosen chip highlights instantly.
+  const [isPending, startTransition] = useTransition();
+  const [optimistic, setOptimistic] = useState<ExploreParams | null>(null);
+  const view = optimistic ?? params;
 
   function setParam(updates: Record<string, string | null>) {
     const sp = new URLSearchParams(search.toString());
@@ -62,17 +67,35 @@ export default function ExploreClient({
       if (v == null || v === "") sp.delete(k);
       else sp.set(k, v);
     }
-    router.push(`/explore${sp.toString() ? `?${sp.toString()}` : ""}`);
+    // optimistic snapshot so chips/pills reflect the click immediately
+    setOptimistic({
+      category: sp.get("category") || "all",
+      q: sp.get("q") || "",
+      when: sp.get("when") || "",
+      beginner: sp.get("beginner") === "true",
+      virtual: sp.get("virtual") || "",
+      difficulty: sp.get("difficulty") || "",
+      sort: sp.get("sort") || "soonest",
+    });
+    startTransition(() => {
+      router.push(`/explore${sp.toString() ? `?${sp.toString()}` : ""}`);
+    });
   }
 
+  // Clear the optimistic snapshot once the server has caught up to it.
+  const paramsKey = JSON.stringify(params);
+  useEffect(() => {
+    setOptimistic(null);
+  }, [paramsKey]);
+
   const hasFilters =
-    !!params.q ||
-    (params.category && params.category !== "all") ||
-    !!params.when ||
-    params.beginner ||
-    !!params.virtual ||
-    !!params.difficulty ||
-    (!!params.sort && params.sort !== "soonest");
+    !!view.q ||
+    (view.category && view.category !== "all") ||
+    !!view.when ||
+    view.beginner ||
+    !!view.virtual ||
+    !!view.difficulty ||
+    (!!view.sort && view.sort !== "soonest");
 
   const seg = (a: boolean): React.CSSProperties => ({
     fontSize: 13.5,
@@ -149,8 +172,8 @@ export default function ExploreClient({
               ].map((w) => (
                 <span
                   key={w.v}
-                  onClick={() => setParam({ when: params.when === w.v ? null : w.v })}
-                  style={pill(params.when === w.v)}
+                  onClick={() => setParam({ when: view.when === w.v ? null : w.v })}
+                  style={pill(view.when === w.v)}
                 >
                   {w.l}
                 </span>
@@ -159,13 +182,13 @@ export default function ExploreClient({
 
             <div style={railLabel}>FORMAT</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 22 }}>
-              <span onClick={() => setParam({ virtual: params.virtual === "false" ? null : "false" })} style={pill(params.virtual === "false")}>
+              <span onClick={() => setParam({ virtual: view.virtual === "false" ? null : "false" })} style={pill(view.virtual === "false")}>
                 In person
               </span>
-              <span onClick={() => setParam({ virtual: params.virtual === "true" ? null : "true" })} style={pill(params.virtual === "true")}>
+              <span onClick={() => setParam({ virtual: view.virtual === "true" ? null : "true" })} style={pill(view.virtual === "true")}>
                 Virtual
               </span>
-              <span onClick={() => setParam({ beginner: params.beginner ? null : "true" })} style={pill(params.beginner)}>
+              <span onClick={() => setParam({ beginner: view.beginner ? null : "true" })} style={pill(view.beginner)}>
                 Beginner-friendly
               </span>
             </div>
@@ -173,7 +196,7 @@ export default function ExploreClient({
             <div style={railLabel}>DIFFICULTY</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 22 }}>
               {["Easy", "Medium", "Hard"].map((d) => (
-                <span key={d} onClick={() => setParam({ difficulty: params.difficulty === d ? null : d })} style={pill(params.difficulty === d)}>
+                <span key={d} onClick={() => setParam({ difficulty: view.difficulty === d ? null : d })} style={pill(view.difficulty === d)}>
                   {d}
                 </span>
               ))}
@@ -189,7 +212,7 @@ export default function ExploreClient({
                 <span
                   key={s.v}
                   onClick={() => setParam({ sort: s.v === "soonest" ? null : s.v })}
-                  style={pill((params.sort || "soonest") === s.v)}
+                  style={pill((view.sort || "soonest") === s.v)}
                 >
                   {s.l}
                 </span>
@@ -232,7 +255,7 @@ export default function ExploreClient({
             {/* cause chips */}
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
               {chips.map((c) => {
-                const activeKey = params.category || "all";
+                const activeKey = view.category || "all";
                 const on = activeKey === c.key;
                 return (
                   <span
@@ -297,8 +320,19 @@ export default function ExploreClient({
                 <div style={{ fontSize: 14, color: "var(--muted-2)", marginBottom: 14 }}>
                   <b style={{ color: "var(--ink)" }}>{cards.length} mission{cards.length === 1 ? "" : "s"}</b>{" "}
                   {hasFilters ? "match your filters" : "near you"}
+                  {isPending && <span style={{ marginLeft: 8, color: "var(--coral-deep)", fontWeight: 600 }}>· Updating…</span>}
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 18 }} className="card-grid-3">
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2,1fr)",
+                    gap: 18,
+                    opacity: isPending ? 0.55 : 1,
+                    transition: "opacity .15s ease",
+                    pointerEvents: isPending ? "none" : "auto",
+                  }}
+                  className="card-grid-3"
+                >
                   {cards.map((card) => {
                     const m = card.mission;
                     const accent = card.categoryAccentColor || "#ff8a5c";

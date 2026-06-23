@@ -8,9 +8,15 @@ import LogoutButton from "./auth/logout-button";
 export default function OrgShell({
   children,
   search = "Search missions, volunteers…",
+  orgName,
+  verified = false,
+  pendingCount = 0,
 }: {
   children: React.ReactNode;
   search?: string;
+  orgName?: string | null;
+  verified?: boolean;
+  pendingCount?: number;
 }) {
   const pathname = usePathname();
   return (
@@ -53,8 +59,12 @@ export default function OrgShell({
             🌱
           </span>
           <div>
-            <div style={{ fontWeight: 800, fontSize: 14, lineHeight: 1.1 }}>GreenRoots</div>
-            <div style={{ fontSize: 11, color: "var(--mint)", fontWeight: 600 }}>✓ Verified</div>
+            <div style={{ fontWeight: 800, fontSize: 14, lineHeight: 1.1 }}>{orgName || "Your organization"}</div>
+            {verified ? (
+              <div style={{ fontSize: 11, color: "var(--mint)", fontWeight: 600 }}>✓ Verified</div>
+            ) : (
+              <div style={{ fontSize: 11, color: "var(--muted-3)", fontWeight: 600 }}>Organizer</div>
+            )}
           </div>
         </div>
 
@@ -63,6 +73,9 @@ export default function OrgShell({
             const active =
               pathname === it.href ||
               (it.href === "/manage/missions" && pathname.startsWith("/manage/missions"));
+            // Applicants badge reflects the real pending count; other static badges are dropped.
+            const badge =
+              it.href === "/manage/applicants" ? (pendingCount > 0 ? String(pendingCount) : undefined) : undefined;
             return (
               <Link
                 key={it.label}
@@ -92,7 +105,7 @@ export default function OrgShell({
                   {it.icon}
                 </span>
                 {it.label}
-                {it.badge && (
+                {badge && (
                   <span
                     style={{
                       marginLeft: "auto",
@@ -103,7 +116,7 @@ export default function OrgShell({
                       borderRadius: 99,
                     }}
                   >
-                    {it.badge}
+                    {badge}
                   </span>
                 )}
               </Link>

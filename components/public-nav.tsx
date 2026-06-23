@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Logo from "./logo";
-import { getBrowserSupabase } from "@/lib/supabase/browser";
+import { useSession } from "./session-provider";
+import { signOutAction } from "@/app/auth/actions";
 
 const DESKTOP_LINKS = [
   { label: "Home", href: "/" },
@@ -22,10 +23,6 @@ const MOBILE_LINKS = [
 ];
 
 type Role = "volunteer" | "organizer" | "admin" | null;
-interface Account {
-  name: string;
-  role: Role;
-}
 
 function dashboardPath(role: Role): string {
   if (role === "admin") return "/admin";
@@ -37,53 +34,14 @@ const AVATARS = ["#bca6ff", "#7a6bf5"];
 
 export default function PublicNav() {
   const pathname = usePathname();
-  const router = useRouter();
+  // Auth state resolved on the server (reliable for SSR cookie sessions).
+  const account = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const [acctOpen, setAcctOpen] = useState(false);
-  const [account, setAccount] = useState<Account | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  const [signingOut, startSignOut] = useTransition();
   const acctRef = useRef<HTMLDivElement>(null);
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
-
-  // Resolve auth state client-side (PublicNav renders on many pages).
-  useEffect(() => {
-    const supabase = getBrowserSupabase();
-    let active = true;
-
-    async function load() {
-      const { data } = await supabase.auth.getUser();
-      const u = data.user;
-      if (!u) {
-        if (active) {
-          setAccount(null);
-          setLoaded(true);
-        }
-        return;
-      }
-      const meta = (u.user_metadata ?? {}) as { display_name?: string; full_name?: string };
-      const name = meta.display_name || meta.full_name || u.email?.split("@")[0] || "Neighbor";
-      let role: Role = null;
-      try {
-        const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", u.id);
-        const list = ((roles ?? []) as { role: string }[]).map((r) => r.role);
-        role = (["admin", "organizer", "volunteer"] as const).find((r) => list.includes(r)) ?? null;
-      } catch {
-        /* role optional for nav */
-      }
-      if (active) {
-        setAccount({ name, role });
-        setLoaded(true);
-      }
-    }
-
-    load();
-    const { data: sub } = supabase.auth.onAuthStateChange(() => load());
-    return () => {
-      active = false;
-      sub.subscription.unsubscribe();
-    };
-  }, []);
 
   useEffect(() => {
     closeMenu();
@@ -113,13 +71,11 @@ export default function PublicNav() {
     };
   }, [menuOpen, closeMenu]);
 
-  async function logout() {
-    const supabase = getBrowserSupabase();
-    await supabase.auth.signOut();
+  function logout() {
     setAcctOpen(false);
     closeMenu();
-    router.push("/");
-    router.refresh();
+    // Server action clears the SSR session cookie and redirects to /auth.
+    startSignOut(() => void signOutAction());
   }
 
   const initial = account?.name?.charAt(0).toUpperCase() || "N";
@@ -198,10 +154,7 @@ export default function PublicNav() {
           </button>
 
           <div className="public-nav-desktop-actions" style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            {!loaded ? (
-              // reserve space to avoid a flash of the wrong state
-              <span style={{ width: 150, height: 38 }} aria-hidden="true" />
-            ) : account ? (
+            {account ? (
               <div ref={acctRef} style={{ position: "relative" }}>
                 <button
                   type="button"
@@ -278,10 +231,11 @@ export default function PublicNav() {
                     <button
                       type="button"
                       onClick={logout}
+                      disabled={signingOut}
                       role="menuitem"
-                      style={{ width: "100%", textAlign: "left", padding: "9px 12px", borderRadius: 9, fontSize: 14, fontWeight: 600, color: "#c0392b", background: "transparent", border: "none", cursor: "pointer" }}
+                      style={{ width: "100%", textAlign: "left", padding: "9px 12px", borderRadius: 9, fontSize: 14, fontWeight: 600, color: "#c0392b", background: "transparent", border: "none", cursor: signingOut ? "wait" : "pointer" }}
                     >
-                      Log out
+                      {signingOut ? "Signing out…" : "Log out"}
                     </button>
                   </div>
                 )}
@@ -349,8 +303,8 @@ export default function PublicNav() {
             <>
               <p className="mobile-nav-drawer-auth-label">Signed in as {account.name}</p>
               <div className="mobile-nav-drawer-auth">
-                <button type="button" onClick={logout} className="mobile-nav-drawer-btn-login" style={{ width: "100%", cursor: "pointer" }}>
-                  Log out
+                <button type="button" onClick={logout} disabled={signingOut} className="mobile-nav-drawer-btn-login" style={{ width: "100%", cursor: signingOut ? "wait" : "pointer" }}>
+                  {signingOut ? "Signing out…" : "Log out"}
                 </button>
               </div>
             </>

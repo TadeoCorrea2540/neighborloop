@@ -9,22 +9,27 @@ const ADMIN_NAV: {
   label: string;
   icon: string;
   href: string;
-  badge?: string;
+  badgeKey?: "verification" | "reports";
 }[] = [
   { label: "Overview", icon: "📊", href: "/admin" },
-  { label: "Verification", icon: "🏛️", href: "/admin/verify", badge: "7" },
-  { label: "Reports", icon: "🚩", href: "/admin", badge: "12" },
-  { label: "Users", icon: "👥", href: "/admin" },
-  { label: "Missions", icon: "🎯", href: "/admin" },
-  { label: "Settings", icon: "⚙️", href: "/admin" },
+  { label: "Verification", icon: "🏛️", href: "/admin/verification", badgeKey: "verification" },
+  { label: "Reports", icon: "🚩", href: "/admin/reports", badgeKey: "reports" },
+  { label: "Missions", icon: "🎯", href: "/admin/missions" },
+  { label: "Organizations", icon: "🏢", href: "/admin/organizations" },
+  { label: "Users", icon: "👥", href: "/admin/users" },
+  { label: "Audit log", icon: "🧾", href: "/admin/audit" },
 ];
 
 export default function AdminShell({
   children,
   search = "Search users, orgs, missions…",
+  pendingVerifications = 0,
+  openReports = 0,
 }: {
   children: React.ReactNode;
   search?: string;
+  pendingVerifications?: number;
+  openReports?: number;
 }) {
   const pathname = usePathname();
   return (
@@ -80,6 +85,9 @@ export default function AdminShell({
               it.href === "/admin"
                 ? pathname === "/admin" && it.label === "Overview"
                 : pathname === it.href || pathname.startsWith(it.href + "/");
+            const badgeCount =
+              it.badgeKey === "verification" ? pendingVerifications : it.badgeKey === "reports" ? openReports : 0;
+            const badge = badgeCount > 0 ? String(badgeCount) : undefined;
             return (
               <Link
                 key={it.label}
@@ -109,7 +117,7 @@ export default function AdminShell({
                   {it.icon}
                 </span>
                 {it.label}
-                {it.badge && (
+                {badge && (
                   <span
                     style={{
                       marginLeft: "auto",
@@ -120,7 +128,7 @@ export default function AdminShell({
                       borderRadius: 99,
                     }}
                   >
-                    {it.badge}
+                    {badge}
                   </span>
                 )}
               </Link>

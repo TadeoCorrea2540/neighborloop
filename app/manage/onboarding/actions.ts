@@ -6,23 +6,13 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth/server";
 import type { OrganizationType } from "@/types/database";
 import type { AuthActionState } from "@/app/auth/actions";
-
-export const ORG_TYPES: { value: OrganizationType; label: string }[] = [
-  { value: "nonprofit", label: "Nonprofit" },
-  { value: "community_group", label: "Community group" },
-  { value: "school", label: "School" },
-  { value: "university", label: "University" },
-  { value: "student_club", label: "Student club" },
-  { value: "faith_group", label: "Faith group" },
-  { value: "local_business", label: "Local business" },
-  { value: "family_individual", label: "Family / individual" },
-  { value: "other", label: "Other" },
-];
+import { ORG_TYPES } from "./org-types";
 
 export interface OrgOnboardingInput {
   name: string;
   organizationType: string;
   city?: string;
+  countryCode?: string;
   shortDescription?: string;
 }
 
@@ -42,6 +32,7 @@ export async function createOrganizationAction(input: OrgOnboardingInput): Promi
 
   const name = input.name?.trim();
   if (!name) return { error: "Please enter your organization name." };
+  if (!input.shortDescription?.trim()) return { error: "Please add a short description." };
 
   const validType = ORG_TYPES.some((t) => t.value === input.organizationType)
     ? (input.organizationType as OrganizationType)
@@ -57,9 +48,13 @@ export async function createOrganizationAction(input: OrgOnboardingInput): Promi
       organization_type: validType,
       name,
       slug,
-      short_description: input.shortDescription?.trim() || null,
+      short_description: input.shortDescription.trim(),
       city: input.city?.trim() || null,
+      country_code: input.countryCode?.trim() || null,
       is_public: true,
+      // Phase 5 product rule: organizers can publish without formal verification.
+      // Admin verification (Phase 6) upgrades this to 'verified' for the badge.
+      verification_status: "not_required",
     })
     .select("id")
     .single();

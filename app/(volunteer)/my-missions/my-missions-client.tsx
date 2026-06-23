@@ -20,7 +20,7 @@ export interface MyRow {
   slug: string | null;
 }
 
-const TABS = ["Upcoming", "Applications", "Saved", "Past", "Cancelled"] as const;
+const TABS = ["All", "Upcoming", "Applications", "Saved", "Past", "Cancelled"] as const;
 type Tab = (typeof TABS)[number];
 
 const STATUS_PILL: Record<ApplicationStatus, { label: string; bg: string; color: string }> = {
@@ -62,7 +62,15 @@ export default function MyMissionsClient({
     setSeq((n) => n + 1);
   };
 
+  // "All" = every application (any status) + saved missions you haven't applied to.
+  const allAppRows = [...upcoming, ...applications, ...past, ...cancelled];
+  const appMissionIds = new Set(
+    allAppRows.map((r) => r.card?.mission.id).filter((id): id is string => Boolean(id))
+  );
+  const savedOnly = saved.filter((c) => !appMissionIds.has(c.mission.id));
+
   const counts: Record<Tab, number> = {
+    All: allAppRows.length + savedOnly.length,
     Upcoming: upcoming.length,
     Applications: applications.length,
     Saved: saved.length,
@@ -181,7 +189,12 @@ export default function MyMissionsClient({
   }
 
   const rows = tab === "Upcoming" ? upcoming : tab === "Applications" ? applications : tab === "Past" ? past : tab === "Cancelled" ? cancelled : [];
-  const isEmpty = tab === "Saved" ? saved.length === 0 : rows.length === 0;
+  const isEmpty =
+    tab === "All"
+      ? counts.All === 0
+      : tab === "Saved"
+      ? saved.length === 0
+      : rows.length === 0;
 
   return (
     <div>
@@ -212,9 +225,16 @@ export default function MyMissionsClient({
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
-        {tab === "Saved"
-          ? saved.map((c) => <SavedCardRow key={c.mission.id} c={c} />)
-          : rows.map((r) => <AppCardRow key={r.applicationId} row={r} />)}
+        {tab === "All" ? (
+          <>
+            {allAppRows.map((r) => <AppCardRow key={r.applicationId} row={r} />)}
+            {savedOnly.map((c) => <SavedCardRow key={c.mission.id} c={c} />)}
+          </>
+        ) : tab === "Saved" ? (
+          saved.map((c) => <SavedCardRow key={c.mission.id} c={c} />)
+        ) : (
+          rows.map((r) => <AppCardRow key={r.applicationId} row={r} />)
+        )}
 
         {isEmpty && (
           <div style={{ textAlign: "center", padding: "54px 20px", background: "#fff", borderRadius: 18, border: "1px dashed rgba(24,32,59,.14)" }}>

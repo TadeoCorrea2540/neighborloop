@@ -10,6 +10,7 @@
  */
 
 import "server-only";
+import { cache } from "react";
 import { getServerSupabase } from "@/lib/supabase/server";
 import {
   toMissionSummary,
@@ -77,7 +78,9 @@ function whenRange(when: NonNullable<MissionFilters["when"]>): { from: string; t
   return { from: now.toISOString(), to: to.toISOString() };
 }
 
-export async function getMissionCategories(): Promise<MissionCategory[]> {
+// Cached per-request: Explore loads it for both the chips and the card builder,
+// so this collapses those into a single query within one render.
+export const getMissionCategories = cache(async (): Promise<MissionCategory[]> => {
   const supabase = getServerSupabase();
   const { data, error } = await supabase
     .from("mission_categories")
@@ -87,7 +90,7 @@ export async function getMissionCategories(): Promise<MissionCategory[]> {
 
   if (error) fail("getMissionCategories", error.message);
   return ((data ?? []) as unknown as MissionCategoryRow[]).map(toMissionCategory);
-}
+});
 
 export async function getPublishedMissions(
   filters: MissionFilters = {}

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { createOrganizationAction, ORG_TYPES } from "./actions";
+import { createOrganizationAction } from "./actions";
+import { ORG_TYPES } from "./org-types";
 import { AuthNotice } from "@/components/auth/auth-card";
 
 const labelStyle: React.CSSProperties = {
@@ -26,6 +27,7 @@ export default function OnboardingForm() {
   const [name, setName] = useState("");
   const [orgType, setOrgType] = useState<string>(ORG_TYPES[0].value);
   const [city, setCity] = useState("");
+  const [countryCode, setCountryCode] = useState("");
   const [description, setDescription] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,12 +39,17 @@ export default function OnboardingForm() {
       setError("Please enter your organization name.");
       return;
     }
+    if (!description.trim()) {
+      setError("Please add a short description.");
+      return;
+    }
     setPending(true);
     // On success this action redirects to /manage/dashboard.
     const res = await createOrganizationAction({
       name,
       organizationType: orgType,
       city,
+      countryCode,
       shortDescription: description,
     });
     setPending(false);
@@ -98,15 +105,28 @@ export default function OnboardingForm() {
           </select>
         </div>
 
-        <div style={{ marginBottom: 16 }}>
-          <label style={labelStyle} htmlFor="org-city">City</label>
-          <input
-            id="org-city"
-            style={inputStyle}
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            placeholder="San Francisco"
-          />
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, marginBottom: 16 }}>
+          <div>
+            <label style={labelStyle} htmlFor="org-city">City</label>
+            <input
+              id="org-city"
+              style={inputStyle}
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="San Francisco"
+            />
+          </div>
+          <div>
+            <label style={labelStyle} htmlFor="org-country">Country</label>
+            <input
+              id="org-country"
+              style={inputStyle}
+              value={countryCode}
+              onChange={(e) => setCountryCode(e.target.value)}
+              placeholder="US"
+              maxLength={8}
+            />
+          </div>
         </div>
 
         <div style={{ marginBottom: 20 }}>
