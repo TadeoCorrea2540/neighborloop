@@ -14,6 +14,7 @@ import { markNotificationReadAction, markAllNotificationsReadAction } from "@/ap
 import type { NotificationItem, NotificationType } from "@/lib/data/notifications";
 import { panelStyle, Caret, MenuHeader, MenuEmpty, MenuSkeleton, Badge } from "./menu-ui";
 import { useFocusPoll } from "./use-focus-poll";
+import { BADGE_REFRESH_EVENT } from "@/lib/badge-events";
 
 const ICON: Record<NotificationType, string> = {
   application_submitted: "📋",
@@ -77,6 +78,13 @@ export default function NotificationsMenu({ initialCount, userId }: { initialCou
   // Keep the badge fresh without relying on realtime: refresh on tab focus +
   // every 30s. (While open, the list is already current and the badge is 0.)
   useFocusPoll(() => { if (!open) fetchUnreadNotificationCount().then(setCount); }, 30_000);
+
+  // Instant cross-component update: re-fetch when a message is read/sent elsewhere.
+  useEffect(() => {
+    const h = () => { if (!open) fetchUnreadNotificationCount().then(setCount); };
+    window.addEventListener(BADGE_REFRESH_EVENT, h);
+    return () => window.removeEventListener(BADGE_REFRESH_EVENT, h);
+  }, [open]);
 
   // close on outside click / Escape
   useEffect(() => {

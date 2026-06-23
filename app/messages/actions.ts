@@ -86,12 +86,21 @@ export async function markConversationReadAction(conversationId: string): Promis
   const user = await getCurrentUser();
   if (!user) return { ok: false, code: "auth", error: "Please sign in." };
   if (!UUID_RE.test(conversationId)) return { ok: false, code: "validation", error: "Invalid conversation." };
-  const { error } = await getServerDb()
-    .from("conversation_participants")
-    .update({ last_read_at: new Date().toISOString() })
-    .eq("conversation_id", conversationId)
-    .eq("user_id", user.id);
-  if (error) return { ok: false, code: "unknown", error: "Couldn’t update read state." };
+  const db = getServerDb();
+  const now = new Date().toISOString();
+  // Opening a conversation clears BOTH its unread messages (last_read_at) and
+  // its "New message" notifications — so the envelope and bell both drop.
+  const [readRes] = await Promise.all([
+    db.from("conversation_participants").update({ last_read_at: now }).eq("conversation_id", conversationId).eq("user_id", user.id),
+    db
+      .from("notifications")
+      .update({ read_at: now })
+      .eq("user_id", user.id)
+      .eq("notification_type", "message_received")
+      .eq("entity_id", conversationId)
+      .is("read_at", null),
+  ]);
+  if (readRes.error) return { ok: false, code: "unknown", error: "Couldn’t update read state." };
   return { ok: true };
 }
 

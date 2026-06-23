@@ -6,11 +6,12 @@
  * to new messages for THIS conversation (RLS-filtered realtime). Correct after a
  * plain refresh — realtime just triggers router.refresh().
  */
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getBrowserSupabase } from "@/lib/supabase/browser";
 import { sendMessageAction, markConversationReadAction } from "@/app/messages/actions";
+import { emitBadgeRefresh } from "@/lib/badge-events";
 import AuthToast from "@/components/auth/auth-toast";
 import { useFocusPoll } from "@/components/header/use-focus-poll";
 import type { MessageItem } from "@/lib/data/messages";
@@ -35,7 +36,7 @@ export default function MessageThread({
   const router = useRouter();
   const [messages, setMessages] = useState(initialMessages);
   const [body, setBody] = useState("");
-  const [pending, start] = useTransition();
+  const inFlight = useRef(0); // in-flight sends; gate refreshes so optimistic bubbles aren't wiped
   const [toast, setToast] = useState<{ msg: string; tone: "error" | "success" } | null>(null);
   const [seq, setSeq] = useState(0);
   const endRef = useRef<HTMLDivElement>(null);
@@ -44,39 +45,39 @@ export default function MessageThread({
   useEffect(() => setMessages(initialMessages), [initialMessages]);
   useEffect(() => { endRef.current?.scrollIntoView({ block: "end" }); }, [messages.length]);
 
-  // mark read on open, then refresh so the header unread badge clears promptly
+  // mark read on open, then nudge the header badges to drop immediately
   useEffect(() => {
     let cancelled = false;
     markConversationReadAction(conversation.id).then((res) => {
-      if (!cancelled && res?.ok) router.refresh();
+      if (!cancelled && res?.ok) emitBadgeRefresh();
     });
     return () => { cancelled = true; };
-  }, [conversation.id, router]);
+  }, [conversation.id]);
 
-  // realtime: new messages in this conversation → refresh
+  // realtime: new messages in this conversation → refresh (not mid-send)
   useEffect(() => {
     let channel: ReturnType<ReturnType<typeof getBrowserSupabase>["channel"]> | null = null;
     try {
       const supabase = getBrowserSupabase();
       channel = supabase
         .channel(`conv:${conversation.id}`)
-        .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${conversation.id}` }, () => router.refresh())
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${conversation.id}` }, () => { if (inFlight.current === 0) router.refresh(); })
         .subscribe();
     } catch { /* realtime optional */ }
     return () => { if (channel) getBrowserSupabase().removeChannel(channel); };
   }, [conversation.id, router]);
 
   // Backstop for realtime: pull new messages when the tab regains focus
-  // (skip mid-send so an optimistic bubble isn't dropped before it commits).
-  useFocusPoll(() => { if (!pending) router.refresh(); });
+  // (skip mid-send so optimistic bubbles aren't dropped before they commit).
+  useFocusPoll(() => { if (inFlight.current === 0) router.refresh(); });
 
   function send() {
     const text = body.trim();
     if (!text) return;
-    // Optimistic: render the message + clear the input instantly. The server
-    // action runs in the background; router.refresh() then reconciles the temp
-    // row with the canonical one. On failure we roll back and restore the input.
-    const tempId = `temp-${Date.now()}`;
+    // Optimistic: render the message + clear the input instantly. Each send fires
+    // independently (no pending gate, so rapid sends are never dropped); once all
+    // in-flight sends settle we do a single refresh to reconcile temp → real rows.
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const optimistic: MessageItem = {
       id: tempId,
       senderId: currentUserId,
@@ -88,16 +89,25 @@ export default function MessageThread({
     };
     setMessages((prev) => [...prev, optimistic]);
     setBody("");
-    start(async () => {
-      const res = await sendMessageAction(conversation.id, text);
-      if (!res.ok) {
+    inFlight.current += 1;
+    sendMessageAction(conversation.id, text)
+      .then((res) => {
+        inFlight.current -= 1;
+        if (!res.ok) {
+          setMessages((prev) => prev.filter((m) => m.id !== tempId));
+          setBody((b) => b || text);
+          if (res.code === "auth") return router.push("/auth");
+          return show(res.error, "error");
+        }
+        emitBadgeRefresh();
+        if (inFlight.current === 0) router.refresh(); // reconcile once idle
+      })
+      .catch(() => {
+        inFlight.current -= 1;
         setMessages((prev) => prev.filter((m) => m.id !== tempId));
-        setBody(text);
-        if (res.code === "auth") return router.push("/auth");
-        return show(res.error, "error");
-      }
-      router.refresh();
-    });
+        setBody((b) => b || text);
+        show("Couldn’t send your message. Try again.", "error");
+      });
   }
 
   return (
@@ -162,8 +172,8 @@ export default function MessageThread({
             maxLength={2000}
             style={{ flex: 1, resize: "none", maxHeight: 120, border: "1px solid rgba(24,32,59,.14)", borderRadius: 12, padding: "10px 12px", fontSize: 14, outline: "none", background: "#fbfcfe", fontFamily: "inherit" }}
           />
-          <button type="button" onClick={send} disabled={pending || !body.trim()} className="btn-coral"
-            style={{ flexShrink: 0, color: "#fff", fontWeight: 700, fontSize: 14, padding: "10px 18px", borderRadius: 12, border: "none", cursor: pending || !body.trim() ? "not-allowed" : "pointer", opacity: pending || !body.trim() ? 0.6 : 1 }}>
+          <button type="button" onClick={send} disabled={!body.trim()} className="btn-coral"
+            style={{ flexShrink: 0, color: "#fff", fontWeight: 700, fontSize: 14, padding: "10px 18px", borderRadius: 12, border: "none", cursor: !body.trim() ? "not-allowed" : "pointer", opacity: !body.trim() ? 0.6 : 1 }}>
             Send
           </button>
         </div>

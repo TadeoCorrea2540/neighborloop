@@ -11,6 +11,7 @@ import { fetchHeaderConversations, fetchUnreadMessageCount } from "@/app/header/
 import type { ConversationListItem } from "@/lib/data/conversations";
 import { panelStyle, Caret, MenuHeader, MenuEmpty, MenuSkeleton, Badge } from "./menu-ui";
 import { useFocusPoll } from "./use-focus-poll";
+import { BADGE_REFRESH_EVENT } from "@/lib/badge-events";
 
 function timeAgo(iso: string | null): string {
   if (!iso) return "";
@@ -44,6 +45,13 @@ export default function MessagesMenu({
   // Keep the badge fresh without relying on realtime: refresh on tab focus +
   // every 30s (skip while open — load() already set the current count).
   useFocusPoll(() => { if (!open) fetchUnreadMessageCount().then(setCount); }, 30_000);
+
+  // Instant cross-component update: re-fetch when a message is read/sent elsewhere.
+  useEffect(() => {
+    const h = () => { if (!open) fetchUnreadMessageCount().then(setCount); };
+    window.addEventListener(BADGE_REFRESH_EVENT, h);
+    return () => window.removeEventListener(BADGE_REFRESH_EVENT, h);
+  }, [open]);
 
   // close on outside click / Escape
   useEffect(() => {
