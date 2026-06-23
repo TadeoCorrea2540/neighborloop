@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { applyToMissionAction, withdrawApplicationAction } from "@/app/(volunteer)/actions";
 import AuthToast from "@/components/auth/auth-toast";
 import SaveButton from "@/components/volunteer/save-button";
 import type { ApplicationStatus } from "@/types/database";
+import type { AttendanceStatus } from "@/lib/data/attendance";
 
 type Role = "anon" | "volunteer" | "organizer" | "admin";
 
@@ -51,6 +53,9 @@ export default function MissionActions({
   initialStatus,
   initialApplicationId,
   initialSaved,
+  attendanceStatus = null,
+  hoursCredited = null,
+  certificateId = null,
 }: {
   missionId: string;
   missionSlug: string;
@@ -58,6 +63,9 @@ export default function MissionActions({
   initialStatus: ApplicationStatus | null;
   initialApplicationId: string | null;
   initialSaved: boolean;
+  attendanceStatus?: AttendanceStatus | null;
+  hoursCredited?: number | null;
+  certificateId?: string | null;
 }) {
   const router = useRouter();
   const [status, setStatus] = useState<ApplicationStatus | null>(initialStatus);
@@ -158,6 +166,133 @@ export default function MissionActions({
           🔒 You’ll get a QR check-in code after joining
         </div>
       </>
+    );
+  }
+
+  // ---- volunteer: already completed this mission → celebratory, terminal state ----
+  if (attendanceStatus === "completed") {
+    return (
+      <div
+        style={{
+          background: "linear-gradient(165deg,#eafaf2,#ffffff)",
+          border: "1px solid rgba(31,174,130,.25)",
+          borderRadius: 18,
+          padding: "26px 22px",
+          textAlign: "center",
+        }}
+      >
+        <span
+          style={{
+            width: 60,
+            height: 60,
+            borderRadius: "50%",
+            background: "linear-gradient(135deg,#8fe3bd,#1fae82)",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 14px 28px -12px rgba(31,174,130,.7)",
+            marginBottom: 14,
+          }}
+        >
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 12.5l4 4 10-10" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <div style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.01em", color: "var(--ink)" }}>
+          Mission completed
+        </div>
+        <p style={{ fontSize: 14, color: "#4a5475", lineHeight: 1.55, margin: "6px 0 0" }}>
+          You showed up and made a real difference. Thank you for volunteering. 💚
+        </p>
+
+        {hoursCredited != null && (
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 7,
+              marginTop: 16,
+              background: "#dff6ea",
+              color: "#147a57",
+              fontWeight: 800,
+              fontSize: 14,
+              padding: "8px 16px",
+              borderRadius: 999,
+            }}
+          >
+            ⏱️ {hoursCredited} {hoursCredited === 1 ? "hour" : "hours"} credited
+          </div>
+        )}
+
+        <div style={{ marginTop: 18 }}>
+          {certificateId ? (
+            <Link
+              href={`/certificates/${certificateId}`}
+              className="btn-coral"
+              style={{
+                display: "block",
+                color: "#fff",
+                textAlign: "center",
+                fontWeight: 700,
+                fontSize: 15,
+                padding: 13,
+                borderRadius: 13,
+                textDecoration: "none",
+                boxShadow: "0 14px 28px -12px rgba(255,111,94,.8)",
+              }}
+            >
+              🏅 View your certificate
+            </Link>
+          ) : (
+            <div
+              style={{
+                fontSize: 13,
+                color: "var(--muted-2)",
+                background: "#fff",
+                border: "1px dashed rgba(24,32,59,.16)",
+                borderRadius: 12,
+                padding: "12px 14px",
+                lineHeight: 1.5,
+              }}
+            >
+              Your certificate will appear here once the organizer issues it.
+            </div>
+          )}
+        </div>
+
+        <Link
+          href="/my-missions"
+          style={{ display: "inline-block", marginTop: 14, fontSize: 13, fontWeight: 600, color: "var(--muted-1)" }}
+        >
+          See your impact →
+        </Link>
+      </div>
+    );
+  }
+
+  // ---- volunteer: checked in / out (attended, awaiting confirmation) ----
+  if (attendanceStatus === "checked_in" || attendanceStatus === "checked_out") {
+    const checkedOut = attendanceStatus === "checked_out";
+    return (
+      <div
+        style={{
+          background: "#e2effd",
+          border: "1px solid rgba(43,108,176,.2)",
+          borderRadius: 16,
+          padding: "20px 18px",
+          textAlign: "center",
+        }}
+      >
+        <div style={{ fontSize: 30, marginBottom: 6 }}>{checkedOut ? "🙌" : "✅"}</div>
+        <div style={{ fontSize: 16, fontWeight: 800, color: "#2b6cb0" }}>
+          {checkedOut ? "Thanks for attending!" : "You’re checked in"}
+        </div>
+        <p style={{ fontSize: 13.5, color: "#4a5475", lineHeight: 1.5, margin: "6px 0 0" }}>
+          {checkedOut
+            ? "Your organizer will confirm your hours shortly."
+            : "Enjoy the mission — your organizer has you on the roster."}
+        </p>
+      </div>
     );
   }
 

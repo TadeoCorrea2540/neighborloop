@@ -105,6 +105,38 @@ export interface MissionAttendanceView {
   roster: AttendanceRosterRow[];
 }
 
+/**
+ * The current volunteer's own attendance for a mission (RLS: volunteer reads
+ * own). Used on the mission detail page so a completed volunteer sees a
+ * completion state instead of apply/withdraw.
+ */
+export async function getVolunteerAttendanceForMission(
+  userId: string,
+  missionId: string
+): Promise<{ status: AttendanceStatus; hoursCredited: number | null; certificateId: string | null } | null> {
+  const db = getServerDb();
+  const { data } = await db
+    .from("attendance_records")
+    .select("id, status, hours_credited")
+    .eq("mission_id", missionId)
+    .eq("volunteer_id", userId)
+    .maybeSingle();
+  const row = data as { id: string; status: AttendanceStatus; hours_credited: number | null } | null;
+  if (!row) return null;
+
+  const { data: cert } = await db
+    .from("certificates")
+    .select("id")
+    .eq("attendance_record_id", row.id)
+    .maybeSingle();
+
+  return {
+    status: row.status,
+    hoursCredited: row.hours_credited != null ? Number(row.hours_credited) : null,
+    certificateId: (cert as { id: string } | null)?.id ?? null,
+  };
+}
+
 export async function getMissionAttendanceList(
   organizationId: string,
   missionId: string

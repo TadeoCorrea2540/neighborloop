@@ -6,6 +6,7 @@ import { loadLiveMissionView } from "@/lib/mission-view";
 import { getCurrentUser, getCurrentUserRole } from "@/lib/auth/server";
 import { getVolunteerApplicationForMission } from "@/lib/data/applications";
 import { getSavedMissionIdsForUser } from "@/lib/data/profiles";
+import { getVolunteerAttendanceForMission, type AttendanceStatus } from "@/lib/data/attendance";
 import MissionActions from "@/components/volunteer/mission-actions";
 import type { ApplicationStatus } from "@/types/database";
 
@@ -27,16 +28,23 @@ export default async function MissionDetailPage({
   let appStatus: ApplicationStatus | null = null;
   let appId: string | null = null;
   let isSaved = false;
+  let attendanceStatus: AttendanceStatus | null = null;
+  let hoursCredited: number | null = null;
+  let certificateId: string | null = null;
   if (user) {
     role = (await getCurrentUserRole()) ?? "volunteer";
     if (role === "volunteer") {
-      const [app, savedIds] = await Promise.all([
+      const [app, savedIds, attendance] = await Promise.all([
         getVolunteerApplicationForMission(user.id, missionId),
         getSavedMissionIdsForUser(user.id),
+        getVolunteerAttendanceForMission(user.id, missionId),
       ]);
       appStatus = app?.status ?? null;
       appId = app?.id ?? null;
       isSaved = savedIds.includes(missionId);
+      attendanceStatus = attendance?.status ?? null;
+      hoursCredited = attendance?.hoursCredited ?? null;
+      certificateId = attendance?.certificateId ?? null;
     }
   }
 
@@ -328,6 +336,9 @@ export default async function MissionDetailPage({
                 initialStatus={appStatus}
                 initialApplicationId={appId}
                 initialSaved={isSaved}
+                attendanceStatus={attendanceStatus}
+                hoursCredited={hoursCredited}
+                certificateId={certificateId}
               />
             </div>
           </div>
