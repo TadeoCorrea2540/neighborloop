@@ -5,6 +5,7 @@ import { getOrganizerDashboardSummary } from "@/lib/data/organizer-dashboard";
 import { getOrganizationMissionsWithCounts } from "@/lib/data/organization-missions";
 import { getApplicationsForOrganization } from "@/lib/data/organization-applications";
 import { getPrimaryOrganizationForUser } from "@/lib/data/organization-membership";
+import { getOrganizationImpactSummary } from "@/lib/data/analytics/organization";
 import type { MissionStatus } from "@/types/database";
 
 export const dynamic = "force-dynamic";
@@ -39,12 +40,20 @@ export default async function OrgDashboard() {
     redirect("/dashboard");
   }
 
-  const [org, summary, missions, applications] = await Promise.all([
+  const [org, summary, missions, applications, impact] = await Promise.all([
     getPrimaryOrganizationForUser(guard.userId),
     getOrganizerDashboardSummary(guard.orgId),
     getOrganizationMissionsWithCounts(guard.orgId),
     getApplicationsForOrganization(guard.orgId),
+    getOrganizationImpactSummary(guard.orgId),
   ]);
+
+  const impactCards = [
+    { label: "Volunteer hours", value: impact.totalHours.toLocaleString(), color: "#e8543f" },
+    { label: "Completed attendances", value: impact.completedAttendances.toLocaleString(), color: "var(--mint)" },
+    { label: "Certificates issued", value: impact.certificatesIssued.toLocaleString(), color: "var(--lav)" },
+    { label: "Avg completion rate", value: impact.avgCompletionRate == null ? "—" : `${Math.round(impact.avgCompletionRate * 100)}%`, color: "var(--blue)" },
+  ];
 
   const greeting = org?.name ? `Welcome back, ${org.name} 🌱` : "Welcome back 🌱";
   const pending = applications.filter((a) => a.status === "pending" || a.status === "waitlisted").slice(0, 4);
@@ -76,6 +85,20 @@ export default async function OrgDashboard() {
           <div key={m.label} style={{ background: "#fff", borderRadius: 18, padding: 18, border: "1px solid rgba(24,32,59,.05)" }}>
             <div style={{ fontSize: 13, color: "var(--muted-3)", fontWeight: 600 }}>{m.label}</div>
             <div style={{ fontSize: 32, fontWeight: 800, marginTop: 6, color: m.color }}>{m.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* impact snapshot (real, all-time) */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "0 0 12px" }}>
+        <div style={{ fontWeight: 700, fontSize: 16 }}>Impact snapshot</div>
+        <Link href="/manage/reports" style={{ fontSize: 13, fontWeight: 600, color: "var(--coral-deep)" }}>Full report →</Link>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 18 }} className="card-grid-4">
+        {impactCards.map((c) => (
+          <div key={c.label} style={{ background: "#fff", borderRadius: 18, padding: 18, border: "1px solid rgba(24,32,59,.05)" }}>
+            <div style={{ fontSize: 13, color: "var(--muted-3)", fontWeight: 600 }}>{c.label}</div>
+            <div style={{ fontSize: 30, fontWeight: 800, marginTop: 6, color: c.color }}>{c.value}</div>
           </div>
         ))}
       </div>

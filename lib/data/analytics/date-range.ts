@@ -1,7 +1,8 @@
-import "server-only";
-
 /**
- * Shared date-range filtering for analytics. All ranges resolve to UTC ISO
+ * Shared date-range filtering for analytics. Pure logic (no DB/server deps), so
+ * it is safe to import from both server analytics functions and the client
+ * RangeFilter (which needs DATE_RANGES + the DateRange type). All ranges resolve
+ * to UTC ISO
  * boundaries (inclusive `from`, exclusive `to`). Each metric family filters on a
  * specific timestamp column — see docs/analytics-definitions.md:
  *   missions → starts_at, applications → applied_at,
