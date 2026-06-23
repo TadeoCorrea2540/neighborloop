@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import LogoutButton from "./auth/logout-button";
-import NotificationBell from "./notifications/notification-bell";
+import NotificationsMenu from "./header/notifications-menu";
 
 /* admin nav (ported from the design's dark sidebar — rendered light here) */
 const ADMIN_NAV: {
@@ -201,11 +201,11 @@ export default function AdminShell({
           >
             🔎 {search}
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 16, marginLeft: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: 16 }}>
             {userId ? (
-              <NotificationBell initialCount={notificationCount} userId={userId} />
+              <NotificationsMenu initialCount={notificationCount} userId={userId} />
             ) : (
-              <Link href="/notifications" style={{ fontSize: 19, textDecoration: "none" }}>🔔</Link>
+              <Link href="/notifications" className="hdr-trigger">🔔</Link>
             )}
             <span
               style={{

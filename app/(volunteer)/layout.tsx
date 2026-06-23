@@ -2,6 +2,7 @@ import VolunteerShell from "@/components/volunteer-shell";
 import { requireAuth, getCurrentUserRole, getCurrentProfile } from "@/lib/auth/server";
 import { redirectToDashboardByRole } from "@/lib/auth/redirect-by-role";
 import { getUnreadNotificationCount } from "@/lib/data/notifications";
+import { getUnreadConversationCount } from "@/lib/data/conversations";
 
 export default async function VolunteerLayout({
   children,
@@ -14,9 +15,10 @@ export default async function VolunteerLayout({
   if (role === "organizer") {
     redirectToDashboardByRole("organizer");
   }
-  const [profile, notificationCount] = await Promise.all([
+  const [profile, notificationCount, messageCount] = await Promise.all([
     getCurrentProfile(),
     getUnreadNotificationCount(user.id),
+    getUnreadConversationCount(user.id),
   ]);
   return (
     <VolunteerShell
@@ -24,6 +26,7 @@ export default async function VolunteerLayout({
       roleLabel={role === "admin" ? "Admin" : "Volunteer"}
       userId={user.id}
       notificationCount={notificationCount}
+      messageCount={messageCount}
     >
       {children}
     </VolunteerShell>

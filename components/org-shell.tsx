@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ORG_NAV } from "@/lib/data";
 import LogoutButton from "./auth/logout-button";
-import NotificationBell from "./notifications/notification-bell";
+import NotificationsMenu from "./header/notifications-menu";
+import MessagesMenu from "./header/messages-menu";
 
 export default function OrgShell({
   children,
@@ -14,6 +15,7 @@ export default function OrgShell({
   pendingCount = 0,
   userId,
   notificationCount = 0,
+  messageCount = 0,
 }: {
   children: React.ReactNode;
   search?: string;
@@ -22,6 +24,7 @@ export default function OrgShell({
   pendingCount?: number;
   userId?: string;
   notificationCount?: number;
+  messageCount?: number;
 }) {
   const pathname = usePathname();
   return (
@@ -191,17 +194,24 @@ export default function OrgShell({
           >
             🔎 {search}
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 16, marginLeft: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 16 }}>
             {userId ? (
-              <NotificationBell initialCount={notificationCount} userId={userId} />
+              <>
+                <NotificationsMenu initialCount={notificationCount} userId={userId} />
+                <MessagesMenu initialCount={messageCount} viewer="organizer" basePath="/manage/messages" />
+              </>
             ) : (
-              <Link href="/notifications" style={{ fontSize: 19, textDecoration: "none" }}>🔔</Link>
+              <>
+                <Link href="/notifications" className="hdr-trigger">🔔</Link>
+                <Link href="/manage/messages" className="hdr-trigger">✉️</Link>
+              </>
             )}
             <span
               style={{
                 width: 38,
                 height: 38,
                 borderRadius: 12,
+                marginLeft: 8,
                 background: "linear-gradient(135deg,#8fe3bd,#1fae82)",
               }}
             />

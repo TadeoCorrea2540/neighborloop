@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/auth/server";
 import { getPrimaryOrganizationForUser } from "@/lib/data/organization-membership";
 import { getPendingApplicationCount } from "@/lib/data/organization-applications";
 import { getUnreadNotificationCount } from "@/lib/data/notifications";
+import { getUnreadConversationCount } from "@/lib/data/conversations";
 
 export default async function ManageLayout({
   children,
@@ -17,9 +18,10 @@ export default async function ManageLayout({
   // Resolve the org for the sidebar (name + verified badge + pending count).
   // Null when the organizer hasn't created an org yet (onboarding).
   const org = await getPrimaryOrganizationForUser(user.id);
-  const [pendingCount, notificationCount] = await Promise.all([
+  const [pendingCount, notificationCount, messageCount] = await Promise.all([
     org ? getPendingApplicationCount(org.id) : Promise.resolve(0),
     getUnreadNotificationCount(user.id),
+    getUnreadConversationCount(user.id),
   ]);
 
   return (
@@ -29,6 +31,7 @@ export default async function ManageLayout({
       pendingCount={pendingCount}
       userId={user.id}
       notificationCount={notificationCount}
+      messageCount={messageCount}
     >
       {children}
     </OrgShell>
