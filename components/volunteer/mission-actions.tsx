@@ -176,55 +176,47 @@ export default function MissionActions({
         style={{
           background: "linear-gradient(165deg,#eafaf2,#ffffff)",
           border: "1px solid rgba(31,174,130,.25)",
-          borderRadius: 18,
-          padding: "26px 22px",
+          borderRadius: 16,
+          padding: "18px 18px 16px",
           textAlign: "center",
         }}
       >
-        <span
-          style={{
-            width: 60,
-            height: 60,
-            borderRadius: "50%",
-            background: "linear-gradient(135deg,#8fe3bd,#1fae82)",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 14px 28px -12px rgba(31,174,130,.7)",
-            marginBottom: 14,
-          }}
-        >
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M5 12.5l4 4 10-10" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </span>
-        <div style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.01em", color: "var(--ink)" }}>
-          Mission completed
-        </div>
-        <p style={{ fontSize: 14, color: "#4a5475", lineHeight: 1.55, margin: "6px 0 0" }}>
-          You showed up and made a real difference. Thank you for volunteering. 💚
-        </p>
-
-        {hoursCredited != null && (
-          <div
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 4 }}>
+          <span
             style={{
+              width: 34,
+              height: 34,
+              borderRadius: "50%",
+              background: "linear-gradient(135deg,#8fe3bd,#1fae82)",
               display: "inline-flex",
               alignItems: "center",
-              gap: 7,
-              marginTop: 16,
-              background: "#dff6ea",
-              color: "#147a57",
-              fontWeight: 800,
-              fontSize: 14,
-              padding: "8px 16px",
-              borderRadius: 999,
+              justifyContent: "center",
+              flexShrink: 0,
+              boxShadow: "0 8px 18px -8px rgba(31,174,130,.7)",
             }}
           >
-            ⏱️ {hoursCredited} {hoursCredited === 1 ? "hour" : "hours"} credited
-          </div>
-        )}
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 12.5l4 4 10-10" stroke="#fff" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+          <span style={{ fontSize: 16.5, fontWeight: 800, letterSpacing: "-.01em", color: "var(--ink)" }}>
+            Mission completed
+          </span>
+        </div>
+        <p style={{ fontSize: 13, color: "#4a5475", lineHeight: 1.5, margin: "0 auto", maxWidth: 240 }}>
+          Thanks for showing up and making a difference.
+          {hoursCredited != null && (
+            <>
+              {" "}
+              <strong style={{ color: "#147a57" }}>
+                {hoursCredited} {hoursCredited === 1 ? "hour" : "hours"}
+              </strong>{" "}
+              credited.
+            </>
+          )}
+        </p>
 
-        <div style={{ marginTop: 18 }}>
+        <div style={{ marginTop: 14 }}>
           {certificateId ? (
             <Link
               href={`/certificates/${certificateId}`}
@@ -234,11 +226,11 @@ export default function MissionActions({
                 color: "#fff",
                 textAlign: "center",
                 fontWeight: 700,
-                fontSize: 15,
-                padding: 13,
-                borderRadius: 13,
+                fontSize: 14,
+                padding: 11,
+                borderRadius: 12,
                 textDecoration: "none",
-                boxShadow: "0 14px 28px -12px rgba(255,111,94,.8)",
+                boxShadow: "0 12px 24px -12px rgba(255,111,94,.8)",
               }}
             >
               🏅 View your certificate
@@ -246,13 +238,13 @@ export default function MissionActions({
           ) : (
             <div
               style={{
-                fontSize: 13,
+                fontSize: 12.5,
                 color: "var(--muted-2)",
                 background: "#fff",
                 border: "1px dashed rgba(24,32,59,.16)",
-                borderRadius: 12,
-                padding: "12px 14px",
-                lineHeight: 1.5,
+                borderRadius: 11,
+                padding: "10px 12px",
+                lineHeight: 1.45,
               }}
             >
               Your certificate will appear here once the organizer issues it.
@@ -261,8 +253,8 @@ export default function MissionActions({
         </div>
 
         <Link
-          href="/my-missions"
-          style={{ display: "inline-block", marginTop: 14, fontSize: 13, fontWeight: 600, color: "var(--muted-1)" }}
+          href="/impact"
+          style={{ display: "inline-block", marginTop: 11, fontSize: 12.5, fontWeight: 600, color: "var(--muted-1)" }}
         >
           See your impact →
         </Link>
