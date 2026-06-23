@@ -8,7 +8,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchHeaderConversations } from "@/app/header/actions";
-import { markAllConversationsReadAction } from "@/app/messages/actions";
 import type { ConversationListItem } from "@/lib/data/conversations";
 import { panelStyle, Caret, MenuHeader, MenuEmpty, MenuSkeleton, Badge } from "./menu-ui";
 
@@ -38,6 +37,7 @@ export default function MessagesMenu({
   async function load() {
     const res = await fetchHeaderConversations();
     setItems(res.items);
+    setCount(res.unread);
   }
 
   // close on outside click / Escape
@@ -50,16 +50,12 @@ export default function MessagesMenu({
     return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
   }, [open]);
 
-  // Opening the menu counts as "seen": load the full list, clear the badge, and
-  // mark all conversations read (rows keep their dots for this viewing).
+  // Opening just refreshes the list. Unread state clears per-conversation when
+  // you actually open that thread (markConversationReadAction), not on open.
   function toggle() {
     const next = !open;
     setOpen(next);
-    if (next) {
-      load();
-      setCount(0);
-      void markAllConversationsReadAction();
-    }
+    if (next) load();
   }
 
   function openConv(c: ConversationListItem) {
