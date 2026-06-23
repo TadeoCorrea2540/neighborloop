@@ -3,36 +3,32 @@ import { getCurrentProfile, getCurrentUser } from "@/lib/auth/server";
 import { getVolunteerDashboardSummary } from "@/lib/data/applications";
 import { getVolunteerImpactSummary } from "@/lib/data/volunteer-impact";
 import { getVolunteerCertificates } from "@/lib/data/certificates";
+import { getVolunteerTimeline, getVolunteerCauseBreakdown, milestonesFromSummary } from "@/lib/data/analytics/volunteer";
 import { fmtDate } from "@/components/admin/badges";
 
 export const dynamic = "force-dynamic";
 
-const COLLECTION = [
-  { emoji: "🌟" }, { emoji: "⏱️" }, { emoji: "🤝" }, { emoji: "🌍" },
-  { emoji: "📚" }, { emoji: "🔥" }, { emoji: "💯" }, { emoji: "🏆" },
-];
-
-function ComingSoon() {
-  return (
-    <span style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-3)", background: "#f1f3f8", padding: "2px 8px", borderRadius: 999, marginLeft: 8 }}>
-      Coming soon
-    </span>
-  );
-}
-
 export default async function Impact() {
   const [profile, user] = await Promise.all([getCurrentProfile(), getCurrentUser()]);
-  const [summary, impact, certificates] = user
+  const [summary, impact, certificates, timelineAll, causeBreakdown] = user
     ? await Promise.all([
         getVolunteerDashboardSummary(user.id),
         getVolunteerImpactSummary(user.id),
         getVolunteerCertificates(user.id),
+        getVolunteerTimeline(user.id),
+        getVolunteerCauseBreakdown(user.id),
       ])
     : [
         { savedCount: 0, pendingCount: 0, approvedCount: 0, totalApplied: 0, nextUpcoming: null },
         { completedCount: 0, totalHours: 0, certificatesCount: 0, causes: [], recentCompleted: [] },
         [],
+        [],
+        [],
       ];
+
+  const milestones = milestonesFromSummary(impact);
+  const timeline = timelineAll.slice(-12); // last 12 months
+  const maxHours = Math.max(1, ...timeline.map((t) => t.hours));
 
   const name = profile?.display_name?.trim() || "Neighbor";
   const city = profile?.city?.trim();
@@ -84,6 +80,22 @@ export default async function Impact() {
           ))}
         </div>
 
+        {timeline.length > 0 && (
+          <div style={{ background: "#fbfcfe", border: "1px solid rgba(24,32,59,.06)", borderRadius: 18, padding: "20px 22px", margin: "0 0 26px" }}>
+            <h3 style={{ fontSize: 18, fontWeight: 800, margin: "0 0 2px" }}>Impact over time</h3>
+            <p style={{ fontSize: 13, color: "var(--muted-3)", margin: "0 0 18px" }}>Confirmed volunteer hours by month</p>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 10, height: 140 }}>
+              {timeline.map((t) => (
+                <div key={t.period} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, height: "100%", justifyContent: "flex-end", minWidth: 0 }}>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: "#e8543f" }}>{t.hours}h</span>
+                  <div title={`${t.label}: ${t.hours}h · ${t.completed} completed`} style={{ width: "100%", maxWidth: 40, borderRadius: "9px 9px 4px 4px", background: "linear-gradient(180deg,#ffb39c,#ff6f5e)", height: `${Math.max(4, (t.hours / maxHours) * 100)}%`, transition: "height .5s" }} />
+                  <span style={{ fontSize: 10.5, color: "var(--muted-3)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>{t.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 20 }} className="detail-split">
           {/* real hours & mission history */}
           <div>
@@ -108,8 +120,21 @@ export default async function Impact() {
                     )}
                   </div>
                 ))}
-                {impact.causes.length > 0 && (
-                  <div style={{ fontSize: 12.5, color: "var(--muted-3)", marginTop: 2 }}>Causes supported: {impact.causes.join(" · ")}</div>
+                {causeBreakdown.length > 0 && (
+                  <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 11 }}>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: "var(--ink)" }}>Causes supported</div>
+                    {causeBreakdown.map((c) => (
+                      <div key={c.categoryId}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", fontSize: 13 }}>
+                          <span style={{ fontWeight: 600 }}>{c.iconKey ?? "✨"} {c.name}</span>
+                          <span style={{ color: "var(--muted-3)", fontWeight: 700, fontSize: 12.5 }}>{c.hours}h · {c.completed} mission{c.completed === 1 ? "" : "s"}</span>
+                        </div>
+                        <div style={{ height: 7, borderRadius: 99, background: "#eef0f5", overflow: "hidden", marginTop: 5 }}>
+                          <span style={{ display: "block", height: "100%", width: `${Math.max(4, c.pct)}%`, borderRadius: 99, background: c.accentColor ?? "#7a6bf5" }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             )}
@@ -137,13 +162,20 @@ export default async function Impact() {
               </div>
             )}
 
-            <h3 style={{ fontSize: 18, fontWeight: 800, margin: "0 0 14px", display: "flex", alignItems: "center" }}>
-              Badges <ComingSoon />
-            </h3>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, opacity: 0.55 }}>
-              {COLLECTION.map((b, i) => (
-                <div key={i} style={{ aspectRatio: "1", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, background: "#eef0f5", filter: "grayscale(.7)" }}>
-                  {b.emoji}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "0 0 14px" }}>
+              <h3 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>Milestones</h3>
+              <Link href="/badges" style={{ fontSize: 12.5, fontWeight: 700, color: "var(--coral-deep,#e8543f)" }}>All →</Link>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10 }}>
+              {milestones.map((m) => (
+                <div key={m.key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 14, border: `1px solid ${m.achieved ? "rgba(31,174,130,.3)" : "rgba(24,32,59,.08)"}`, background: m.achieved ? "#f1fbf6" : "#fbfcfe" }}>
+                  <span style={{ fontSize: 22, filter: m.achieved ? "none" : "grayscale(.8)", opacity: m.achieved ? 1 : 0.5 }}>{m.emoji}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: m.achieved ? "var(--ink)" : "var(--muted-2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.label}</div>
+                    <div style={{ fontSize: 11, color: m.achieved ? "var(--mint,#1fae82)" : "var(--muted-3)", marginTop: 2, fontWeight: 600 }}>
+                      {m.achieved ? "Unlocked ✓" : `${Math.min(m.current, m.target)} / ${m.target}`}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>

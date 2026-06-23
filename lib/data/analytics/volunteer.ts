@@ -11,6 +11,7 @@ import {
   getVolunteerAttendanceHistory,
   getVolunteerImpactSummary,
   type CompletedMission,
+  type VolunteerImpactSummary,
 } from "@/lib/data/volunteer-impact";
 import { inRange, resolveDateRange, type DateRange } from "./date-range";
 
@@ -124,18 +125,21 @@ export async function getVolunteerCauseBreakdown(userId: string): Promise<Volunt
     .sort((a, b) => b.hours - a.hours);
 }
 
-/** Milestones derived purely from the real impact summary (no extra queries beyond it). */
-export async function deriveVolunteerMilestones(userId: string): Promise<VolunteerMilestone[]> {
-  const s = await getVolunteerImpactSummary(userId);
-  const causes = s.causes.length;
+/** Pure milestone derivation from an already-loaded impact summary (no DB). */
+export function milestonesFromSummary(s: VolunteerImpactSummary): VolunteerMilestone[] {
   const def: Omit<VolunteerMilestone, "achieved">[] = [
     { key: "first_mission", label: "First mission completed", emoji: "🌟", current: s.completedCount, target: 1 },
     { key: "five_missions", label: "5 missions completed", emoji: "🔥", current: s.completedCount, target: 5 },
     { key: "ten_hours", label: "10 volunteer hours", emoji: "⏱️", current: s.totalHours, target: 10 },
     { key: "fifty_hours", label: "50 volunteer hours", emoji: "💪", current: s.totalHours, target: 50 },
     { key: "hundred_hours", label: "100 volunteer hours", emoji: "🏆", current: s.totalHours, target: 100 },
-    { key: "three_causes", label: "3 causes supported", emoji: "🌍", current: causes, target: 3 },
+    { key: "three_causes", label: "3 causes supported", emoji: "🌍", current: s.causes.length, target: 3 },
     { key: "certified", label: "Certificate earned", emoji: "🏅", current: s.certificatesCount, target: 1 },
   ];
   return def.map((d) => ({ ...d, achieved: d.current >= d.target }));
+}
+
+/** Milestones for a volunteer (loads the impact summary, then derives). */
+export async function deriveVolunteerMilestones(userId: string): Promise<VolunteerMilestone[]> {
+  return milestonesFromSummary(await getVolunteerImpactSummary(userId));
 }
