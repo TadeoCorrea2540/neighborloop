@@ -39,11 +39,25 @@ export default function MessageThread({
   const inFlight = useRef(0); // in-flight sends; gate refreshes so optimistic bubbles aren't wiped
   const [toast, setToast] = useState<{ msg: string; tone: "error" | "success" } | null>(null);
   const [seq, setSeq] = useState(0);
-  const endRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const show = (msg: string, tone: "error" | "success") => { setToast({ msg, tone }); setSeq((n) => n + 1); };
 
   useEffect(() => setMessages(initialMessages), [initialMessages]);
-  useEffect(() => { endRef.current?.scrollIntoView({ block: "end" }); }, [messages.length]);
+
+  // Pin to the very bottom: directly, after the next frame, and again once the
+  // web font loads (font swap reflows message heights and would otherwise leave
+  // the view a little above the latest message).
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    const pin = () => { el.scrollTop = el.scrollHeight; };
+    pin();
+    const raf = requestAnimationFrame(pin);
+    let cancelled = false;
+    const fonts = (document as Document & { fonts?: { ready?: Promise<unknown> } }).fonts;
+    if (fonts?.ready) fonts.ready.then(() => { if (!cancelled) pin(); });
+    return () => { cancelled = true; cancelAnimationFrame(raf); };
+  }, [messages.length]);
 
   // Drop the envelope badge instantly by this conversation's unread count, then
   // persist the read in the background (no extra count re-fetch).
@@ -125,7 +139,7 @@ export default function MessageThread({
       </div>
 
       {/* messages */}
-      <div style={{ flex: 1, overflowY: "auto", padding: 18, background: "#fbfcfe", display: "flex", flexDirection: "column", gap: 10 }}>
+      <div ref={listRef} style={{ flex: 1, overflowY: "auto", padding: 18, background: "#fbfcfe", display: "flex", flexDirection: "column", gap: 10 }}>
         {messages.length === 0 ? (
           <div style={{ margin: "auto", textAlign: "center", color: "var(--muted-3)", fontSize: 14 }}>
             <div style={{ fontSize: 28, marginBottom: 6 }}>💬</div>
@@ -155,7 +169,6 @@ export default function MessageThread({
             )
           )
         )}
-        <div ref={endRef} />
       </div>
 
       {/* composer */}
