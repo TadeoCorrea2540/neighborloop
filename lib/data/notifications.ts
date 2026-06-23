@@ -142,10 +142,12 @@ export async function getUserNotifications(
   userId: string,
   opts: { filter?: "all" | "unread"; limit?: number } = {}
 ): Promise<NotificationItem[]> {
+  // Messages are tracked by the envelope/messages badge, not the bell.
   let query = getServerDb()
     .from("notifications")
     .select("id, notification_type, title, body, link_url, entity_type, entity_id, metadata, read_at, created_at")
     .eq("user_id", userId)
+    .neq("notification_type", "message_received")
     .order("created_at", { ascending: false })
     .limit(opts.limit ?? 100);
   if (opts.filter === "unread") query = query.is("read_at", null);
@@ -158,6 +160,7 @@ export async function getUnreadNotificationCount(userId: string): Promise<number
     .from("notifications")
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId)
+    .neq("notification_type", "message_received") // bell excludes messages
     .is("read_at", null);
   return count ?? 0;
 }

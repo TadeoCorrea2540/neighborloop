@@ -3,14 +3,14 @@
 /**
  * Messaging actions. Conversations are mission-scoped and created via the
  * create_application_conversation() RPC (which authorizes + sets up participant
- * rows). Sending validates participation (RLS) + body length, bumps
- * last_message_at, and notifies the other participant(s).
+ * rows). Sending validates participation (RLS) + body length and bumps
+ * last_message_at. Messages are surfaced via the envelope/messages badge — they
+ * do NOT create bell notifications.
  */
 import { revalidatePath } from "next/cache";
 import { getCurrentUser, getCurrentUserRole } from "@/lib/auth/server";
 import { getServerDb } from "@/lib/supabase/db";
 import { UUID_RE, type ActionResult } from "@/lib/auth/require-organizer";
-import { createNotification } from "@/lib/data/notifications";
 
 export async function createConversationForApplicationAction(
   applicationId: string
@@ -51,29 +51,13 @@ export async function sendMessageAction(conversationId: string, body: string): P
   if (error) return { ok: false, code: "forbidden", error: "You don’t have access to this conversation." };
 
   const now = new Date().toISOString();
-  // Independent post-insert work in parallel: bump the conversation, advance the
-  // sender's read marker (so their own message isn't flagged unread to them —
-  // unread check `last_message_at > last_read_at` is false at the same stamp),
-  // and fetch the other participant(s) to notify.
-  const [, , partsRes] = await Promise.all([
+  // Bump the conversation + advance the sender's read marker (so their own
+  // message isn't flagged unread to them). No bell notification — the recipient
+  // sees the message via the envelope/messages badge.
+  await Promise.all([
     db.from("conversations").update({ last_message_at: now }).eq("id", conversationId),
     db.from("conversation_participants").update({ last_read_at: now }).eq("conversation_id", conversationId).eq("user_id", user.id),
-    db.from("conversation_participants").select("user_id, participant_role").eq("conversation_id", conversationId).neq("user_id", user.id),
   ]);
-
-  const preview = text.length > 80 ? `${text.slice(0, 80)}…` : text;
-  await Promise.all(
-    ((partsRes.data ?? []) as { user_id: string; participant_role: string }[]).map((p) =>
-      createNotification(p.user_id, {
-        type: "message_received",
-        title: "New message",
-        body: preview,
-        linkUrl: p.participant_role === "organizer" ? `/manage/messages/${conversationId}` : `/messages/${conversationId}`,
-        entityType: "conversation",
-        entityId: conversationId,
-      })
-    )
-  );
 
   revalidatePath(`/messages/${conversationId}`);
   revalidatePath(`/manage/messages/${conversationId}`);
@@ -86,21 +70,13 @@ export async function markConversationReadAction(conversationId: string): Promis
   const user = await getCurrentUser();
   if (!user) return { ok: false, code: "auth", error: "Please sign in." };
   if (!UUID_RE.test(conversationId)) return { ok: false, code: "validation", error: "Invalid conversation." };
-  const db = getServerDb();
-  const now = new Date().toISOString();
-  // Opening a conversation clears BOTH its unread messages (last_read_at) and
-  // its "New message" notifications — so the envelope and bell both drop.
-  const [readRes] = await Promise.all([
-    db.from("conversation_participants").update({ last_read_at: now }).eq("conversation_id", conversationId).eq("user_id", user.id),
-    db
-      .from("notifications")
-      .update({ read_at: now })
-      .eq("user_id", user.id)
-      .eq("notification_type", "message_received")
-      .eq("entity_id", conversationId)
-      .is("read_at", null),
-  ]);
-  if (readRes.error) return { ok: false, code: "unknown", error: "Couldn’t update read state." };
+  // Just advance the read marker — messages don't create bell notifications.
+  const { error } = await getServerDb()
+    .from("conversation_participants")
+    .update({ last_read_at: new Date().toISOString() })
+    .eq("conversation_id", conversationId)
+    .eq("user_id", user.id);
+  if (error) return { ok: false, code: "unknown", error: "Couldn’t update read state." };
   return { ok: true };
 }
 
