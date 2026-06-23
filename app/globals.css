@@ -614,3 +614,11 @@ select {
     font-size: 13px;
   }
 }
+
+/* ---------- print-friendly report ---------- */
+@media print {
+  .print-hide { display: none !important; }
+  .print-page { background: #fff !important; }
+  .print-page * { box-shadow: none !important; }
+  @page { margin: 14mm; }
+}

@@ -30,6 +30,8 @@ export interface OrgOpp {
 }
 
 export interface OrgView {
+  /** Live org id (for public-impact RPC), or null for the demo org. */
+  id: string | null;
   name: string;
   /** Badge text, or null to hide the verified badge. */
   verifiedLabel: string | null;
@@ -45,6 +47,7 @@ export interface OrgView {
 
 /** The existing demo profile — unchanged behaviour when there's no live org. */
 export const MOCK_ORG_VIEW: OrgView = {
+  id: null,
   name: "GreenRoots Collective",
   verifiedLabel: "✓ Verified nonprofit",
   metaLine: "🌍 Community gardens & food security · San Francisco · ★ 4.9 (212 reviews)",
@@ -89,6 +92,7 @@ function toOrgView(org: OrganizationSummary, missions: MissionSummary[], cats: M
   if (org.city) metaBits.push(org.city);
 
   return {
+    id: org.id,
     name: org.name,
     verifiedLabel: org.verificationStatus === "verified" ? `✓ Verified ${typeLabel.toLowerCase()}` : null,
     metaLine: metaBits.join(" · "),

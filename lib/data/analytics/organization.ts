@@ -262,6 +262,33 @@ export async function getOrganizationCategoryBreakdown(orgId: string, range: Dat
   return categoriesOf(await loadOrgActivity(orgId, range, cf, ct));
 }
 
+export interface OrgVolunteerHoursRow {
+  volunteerId: string;
+  displayName: string;
+  completedMissions: number;
+  hours: number;
+}
+
+/** Per-volunteer completed hours for this org (org-member RLS already exposes the roster). */
+export async function getOrganizationVolunteerHours(orgId: string, range: DateRange = "all_time", cf?: string, ct?: string): Promise<OrgVolunteerHoursRow[]> {
+  const activity = await loadOrgActivity(orgId, range, cf, ct);
+  const completedByVol = new Map<string, number>();
+  for (const p of activity.completedPairs) completedByVol.set(p.volunteerId, (completedByVol.get(p.volunteerId) ?? 0) + 1);
+  const volIds = Array.from(completedByVol.keys());
+  if (volIds.length === 0) return [];
+  const supabase = getServerSupabase();
+  const { data: profs } = await supabase.from("profiles").select("id, display_name").in("id", volIds);
+  const nameById = new Map(((profs ?? []) as { id: string; display_name: string }[]).map((p) => [p.id, p.display_name]));
+  return volIds
+    .map((id) => ({
+      volunteerId: id,
+      displayName: nameById.get(id) ?? "Volunteer",
+      completedMissions: completedByVol.get(id) ?? 0,
+      hours: Math.round((activity.hoursByVolunteer.get(id) ?? 0) * 100) / 100,
+    }))
+    .sort((a, b) => b.hours - a.hours);
+}
+
 /** Everything for the reports page in a single DB load. */
 export async function getOrganizationReport(orgId: string, range: DateRange = "all_time", cf?: string, ct?: string): Promise<OrganizationReport> {
   const activity = await loadOrgActivity(orgId, range, cf, ct);

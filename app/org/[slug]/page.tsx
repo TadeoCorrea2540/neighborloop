@@ -1,5 +1,6 @@
 import PublicNav from "@/components/public-nav";
 import { loadOrgView } from "@/lib/org-view";
+import { getPublicOrganizationImpact } from "@/lib/data/analytics/public-impact";
 
 // Demo-only sections below have no DB source yet, so they stay identical for
 // live and mock orgs (noted where rendered).
@@ -41,6 +42,20 @@ export default async function OrgProfile({
 }) {
   // Live-first by slug; falls back to the GreenRoots demo when not a live org.
   const view = await loadOrgView(params.slug);
+
+  // Public-safe impact (aggregate-only, no PII) for live public orgs. Null when
+  // the org isn't public, has no confirmed impact, or migration 019 isn't applied.
+  const impact = view.id ? await getPublicOrganizationImpact(view.id) : null;
+  const realStats = impact
+    ? [
+        { v: impact.volunteerHours.toLocaleString(), l: "volunteer hours", c: "#e8543f" },
+        { v: impact.missionsHosted.toLocaleString(), l: "missions hosted", c: "#1fae82" },
+        { v: impact.certificatesIssued.toLocaleString(), l: "certificates issued", c: "#3a8bf0" },
+        { v: impact.causesSupported.toLocaleString(), l: "causes supported", c: "#7a6bf5" },
+      ]
+    : null;
+  // Demo org keeps its illustrative stats; live orgs show real numbers (or none).
+  const statsToShow = view.source === "mock" ? STATS : realStats;
   return (
     <div style={{ background: "#fff", minHeight: "100vh" }}>
       <PublicNav />
@@ -171,31 +186,33 @@ export default async function OrgProfile({
             {view.description}
           </p>
 
-          {/* stats */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4,1fr)",
-              gap: 16,
-              marginBottom: 28,
-            }}
-            className="card-grid-4"
-          >
-            {STATS.map((s) => (
-              <div
-                key={s.l}
-                style={{
-                  background: "#fbfcfe",
-                  border: "1px solid rgba(24,32,59,.06)",
-                  borderRadius: 18,
-                  padding: 20,
-                }}
-              >
-                <div style={{ fontSize: 28, fontWeight: 800, color: s.c }}>{s.v}</div>
-                <div style={{ fontSize: 13, color: "var(--muted-3)" }}>{s.l}</div>
-              </div>
-            ))}
-          </div>
+          {/* impact (real public-safe numbers for live orgs; demo numbers for the demo org) */}
+          {statsToShow && (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4,1fr)",
+                gap: 16,
+                marginBottom: 28,
+              }}
+              className="card-grid-4"
+            >
+              {statsToShow.map((s) => (
+                <div
+                  key={s.l}
+                  style={{
+                    background: "#fbfcfe",
+                    border: "1px solid rgba(24,32,59,.06)",
+                    borderRadius: 18,
+                    padding: 20,
+                  }}
+                >
+                  <div style={{ fontSize: 28, fontWeight: 800, color: s.c }}>{s.v}</div>
+                  <div style={{ fontSize: 13, color: "var(--muted-3)" }}>{s.l}</div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* split */}
           <div

@@ -67,6 +67,26 @@ export default async function Reports({ searchParams }: { searchParams: { range?
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          {/* export center */}
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, background: "#fff", border: "1px solid rgba(24,32,59,.06)", borderRadius: 14, padding: "12px 14px" }}>
+            <span style={{ fontSize: 13, fontWeight: 800, color: "var(--ink)", marginRight: 4 }}>Export center</span>
+            {([
+              ["mission-performance", "Mission performance"],
+              ["attendance-summary", "Attendance"],
+              ["volunteer-hours", "Volunteer hours"],
+              ["certificates-issued", "Certificates"],
+            ] as const).map(([t, label]) => (
+              <a key={t} href={`/api/manage/reports/export?type=${t}&range=${range}`}
+                style={{ fontSize: 12.5, fontWeight: 700, color: "var(--muted-1)", background: "#fbfcfe", border: "1px solid rgba(24,32,59,.1)", padding: "7px 12px", borderRadius: 10, textDecoration: "none" }}>
+                ⬇ {label}.csv
+              </a>
+            ))}
+            <Link href={`/reports/print?range=${range}`}
+              style={{ marginLeft: "auto", fontSize: 12.5, fontWeight: 700, color: "#fff", background: "#18203b", padding: "7px 12px", borderRadius: 10 }}>
+              🖨 Print / Save as PDF
+            </Link>
+          </div>
+
           {/* impact overview */}
           <ImpactStatGrid summary={report.summary} />
 
