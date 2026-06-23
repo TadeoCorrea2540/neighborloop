@@ -12,7 +12,7 @@ import { getBrowserSupabase } from "@/lib/supabase/browser";
 import { fetchHeaderNotifications } from "@/app/header/actions";
 import { markNotificationReadAction, markAllNotificationsReadAction } from "@/app/notifications/actions";
 import type { NotificationItem, NotificationType } from "@/lib/data/notifications";
-import { panelStyle, Caret, MenuHeader, MenuFooter, MenuEmpty, MenuSkeleton, Badge } from "./menu-ui";
+import { panelStyle, Caret, MenuHeader, MenuEmpty, MenuSkeleton, Badge } from "./menu-ui";
 
 const ICON: Record<NotificationType, string> = {
   application_submitted: "📋",
@@ -51,7 +51,6 @@ export default function NotificationsMenu({ initialCount, userId }: { initialCou
   const load = useCallback(async () => {
     const res = await fetchHeaderNotifications();
     setItems(res.items);
-    setCount(res.unread);
   }, []);
 
   // realtime badge — bump on insert; drop any cached list so it refetches next open
@@ -84,28 +83,25 @@ export default function NotificationsMenu({ initialCount, userId }: { initialCou
     return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
   }, [open]);
 
+  // Opening the menu counts as "seen": load the full list, clear the badge,
+  // and mark everything read (the list keeps its highlights for this viewing).
   function toggle() {
-    setOpen((o) => {
-      const next = !o;
-      if (next && items === null) load();
-      return next;
-    });
+    const next = !open;
+    setOpen(next);
+    if (next) {
+      load();
+      setCount(0);
+      start(async () => { await markAllNotificationsReadAction(); });
+    }
   }
 
   function openItem(n: NotificationItem) {
     if (!n.readAt) {
       setItems((prev) => prev?.map((x) => (x.id === n.id ? { ...x, readAt: new Date().toISOString() } : x)) ?? prev);
-      setCount((c) => Math.max(0, c - 1));
-      start(async () => { await markNotificationReadAction(n.id); router.refresh(); });
+      start(async () => { await markNotificationReadAction(n.id); });
     }
     setOpen(false);
     if (n.linkUrl) router.push(n.linkUrl);
-  }
-
-  function markAll() {
-    setItems((prev) => prev?.map((n) => (n.readAt ? n : { ...n, readAt: new Date().toISOString() })) ?? prev);
-    setCount(0);
-    start(async () => { await markAllNotificationsReadAction(); router.refresh(); });
   }
 
   return (
@@ -126,16 +122,9 @@ export default function NotificationsMenu({ initialCount, userId }: { initialCou
       {open && (
         <div className="hdr-pop" style={panelStyle} role="menu">
           <Caret />
-          <MenuHeader
-            title="Notifications"
-            action={count > 0 ? (
-              <button type="button" onClick={markAll} style={{ fontSize: 12.5, fontWeight: 700, color: "var(--coral-deep)", background: "#fff0ec", padding: "5px 11px", borderRadius: 9 }}>
-                Mark all read
-              </button>
-            ) : null}
-          />
+          <MenuHeader title="Notifications" />
 
-          <div style={{ maxHeight: 392, overflowY: "auto" }}>
+          <div style={{ maxHeight: "min(70vh, 480px)", overflowY: "auto" }}>
             {items === null ? (
               <MenuSkeleton rows={3} />
             ) : items.length === 0 ? (
@@ -170,8 +159,6 @@ export default function NotificationsMenu({ initialCount, userId }: { initialCou
               ))
             )}
           </div>
-
-          <MenuFooter href="/notifications" label="View all notifications" onClick={() => setOpen(false)} />
         </div>
       )}
     </div>

@@ -8,8 +8,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchHeaderConversations } from "@/app/header/actions";
+import { markAllConversationsReadAction } from "@/app/messages/actions";
 import type { ConversationListItem } from "@/lib/data/conversations";
-import { panelStyle, Caret, MenuHeader, MenuFooter, MenuEmpty, MenuSkeleton, Badge } from "./menu-ui";
+import { panelStyle, Caret, MenuHeader, MenuEmpty, MenuSkeleton, Badge } from "./menu-ui";
 
 function timeAgo(iso: string | null): string {
   if (!iso) return "";
@@ -37,7 +38,6 @@ export default function MessagesMenu({
   async function load() {
     const res = await fetchHeaderConversations();
     setItems(res.items);
-    setCount(res.unread);
   }
 
   // close on outside click / Escape
@@ -50,12 +50,16 @@ export default function MessagesMenu({
     return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
   }, [open]);
 
+  // Opening the menu counts as "seen": load the full list, clear the badge, and
+  // mark all conversations read (rows keep their dots for this viewing).
   function toggle() {
-    setOpen((o) => {
-      const next = !o;
-      if (next) load(); // always refresh — conversations change often
-      return next;
-    });
+    const next = !open;
+    setOpen(next);
+    if (next) {
+      load();
+      setCount(0);
+      void markAllConversationsReadAction();
+    }
   }
 
   function openConv(c: ConversationListItem) {
@@ -83,7 +87,7 @@ export default function MessagesMenu({
           <Caret />
           <MenuHeader title="Messages" />
 
-          <div style={{ maxHeight: 392, overflowY: "auto" }}>
+          <div style={{ maxHeight: "min(70vh, 480px)", overflowY: "auto" }}>
             {items === null ? (
               <MenuSkeleton rows={3} />
             ) : items.length === 0 ? (
@@ -123,8 +127,6 @@ export default function MessagesMenu({
               })
             )}
           </div>
-
-          <MenuFooter href={basePath} label="View all messages" onClick={() => setOpen(false)} />
         </div>
       )}
     </div>

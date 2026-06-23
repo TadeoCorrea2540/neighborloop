@@ -1,7 +1,6 @@
 "use client";
 
 /** Shared chrome for the header dropdown menus (notifications + messages). */
-import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 
 export const panelStyle: CSSProperties = {
@@ -37,14 +36,6 @@ export function MenuHeader({ title, action }: { title: string; action?: ReactNod
       <span style={{ fontWeight: 800, fontSize: 15 }}>{title}</span>
       {action}
     </div>
-  );
-}
-
-export function MenuFooter({ href, label, onClick }: { href: string; label: string; onClick?: () => void }) {
-  return (
-    <Link href={href} onClick={onClick} className="hdr-viewall" style={{ display: "block", textAlign: "center", padding: 12, fontSize: 13.5, fontWeight: 700, color: "var(--coral-deep)", borderTop: "1px solid var(--line)" }}>
-      {label}
-    </Link>
   );
 }
 

@@ -77,6 +77,19 @@ export async function sendMessageAction(conversationId: string, body: string): P
   return { ok: true };
 }
 
+export async function markAllConversationsReadAction(): Promise<ActionResult> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, code: "auth", error: "Please sign in." };
+  const { error } = await getServerDb()
+    .from("conversation_participants")
+    .update({ last_read_at: new Date().toISOString() })
+    .eq("user_id", user.id);
+  if (error) return { ok: false, code: "unknown", error: "Couldn’t update read state." };
+  revalidatePath("/messages");
+  revalidatePath("/manage/messages");
+  return { ok: true };
+}
+
 export async function markConversationReadAction(conversationId: string): Promise<ActionResult> {
   const user = await getCurrentUser();
   if (!user) return { ok: false, code: "auth", error: "Please sign in." };
