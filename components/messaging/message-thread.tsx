@@ -68,13 +68,29 @@ export default function MessageThread({
   function send() {
     const text = body.trim();
     if (!text) return;
+    // Optimistic: render the message + clear the input instantly. The server
+    // action runs in the background; router.refresh() then reconciles the temp
+    // row with the canonical one. On failure we roll back and restore the input.
+    const tempId = `temp-${Date.now()}`;
+    const optimistic: MessageItem = {
+      id: tempId,
+      senderId: currentUserId,
+      senderName: "",
+      body: text,
+      isSystem: false,
+      isMine: true,
+      createdAt: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, optimistic]);
+    setBody("");
     start(async () => {
       const res = await sendMessageAction(conversation.id, text);
       if (!res.ok) {
+        setMessages((prev) => prev.filter((m) => m.id !== tempId));
+        setBody(text);
         if (res.code === "auth") return router.push("/auth");
         return show(res.error, "error");
       }
-      setBody("");
       router.refresh();
     });
   }
