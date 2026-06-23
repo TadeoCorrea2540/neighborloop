@@ -43,8 +43,14 @@ export default function MessageThread({
   useEffect(() => setMessages(initialMessages), [initialMessages]);
   useEffect(() => { endRef.current?.scrollIntoView({ block: "end" }); }, [messages.length]);
 
-  // mark read on open
-  useEffect(() => { markConversationReadAction(conversation.id); }, [conversation.id]);
+  // mark read on open, then refresh so the header unread badge clears promptly
+  useEffect(() => {
+    let cancelled = false;
+    markConversationReadAction(conversation.id).then((res) => {
+      if (!cancelled && res?.ok) router.refresh();
+    });
+    return () => { cancelled = true; };
+  }, [conversation.id, router]);
 
   // realtime: new messages in this conversation → refresh
   useEffect(() => {

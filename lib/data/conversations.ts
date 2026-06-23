@@ -129,8 +129,28 @@ export async function getUserConversations(userId: string): Promise<Conversation
 }
 
 export async function getUnreadConversationCount(userId: string): Promise<number> {
-  const items = await getUserConversations(userId);
-  return items.filter((c) => c.unread).length;
+  // Lightweight: just the participant rows + their conversations' last_message_at
+  // (no mission/org/profile decoration — this runs on every page load).
+  const db = getServerDb();
+  const { data: partRows } = await db
+    .from("conversation_participants")
+    .select("conversation_id, last_read_at")
+    .eq("user_id", userId);
+  const parts = (partRows ?? []) as { conversation_id: string; last_read_at: string | null }[];
+  if (parts.length === 0) return 0;
+  const lastRead = new Map(parts.map((p) => [p.conversation_id, p.last_read_at]));
+
+  const { data: convRows } = await db
+    .from("conversations")
+    .select("id, last_message_at")
+    .in("id", parts.map((p) => p.conversation_id));
+
+  let count = 0;
+  for (const c of (convRows ?? []) as { id: string; last_message_at: string | null }[]) {
+    const lr = lastRead.get(c.id) ?? null;
+    if (c.last_message_at && (!lr || c.last_message_at > lr)) count++;
+  }
+  return count;
 }
 
 export async function getConversationByIdForUser(conversationId: string, userId: string): Promise<ConversationDetail | null> {
