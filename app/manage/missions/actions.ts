@@ -9,6 +9,8 @@ import { revalidatePath } from "next/cache";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { requireOrganizer, UUID_RE, type ActionResult } from "@/lib/auth/require-organizer";
 import { slugWithSuffix } from "@/lib/slug";
+import { uploadFile, readFile, IMAGE_TYPES } from "@/lib/storage/upload";
+import { BUCKETS, missionCoverPath } from "@/lib/storage/storage-paths";
 import type { MissionStatus } from "@/types/database";
 
 // ---------- FormData parsing ----------
@@ -62,7 +64,8 @@ interface MissionInput {
   materials_needed: string[];
   perks: string[];
   safety_notes: string | null;
-  cover_image_path: string | null;
+  // cover_image_path is managed only via uploadMissionCoverAction — never set
+  // from the form, so saving the form can't wipe an uploaded cover.
 }
 
 function parseMission(fd: FormData): MissionInput {
@@ -88,7 +91,6 @@ function parseMission(fd: FormData): MissionInput {
     materials_needed: list(fd, "materials_needed"),
     perks: list(fd, "perks"),
     safety_notes: str(fd, "safety_notes"),
-    cover_image_path: str(fd, "cover_image_path"),
   };
 }
 
@@ -280,6 +282,41 @@ export const cancelMissionAction = (id: string) =>
   changeStatus(id, ["draft", "pending_review", "published", "paused"], "cancelled", "This mission can’t be cancelled from its current status.");
 export const archiveMissionAction = (id: string) =>
   changeStatus(id, ["draft", "pending_review", "closed", "cancelled"], "archived", "Close or cancel the mission before archiving.");
+
+// ---------- mission cover image upload ----------
+export async function uploadMissionCoverAction(missionId: string, fd: FormData): Promise<ActionResult> {
+  const guard = await requireOrganizer();
+  if (!guard.ok) return guard;
+  if (!UUID_RE.test(missionId)) return { ok: false, code: "validation", error: "Invalid mission." };
+
+  const owns = await assertOwnsMission(guard.orgId, missionId);
+  if (!owns.ok) return { ok: false, code: "forbidden", error: "You don’t have permission to edit this mission." };
+
+  const file = readFile(fd);
+  if (!file) return { ok: false, code: "validation", error: "Please choose an image." };
+
+  const up = await uploadFile({
+    bucket: BUCKETS.missionMedia,
+    path: missionCoverPath(guard.orgId, missionId, file.type),
+    file,
+    allowedTypes: IMAGE_TYPES,
+    maxBytes: 5 * 1_048_576,
+  });
+  if (!up.ok) return { ok: false, code: "validation", error: up.error };
+
+  const supabase = getServerSupabase();
+  const { error } = await supabase
+    .from("missions")
+    .update({ cover_image_path: up.path })
+    .eq("id", missionId)
+    .eq("organization_id", guard.orgId);
+  if (error) return { ok: false, code: "unknown", error: "Uploaded, but couldn’t save it to the mission." };
+
+  revalidateManage();
+  revalidatePath(`/manage/missions/${missionId}/edit`);
+  if (owns.status === "published") revalidatePublic();
+  return { ok: true };
+}
 
 // ---------- private details ----------
 export async function upsertMissionPrivateDetailsAction(

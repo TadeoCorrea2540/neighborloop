@@ -5,9 +5,13 @@
  * includes verification_status / verification_note — the guard trigger blocks
  * non-admins from changing those. Slug is immutable (public URLs depend on it).
  */
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { requireOrganizer, type ActionResult } from "@/lib/auth/require-organizer";
+import { getServerDb } from "@/lib/supabase/db";
+import { uploadFile, readFile, IMAGE_TYPES, DOC_TYPES } from "@/lib/storage/upload";
+import { BUCKETS, orgLogoPath, orgCoverPath, verificationDocPath } from "@/lib/storage/storage-paths";
 
 function clean(fd: FormData, k: string, max = 600): string | null {
   const v = (fd.get(k) ?? "").toString().trim();
@@ -75,15 +79,32 @@ export async function updateOrganizationAction(fd: FormData): Promise<ActionResu
  * organization_verifications (admin-only read). A duplicate pending insert
  * returns 23505, which we map to a friendly message.
  */
-export async function requestVerificationAction(): Promise<ActionResult> {
+export async function requestVerificationAction(fd?: FormData): Promise<ActionResult> {
   const guard = await requireOrganizer();
   if (!guard.ok) return guard;
 
-  const supabase = getServerSupabase();
-  const { error } = await supabase.from("organization_verifications").insert({
+  // Optional supporting document. Organizers can't UPDATE the verification row
+  // (admin-only), so the doc must be attached at insert time.
+  let documentPath: string | null = null;
+  const file = fd ? readFile(fd, "document") : null;
+  if (file) {
+    const up = await uploadFile({
+      bucket: BUCKETS.verificationDocs,
+      path: verificationDocPath(guard.orgId, randomUUID(), file.type),
+      file,
+      allowedTypes: DOC_TYPES,
+      maxBytes: 10 * 1_048_576,
+    });
+    if (!up.ok) return { ok: false, code: "validation", error: up.error };
+    documentPath = up.path;
+  }
+
+  // getServerDb(): document_path column isn't in generated types until 016 + regen.
+  const { error } = await getServerDb().from("organization_verifications").insert({
     organization_id: guard.orgId,
     submitted_by: guard.userId,
     status: "pending",
+    document_path: documentPath,
   });
   if (error) {
     if (error.code === "23505") {
@@ -96,3 +117,33 @@ export async function requestVerificationAction(): Promise<ActionResult> {
   revalidatePath("/admin", "layout");
   return { ok: true };
 }
+
+// ---------- organization media uploads ----------
+async function uploadOrgMedia(
+  fd: FormData,
+  column: "logo_path" | "cover_image_path",
+  pathFor: (orgId: string, mime: string) => string,
+  maxBytes: number
+): Promise<ActionResult> {
+  const guard = await requireOrganizer();
+  if (!guard.ok) return guard;
+  const file = readFile(fd);
+  if (!file) return { ok: false, code: "validation", error: "Please choose an image." };
+
+  const up = await uploadFile({ bucket: BUCKETS.orgMedia, path: pathFor(guard.orgId, file.type), file, allowedTypes: IMAGE_TYPES, maxBytes });
+  if (!up.ok) return { ok: false, code: "validation", error: up.error };
+
+  const supabase = getServerSupabase();
+  const patch = column === "logo_path" ? { logo_path: up.path } : { cover_image_path: up.path };
+  const { error } = await supabase.from("organizations").update(patch).eq("id", guard.orgId);
+  if (error) return { ok: false, code: "unknown", error: "Uploaded, but couldn’t save it to your profile." };
+
+  revalidatePath("/manage/settings");
+  revalidatePath("/", "layout"); // public org page
+  return { ok: true };
+}
+
+export const uploadOrganizationLogoAction = (fd: FormData) =>
+  uploadOrgMedia(fd, "logo_path", orgLogoPath, 2 * 1_048_576);
+export const uploadOrganizationCoverAction = (fd: FormData) =>
+  uploadOrgMedia(fd, "cover_image_path", orgCoverPath, 5 * 1_048_576);

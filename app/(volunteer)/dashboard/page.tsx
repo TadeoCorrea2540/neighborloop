@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { CHART, NOTIFS } from "@/lib/data";
 import { iconKeyToEmoji } from "@/lib/categories";
 import { getCurrentProfile, getCurrentUser } from "@/lib/auth/server";
 import { getVolunteerDashboardSummary } from "@/lib/data/applications";
 import { getExploreMissionCards } from "@/lib/data/mission-cards";
+import { getVolunteerImpactSummary } from "@/lib/data/volunteer-impact";
+
+export const dynamic = "force-dynamic";
 
 function fmtDate(iso: string): string {
   const d = new Date(iso);
@@ -16,12 +18,14 @@ export default async function Dashboard() {
   const name = profile?.display_name?.trim();
   const greeting = name ? `Welcome back, ${name} 👋` : "Welcome back 👋";
 
-  const summary = user
-    ? await getVolunteerDashboardSummary(user.id)
-    : { savedCount: 0, pendingCount: 0, approvedCount: 0, totalApplied: 0, nextUpcoming: null };
+  const [summary, impact] = user
+    ? await Promise.all([getVolunteerDashboardSummary(user.id), getVolunteerImpactSummary(user.id)])
+    : [
+        { savedCount: 0, pendingCount: 0, approvedCount: 0, totalApplied: 0, nextUpcoming: null },
+        { completedCount: 0, totalHours: 0, certificatesCount: 0, causes: [], recentCompleted: [] },
+      ];
   const recs = await getExploreMissionCards({ sort: "soonest", limit: 3 }, { userId: user?.id });
 
-  const maxBar = Math.max(...CHART.map((c) => c.value));
   const sub = summary.nextUpcoming
     ? `Next up: ${summary.nextUpcoming.title} · ${fmtDate(summary.nextUpcoming.startsAt)}`
     : "Find a mission this week to get started.";
@@ -56,43 +60,60 @@ export default async function Dashboard() {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 16 }} className="dash-split">
-        {/* chart — placeholder until attendance/hours tracking exists */}
+        {/* real impact */}
         <div style={{ background: "#fff", borderRadius: 18, padding: 22, border: "1px solid rgba(24,32,59,.05)" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
-            <div style={{ fontWeight: 700, fontSize: 16 }}>
-              Hours this week{" "}
-              <span style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-3)", background: "#f1f3f8", padding: "2px 8px", borderRadius: 999, marginLeft: 6 }}>Coming soon</span>
+          <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 16 }}>Your impact</div>
+          <div style={{ display: "flex", gap: 28, flexWrap: "wrap", marginBottom: 18 }}>
+            <div>
+              <div style={{ fontSize: 34, fontWeight: 800, color: "#e8543f" }}>{impact.totalHours}</div>
+              <div style={{ fontSize: 12.5, color: "var(--muted-3)" }}>volunteer hours</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 34, fontWeight: 800, color: "var(--mint)" }}>{impact.completedCount}</div>
+              <div style={{ fontSize: 12.5, color: "var(--muted-3)" }}>completed missions</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 34, fontWeight: 800, color: "var(--blue)" }}>{impact.certificatesCount}</div>
+              <div style={{ fontSize: 12.5, color: "var(--muted-3)" }}>certificates</div>
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 14, height: 170, opacity: 0.55 }}>
-            {CHART.map((b) => (
-              <div key={b.label} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, height: "100%", justifyContent: "flex-end" }}>
-                <div style={{ width: "100%", maxWidth: 34, borderRadius: "9px 9px 4px 4px", background: "linear-gradient(180deg,#ff8a5c,#ff5e7a)", height: `${(b.value / maxBar) * 100}%` }} />
-                <span style={{ fontSize: 12, color: "var(--muted-3)", fontWeight: 600 }}>{b.label}</span>
-              </div>
-            ))}
-          </div>
+          {impact.recentCompleted.length === 0 ? (
+            <div style={{ fontSize: 13.5, color: "var(--muted-3)", background: "#fbfcfe", border: "1px dashed rgba(24,32,59,.14)", borderRadius: 12, padding: "16px", textAlign: "center" }}>
+              Your confirmed hours appear here after organizers check you in. <Link href="/explore" style={{ color: "var(--coral-deep)", fontWeight: 600 }}>Find a mission →</Link>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {impact.recentCompleted.map((m, i) => (
+                <div key={m.attendanceId} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: i < impact.recentCompleted.length - 1 ? "1px solid rgba(24,32,59,.05)" : "none" }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.missionTitle}</div>
+                    <div style={{ fontSize: 12, color: "var(--muted-3)" }}>{m.organizationName}</div>
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: "#e8543f" }}>{m.hoursCredited}h</span>
+                  {m.certificateId && <Link href={`/certificates/${m.certificateId}`} style={{ fontSize: 12, fontWeight: 700, color: "var(--blue)" }}>cert</Link>}
+                </div>
+              ))}
+              <Link href="/impact" style={{ fontSize: 13, fontWeight: 600, color: "var(--muted-1)", paddingTop: 10 }}>View full impact →</Link>
+            </div>
+          )}
         </div>
 
-        {/* activity — placeholder sample */}
+        {/* next mission */}
         <div style={{ background: "#fff", borderRadius: 18, padding: 20, border: "1px solid rgba(24,32,59,.05)" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-            <div style={{ fontWeight: 700, fontSize: 16 }}>
-              Activity{" "}
-              <span style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-3)", background: "#f1f3f8", padding: "2px 8px", borderRadius: 999, marginLeft: 6 }}>Coming soon</span>
+          <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 14 }}>Next mission</div>
+          {summary.nextUpcoming ? (
+            <div style={{ background: "#fbfcfe", border: "1px solid rgba(24,32,59,.06)", borderRadius: 14, padding: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--mint)" }}>✓ Approved</div>
+              <div style={{ fontWeight: 700, fontSize: 15.5, marginTop: 6 }}>{summary.nextUpcoming.title}</div>
+              <div style={{ fontSize: 13, color: "var(--muted-3)", marginTop: 2 }}>📅 {fmtDate(summary.nextUpcoming.startsAt)}</div>
+              <Link href="/my-missions" style={{ display: "inline-block", marginTop: 12, fontSize: 13, fontWeight: 700, color: "#fff", background: "#18203b", padding: "9px 14px", borderRadius: 11 }}>View My Missions</Link>
             </div>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 11, opacity: 0.6 }}>
-            {NOTIFS.map((n, i) => (
-              <div key={i} style={{ display: "flex", gap: 11, alignItems: "flex-start" }}>
-                <span style={{ width: 34, height: 34, borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0, background: n.tile }}>{n.emoji}</span>
-                <div>
-                  <div style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.35 }}>{n.text}</div>
-                  <div style={{ fontSize: 12, color: "var(--muted-3)" }}>{n.time}</div>
-                </div>
-              </div>
-            ))}
-          </div>
+          ) : (
+            <div style={{ fontSize: 13.5, color: "var(--muted-3)", textAlign: "center", padding: "20px 8px" }}>
+              <div style={{ fontSize: 26, marginBottom: 6 }}>🗓️</div>
+              No upcoming mission yet. <Link href="/explore" style={{ color: "var(--coral-deep)", fontWeight: 600 }}>Find one →</Link>
+            </div>
+          )}
         </div>
       </div>
 

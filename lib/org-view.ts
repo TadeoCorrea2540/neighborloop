@@ -18,6 +18,8 @@ import {
   getOrganizationPublicMissions,
 } from "@/lib/data/organizations";
 import { hasPublicSupabaseEnv } from "@/lib/supabase/env";
+import { publicMediaUrl } from "@/lib/storage/urls";
+import { BUCKETS } from "@/lib/storage/storage-paths";
 import type { OrganizationSummary, MissionSummary } from "@/types/domain";
 
 export interface OrgOpp {
@@ -34,6 +36,9 @@ export interface OrgView {
   /** The line under the org name (icon · type · city …). */
   metaLine: string;
   description: string;
+  /** Resolved public URLs, or null → gradient/initial fallback. */
+  logoUrl: string | null;
+  coverUrl: string | null;
   opps: OrgOpp[];
   source: "live" | "mock";
 }
@@ -45,6 +50,8 @@ export const MOCK_ORG_VIEW: OrgView = {
   metaLine: "🌍 Community gardens & food security · San Francisco · ★ 4.9 (212 reviews)",
   description:
     "We turn vacant lots into thriving community gardens that feed neighborhoods and bring people together. Since 2019 we’ve grown food, friendships and a greener San Francisco — one raised bed at a time. 🌱",
+  logoUrl: null,
+  coverUrl: null,
   opps: [
     { title: "Community Garden Planting", meta: "📅 Jun 28 · 📍 0.5 mi · Easy", emoji: "🌱", art: "linear-gradient(135deg,#eaf7cf,#c2e58a)" },
     { title: "Compost Workshop", meta: "📅 Jul 5 · 📍 0.5 mi · Medium", emoji: "🌿", art: "linear-gradient(135deg,#eaf7cf,#c2e58a)" },
@@ -86,6 +93,8 @@ function toOrgView(org: OrganizationSummary, missions: MissionSummary[], cats: M
     verifiedLabel: org.verificationStatus === "verified" ? `✓ Verified ${typeLabel.toLowerCase()}` : null,
     metaLine: metaBits.join(" · "),
     description: org.description || org.shortDescription || "This organization hasn’t added a description yet.",
+    logoUrl: publicMediaUrl(BUCKETS.orgMedia, org.logoPath),
+    coverUrl: publicMediaUrl(BUCKETS.orgMedia, org.coverImagePath),
     opps: missions.map((m) => {
       const cat = m.categoryId ? cats.get(m.categoryId) : undefined;
       return toOpp(m, iconKeyToEmoji(cat?.iconKey), cat?.accent || "#8fe3bd");

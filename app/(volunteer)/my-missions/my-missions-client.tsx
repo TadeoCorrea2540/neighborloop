@@ -9,6 +9,8 @@ import SaveButton from "@/components/volunteer/save-button";
 import AuthToast from "@/components/auth/auth-toast";
 import type { MissionCard } from "@/lib/data/mission-cards";
 import type { ApplicationStatus } from "@/types/database";
+import type { CompletedMission } from "@/lib/data/volunteer-impact";
+import type { CertificateItem } from "@/lib/data/certificates";
 
 export interface MyRow {
   applicationId: string;
@@ -20,7 +22,7 @@ export interface MyRow {
   slug: string | null;
 }
 
-const TABS = ["All", "Upcoming", "Applications", "Saved", "Past", "Cancelled"] as const;
+const TABS = ["All", "Upcoming", "Applications", "Completed", "Certificates", "Saved", "Past", "Cancelled"] as const;
 type Tab = (typeof TABS)[number];
 
 const STATUS_PILL: Record<ApplicationStatus, { label: string; bg: string; color: string }> = {
@@ -44,12 +46,16 @@ export default function MyMissionsClient({
   saved,
   past,
   cancelled,
+  completed,
+  certificates,
 }: {
   upcoming: MyRow[];
   applications: MyRow[];
   saved: MissionCard[];
   past: MyRow[];
   cancelled: MyRow[];
+  completed: CompletedMission[];
+  certificates: CertificateItem[];
 }) {
   const [tab, setTab] = useState<Tab>("Upcoming");
   const router = useRouter();
@@ -73,6 +79,8 @@ export default function MyMissionsClient({
     All: allAppRows.length + savedOnly.length,
     Upcoming: upcoming.length,
     Applications: applications.length,
+    Completed: completed.length,
+    Certificates: certificates.length,
     Saved: saved.length,
     Past: past.length,
     Cancelled: cancelled.length,
@@ -188,12 +196,49 @@ export default function MyMissionsClient({
     );
   }
 
+  function CompletedRow({ m }: { m: CompletedMission }) {
+    return (
+      <div style={{ background: "#fff", border: "1px solid rgba(24,32,59,.06)", borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+        <span style={{ width: 52, height: 52, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0, background: "linear-gradient(135deg,#8fe3bd,#1fae82)" }}>✅</span>
+        <div style={{ flex: 1, minWidth: 180 }}>
+          <div style={{ fontWeight: 700, fontSize: 16 }}>{m.missionTitle}</div>
+          <div style={{ fontSize: 13, color: "#9aa3bd", marginTop: 2 }}>
+            {m.organizationName}{m.startsAt ? ` · 📅 ${fmtDate(m.startsAt)}` : ""}
+          </div>
+        </div>
+        <span style={{ fontSize: 13.5, fontWeight: 800, color: "#e8543f" }}>{m.hoursCredited}h</span>
+        {m.certificateId ? (
+          <Link href={`/certificates/${m.certificateId}`} style={{ fontSize: 13, fontWeight: 700, color: "#fff", background: "#18203b", padding: "9px 13px", borderRadius: 11 }}>View certificate</Link>
+        ) : (
+          <span style={{ fontSize: 12.5, color: "#9aa3bd" }}>Certificate pending</span>
+        )}
+      </div>
+    );
+  }
+
+  function CertRow({ c }: { c: CertificateItem }) {
+    return (
+      <Link href={`/certificates/${c.id}`} style={{ background: "linear-gradient(180deg,#fff,#fffaf8)", border: "1px solid rgba(255,111,94,.25)", borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+        <span style={{ width: 52, height: 52, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0, background: "linear-gradient(135deg,#ffd9cf,#ff8a5c)" }}>🏅</span>
+        <div style={{ flex: 1, minWidth: 180 }}>
+          <div style={{ fontWeight: 700, fontSize: 16 }}>{c.missionTitle}</div>
+          <div style={{ fontSize: 13, color: "#9aa3bd", marginTop: 2 }}>{c.organizationName} · {c.hoursCredited}h · {c.certificateNumber}</div>
+        </div>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--coral-deep,#e8543f)" }}>View →</span>
+      </Link>
+    );
+  }
+
   const rows = tab === "Upcoming" ? upcoming : tab === "Applications" ? applications : tab === "Past" ? past : tab === "Cancelled" ? cancelled : [];
   const isEmpty =
     tab === "All"
       ? counts.All === 0
       : tab === "Saved"
       ? saved.length === 0
+      : tab === "Completed"
+      ? completed.length === 0
+      : tab === "Certificates"
+      ? certificates.length === 0
       : rows.length === 0;
 
   return (
@@ -232,6 +277,10 @@ export default function MyMissionsClient({
           </>
         ) : tab === "Saved" ? (
           saved.map((c) => <SavedCardRow key={c.mission.id} c={c} />)
+        ) : tab === "Completed" ? (
+          completed.map((m) => <CompletedRow key={m.attendanceId} m={m} />)
+        ) : tab === "Certificates" ? (
+          certificates.map((c) => <CertRow key={c.id} c={c} />)
         ) : (
           rows.map((r) => <AppCardRow key={r.applicationId} row={r} />)
         )}

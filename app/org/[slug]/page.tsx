@@ -50,24 +50,28 @@ export default async function OrgProfile({
         <div
           style={{
             height: 180,
-            background: "linear-gradient(120deg,#d6f6e6,#a6e3c2,#8fe3bd)",
+            background: view.coverUrl
+              ? `url('${view.coverUrl}') center/cover no-repeat`
+              : "linear-gradient(120deg,#d6f6e6,#a6e3c2,#8fe3bd)",
             position: "relative",
           }}
         >
-          <span
-            style={{
-              position: "absolute",
-              width: 240,
-              height: 240,
-              borderRadius: "50%",
-              background: "radial-gradient(circle,rgba(255,255,255,.5),transparent 70%)",
-              top: -80,
-              right: 120,
-            }}
-          />
-          <span style={{ position: "absolute", right: 40, bottom: 24, fontSize: 80, opacity: 0.5 }}>
-            🌱
-          </span>
+          {!view.coverUrl && (
+            <>
+              <span
+                style={{
+                  position: "absolute",
+                  width: 240,
+                  height: 240,
+                  borderRadius: "50%",
+                  background: "radial-gradient(circle,rgba(255,255,255,.5),transparent 70%)",
+                  top: -80,
+                  right: 120,
+                }}
+              />
+              <span style={{ position: "absolute", right: 40, bottom: 24, fontSize: 80, opacity: 0.5 }}>🌱</span>
+            </>
+          )}
         </div>
 
         <div style={{ padding: "0 34px 34px", marginTop: -46, position: "relative" }}>
@@ -87,7 +91,9 @@ export default async function OrgProfile({
                   width: 100,
                   height: 100,
                   borderRadius: 26,
-                  background: "linear-gradient(135deg,#8fe3bd,#1fae82)",
+                  background: view.logoUrl
+                    ? `url('${view.logoUrl}') center/cover no-repeat`
+                    : "linear-gradient(135deg,#8fe3bd,#1fae82)",
                   border: "5px solid #fff",
                   boxShadow: "0 16px 32px -16px rgba(24,32,59,.5)",
                   display: "flex",
@@ -96,7 +102,7 @@ export default async function OrgProfile({
                   fontSize: 44,
                 }}
               >
-                🌱
+                {!view.logoUrl && "🌱"}
               </span>
               <div style={{ paddingBottom: 6 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>

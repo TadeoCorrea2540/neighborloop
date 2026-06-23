@@ -13,6 +13,8 @@
 
 import "server-only";
 import { causeArt, type Mission, type MissionDetail } from "@/lib/data";
+import { publicMediaUrl } from "@/lib/storage/urls";
+import { BUCKETS } from "@/lib/storage/storage-paths";
 import { iconKeyToEmoji } from "@/lib/categories";
 import {
   getMissionBySlug,
@@ -118,7 +120,12 @@ function toMissionDetail(
     // No DB column for safety notes yet — generic guidance.
     safety:
       "Please dress for the weather and wear comfortable, closed-toe shoes. Any supplies or training needed are provided on site.",
-    coverGrad: causeArt(mission),
+    coverGrad: (() => {
+      const url = publicMediaUrl(BUCKETS.missionMedia, s.coverImagePath);
+      return url
+        ? `linear-gradient(180deg, rgba(8,12,28,0) 45%, rgba(8,12,28,.4)), url('${url}') center/cover no-repeat`
+        : causeArt(mission);
+    })(),
     date: mission.date,
     time: formatTime(s.startsAt),
     spotsLeft,

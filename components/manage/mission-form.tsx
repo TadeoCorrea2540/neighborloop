@@ -14,7 +14,9 @@ import AuthToast from "@/components/auth/auth-toast";
 import {
   createMissionDraftAction,
   updateMissionAction,
+  uploadMissionCoverAction,
 } from "@/app/manage/missions/actions";
+import ImageUpload from "@/components/manage/image-upload";
 import type { MissionFull } from "@/types/domain";
 
 interface CategoryOption {
@@ -60,7 +62,6 @@ interface FormState {
   summary: string;
   description: string;
   category_id: string;
-  cover_image_path: string;
   starts_at: string;
   ends_at: string;
   timezone: string;
@@ -85,7 +86,7 @@ function initialState(mission: MissionFull | null): FormState {
     typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC" : "UTC";
   if (!mission) {
     return {
-      title: "", summary: "", description: "", category_id: "", cover_image_path: "",
+      title: "", summary: "", description: "", category_id: "",
       starts_at: "", ends_at: "", timezone: tz, estimated_hours: "",
       is_virtual: false, location_label: "", city: "", country_code: "",
       volunteer_capacity: "", minimum_age: "", difficulty: "", is_beginner_friendly: true,
@@ -97,7 +98,6 @@ function initialState(mission: MissionFull | null): FormState {
     summary: mission.summary,
     description: mission.description ?? "",
     category_id: mission.categoryId ?? "",
-    cover_image_path: mission.coverImagePath ?? "",
     starts_at: toLocalInput(mission.startsAt),
     ends_at: toLocalInput(mission.endsAt),
     timezone: mission.timezone || tz,
@@ -121,7 +121,7 @@ function initialState(mission: MissionFull | null): FormState {
 function buildFormData(s: FormState): FormData {
   const fd = new FormData();
   const strings: (keyof FormState)[] = [
-    "title", "summary", "description", "category_id", "cover_image_path",
+    "title", "summary", "description", "category_id",
     "starts_at", "ends_at", "timezone", "estimated_hours",
     "location_label", "city", "country_code", "volunteer_capacity",
     "minimum_age", "difficulty", "application_mode",
@@ -140,10 +140,12 @@ export default function MissionForm({
   mode,
   mission,
   categories,
+  coverImageUrl = null,
 }: {
   mode: Mode;
   mission: MissionFull | null;
   categories: CategoryOption[];
+  coverImageUrl?: string | null;
 }) {
   const router = useRouter();
   const [s, setS] = useState<FormState>(() => initialState(mission));
@@ -249,11 +251,23 @@ export default function MissionForm({
               ))}
             </select>
           </div>
-          <div>
-            <label style={labelStyle} htmlFor="cover_image_path">Cover image path <span style={{ fontWeight: 500, color: "var(--muted-3)" }}>(optional)</span></label>
-            <input id="cover_image_path" style={inputStyle} value={s.cover_image_path} onChange={(e) => set("cover_image_path", e.target.value)} placeholder="e.g. covers/garden.jpg" />
-          </div>
+          <div />
         </div>
+
+        {mode === "edit" && mission ? (
+          <div style={{ marginTop: 16 }}>
+            <ImageUpload
+              label="Cover image"
+              currentUrl={coverImageUrl}
+              hint="Shown on Explore and the mission page. Up to 5MB (JPG/PNG/WebP). Falls back to a category gradient if none."
+              upload={(fd) => uploadMissionCoverAction(mission.id, fd)}
+            />
+          </div>
+        ) : (
+          <p style={{ fontSize: 12.5, color: "var(--muted-3)", marginTop: 6 }}>
+            🖼️ You can add a cover image after saving, from the edit page. Until then a category gradient is used.
+          </p>
+        )}
       </div>
 
       {/* When */}

@@ -4,6 +4,7 @@ import { getVerificationDetailById } from "@/lib/data/admin-verification";
 import { UUID_RE } from "@/lib/auth/require-admin";
 import { fmtDate, VerificationBadge, MissionStatusBadge } from "@/components/admin/badges";
 import VerificationDecision from "@/components/admin/verification-decision";
+import { signedDocUrl } from "@/lib/storage/urls";
 import type { MissionStatus } from "@/types/database";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,7 @@ export default async function VerificationDetailPage({ params }: { params: { id:
   const detail = await getVerificationDetailById(params.id);
   if (!detail) notFound();
   const { item, org, owner, missions, history } = detail;
+  const docUrl = await signedDocUrl(detail.documentPath);
 
   return (
     <div style={{ maxWidth: 980, margin: "0 auto" }}>
@@ -54,12 +56,18 @@ export default async function VerificationDetailPage({ params }: { params: { id:
             </div>
           </div>
 
-          {/* document placeholder — uploads are a later phase */}
+          {/* supporting document (private; signed URL) */}
           <div style={{ ...card, background: "#fbfcfe" }}>
-            <h3 style={{ fontSize: 15, fontWeight: 800, margin: "0 0 6px" }}>Documents</h3>
-            <p style={{ fontSize: 13, color: "var(--muted-2)", margin: 0, lineHeight: 1.5 }}>
-              📄 Verification documents are not implemented yet. Review is currently based on the organization profile, links, and admin judgment.
-            </p>
+            <h3 style={{ fontSize: 15, fontWeight: 800, margin: "0 0 6px" }}>Supporting document</h3>
+            {docUrl ? (
+              <a href={docUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13.5, fontWeight: 700, color: "var(--blue)" }}>
+                📄 View submitted document ↗ <span style={{ fontWeight: 500, color: "var(--muted-3)" }}>(private link, expires shortly)</span>
+              </a>
+            ) : (
+              <p style={{ fontSize: 13, color: "var(--muted-2)", margin: 0, lineHeight: 1.5 }}>
+                No document attached. Review is based on the organization profile, links, and admin judgment.
+              </p>
+            )}
           </div>
 
           <div style={card}>

@@ -1,5 +1,11 @@
+import Link from "next/link";
 import { getCurrentProfile, getCurrentUser } from "@/lib/auth/server";
 import { getVolunteerDashboardSummary } from "@/lib/data/applications";
+import { getVolunteerImpactSummary } from "@/lib/data/volunteer-impact";
+import { getVolunteerCertificates } from "@/lib/data/certificates";
+import { fmtDate } from "@/components/admin/badges";
+
+export const dynamic = "force-dynamic";
 
 const COLLECTION = [
   { emoji: "🌟" }, { emoji: "⏱️" }, { emoji: "🤝" }, { emoji: "🌍" },
@@ -16,9 +22,17 @@ function ComingSoon() {
 
 export default async function Impact() {
   const [profile, user] = await Promise.all([getCurrentProfile(), getCurrentUser()]);
-  const summary = user
-    ? await getVolunteerDashboardSummary(user.id)
-    : { savedCount: 0, pendingCount: 0, approvedCount: 0, totalApplied: 0, nextUpcoming: null };
+  const [summary, impact, certificates] = user
+    ? await Promise.all([
+        getVolunteerDashboardSummary(user.id),
+        getVolunteerImpactSummary(user.id),
+        getVolunteerCertificates(user.id),
+      ])
+    : [
+        { savedCount: 0, pendingCount: 0, approvedCount: 0, totalApplied: 0, nextUpcoming: null },
+        { completedCount: 0, totalHours: 0, certificatesCount: 0, causes: [], recentCompleted: [] },
+        [],
+      ];
 
   const name = profile?.display_name?.trim() || "Neighbor";
   const city = profile?.city?.trim();
@@ -26,10 +40,10 @@ export default async function Impact() {
   const interests = profile?.interests ?? [];
 
   const stats = [
-    { v: summary.totalApplied, l: "missions applied", c: "#3a8bf0" },
-    { v: summary.approvedCount, l: "approved", c: "#1fae82" },
-    { v: summary.savedCount, l: "saved", c: "#7a6bf5" },
-    { v: summary.pendingCount, l: "pending", c: "#f1543f" },
+    { v: impact.totalHours, l: "volunteer hours", c: "#e8543f" },
+    { v: impact.completedCount, l: "completed", c: "#1fae82" },
+    { v: summary.approvedCount, l: "approved", c: "#3a8bf0" },
+    { v: summary.totalApplied, l: "applied", c: "#7a6bf5" },
   ];
 
   return (
@@ -51,9 +65,7 @@ export default async function Impact() {
           </div>
         </div>
 
-        {bio && (
-          <p style={{ fontSize: 15, color: "#4a5475", lineHeight: 1.6, maxWidth: 620, margin: "20px 0 0" }}>{bio}</p>
-        )}
+        {bio && <p style={{ fontSize: 15, color: "#4a5475", lineHeight: 1.6, maxWidth: 620, margin: "20px 0 0" }}>{bio}</p>}
 
         {interests.length > 0 && (
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "16px 0 24px" }}>
@@ -63,7 +75,6 @@ export default async function Impact() {
           </div>
         )}
 
-        {/* real activity counts */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, margin: interests.length ? "0 0 26px" : "24px 0 26px" }} className="card-grid-4">
           {stats.map((s) => (
             <div key={s.l} style={{ background: "#fbfcfe", border: "1px solid rgba(24,32,59,.06)", borderRadius: 18, padding: 20 }}>
@@ -74,35 +85,67 @@ export default async function Impact() {
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 20 }} className="detail-split">
-          {/* hours timeline — placeholder */}
+          {/* real hours & mission history */}
           <div>
-            <h3 style={{ fontSize: 18, fontWeight: 800, margin: "0 0 16px", display: "flex", alignItems: "center" }}>
-              Hours &amp; mission history <ComingSoon />
-            </h3>
-            <div style={{ border: "1px dashed rgba(24,32,59,.16)", borderRadius: 16, padding: "32px 20px", textAlign: "center", color: "var(--muted-2)", background: "#fbfcfe" }}>
-              <div style={{ fontSize: 30, marginBottom: 8 }}>⏱️</div>
-              <div style={{ fontWeight: 700, color: "var(--ink)" }}>Verified hours are on the way</div>
-              <div style={{ fontSize: 13.5, marginTop: 4 }}>Once organizers check you in at missions, your logged hours and history will appear here.</div>
-            </div>
+            <h3 style={{ fontSize: 18, fontWeight: 800, margin: "0 0 16px" }}>Hours &amp; mission history</h3>
+            {impact.recentCompleted.length === 0 ? (
+              <div style={{ border: "1px dashed rgba(24,32,59,.16)", borderRadius: 16, padding: "32px 20px", textAlign: "center", color: "var(--muted-2)", background: "#fbfcfe" }}>
+                <div style={{ fontSize: 30, marginBottom: 8 }}>⏱️</div>
+                <div style={{ fontWeight: 700, color: "var(--ink)" }}>No confirmed hours yet</div>
+                <div style={{ fontSize: 13.5, marginTop: 4 }}>Once organizers confirm your attendance, your hours and completed missions appear here.</div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {impact.recentCompleted.map((m) => (
+                  <div key={m.attendanceId} style={{ display: "flex", alignItems: "center", gap: 12, background: "#fbfcfe", border: "1px solid rgba(24,32,59,.06)", borderRadius: 14, padding: "12px 14px" }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>{m.missionTitle}</div>
+                      <div style={{ fontSize: 12.5, color: "var(--muted-3)" }}>{m.organizationName} · {fmtDate(m.startsAt)}</div>
+                    </div>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: "#e8543f" }}>{m.hoursCredited}h</span>
+                    {m.certificateId && (
+                      <Link href={`/certificates/${m.certificateId}`} style={{ fontSize: 12, fontWeight: 700, color: "#fff", background: "#18203b", padding: "6px 11px", borderRadius: 9 }}>Certificate</Link>
+                    )}
+                  </div>
+                ))}
+                {impact.causes.length > 0 && (
+                  <div style={{ fontSize: 12.5, color: "var(--muted-3)", marginTop: 2 }}>Causes supported: {impact.causes.join(" · ")}</div>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* badges + certs — placeholder */}
+          {/* certificates (real) + badges (coming soon) */}
           <div>
-            <h3 style={{ fontSize: 18, fontWeight: 800, margin: "0 0 16px", display: "flex", alignItems: "center" }}>
+            <h3 style={{ fontSize: 18, fontWeight: 800, margin: "0 0 14px" }}>Certificates</h3>
+            {certificates.length === 0 ? (
+              <div style={{ border: "1px dashed rgba(24,32,59,.16)", borderRadius: 14, padding: "20px", textAlign: "center", fontSize: 13.5, color: "var(--muted-2)", background: "#fbfcfe", marginBottom: 24 }}>
+                Certificates appear here after organizers confirm your attendance.
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
+                {certificates.map((c) => (
+                  <Link key={c.id} href={`/certificates/${c.id}`} style={{ display: "flex", alignItems: "center", gap: 10, background: "linear-gradient(180deg,#fff,#fffaf8)", border: "1px solid rgba(255,111,94,.25)", borderRadius: 14, padding: "12px 14px" }}>
+                    <span style={{ fontSize: 20 }}>🏅</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: 13.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.missionTitle}</div>
+                      <div style={{ fontSize: 12, color: "var(--muted-3)" }}>{c.hoursCredited}h · {c.certificateNumber}</div>
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "var(--coral-deep,#e8543f)" }}>View →</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            <h3 style={{ fontSize: 18, fontWeight: 800, margin: "0 0 14px", display: "flex", alignItems: "center" }}>
               Badges <ComingSoon />
             </h3>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 24, opacity: 0.55 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, opacity: 0.55 }}>
               {COLLECTION.map((b, i) => (
                 <div key={i} style={{ aspectRatio: "1", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, background: "#eef0f5", filter: "grayscale(.7)" }}>
                   {b.emoji}
                 </div>
               ))}
-            </div>
-            <h3 style={{ fontSize: 18, fontWeight: 800, margin: "0 0 14px", display: "flex", alignItems: "center" }}>
-              Certificates <ComingSoon />
-            </h3>
-            <div style={{ border: "1px dashed rgba(24,32,59,.16)", borderRadius: 14, padding: "20px", textAlign: "center", fontSize: 13.5, color: "var(--muted-2)", background: "#fbfcfe" }}>
-              Earn certificates by completing verified missions.
             </div>
           </div>
         </div>

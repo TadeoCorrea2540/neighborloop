@@ -367,10 +367,12 @@ export default function ExploreClient({
                               padding: "0 16px",
                               gap: 10,
                               fontSize: 30,
-                              background: `linear-gradient(135deg, ${accent}33, ${accent})`,
+                              background: card.coverImageUrl
+                                ? `linear-gradient(180deg, rgba(8,12,28,0) 40%, rgba(8,12,28,.45)), url('${card.coverImageUrl}') center/cover no-repeat`
+                                : `linear-gradient(135deg, ${accent}33, ${accent})`,
                             }}
                           >
-                            {iconKeyToEmoji(card.categoryIconKey)}
+                            {!card.coverImageUrl && iconKeyToEmoji(card.categoryIconKey)}
                             {card.applicationStatus && (
                               <span
                                 style={{

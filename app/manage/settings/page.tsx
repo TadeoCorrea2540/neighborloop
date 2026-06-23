@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { requireOrganizer } from "@/lib/auth/require-organizer";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { publicMediaUrl } from "@/lib/storage/urls";
+import { BUCKETS } from "@/lib/storage/storage-paths";
 import type { VerificationStatus } from "@/types/database";
 import SettingsClient from "./settings-client";
 import RequestVerificationButton from "@/components/manage/request-verification-button";
@@ -39,7 +41,7 @@ export default async function SettingsPage() {
   const supabase = getServerSupabase();
   const { data } = await supabase
     .from("organizations")
-    .select("id, name, slug, short_description, description, website_url, instagram_url, city, country_code, is_public, verification_status, verification_note")
+    .select("id, name, slug, short_description, description, website_url, instagram_url, city, country_code, is_public, verification_status, verification_note, logo_path, cover_image_path")
     .eq("id", guard.orgId)
     .maybeSingle();
 
@@ -49,7 +51,10 @@ export default async function SettingsPage() {
     description: string | null; website_url: string | null; instagram_url: string | null;
     city: string | null; country_code: string | null; is_public: boolean;
     verification_status: VerificationStatus; verification_note: string | null;
+    logo_path: string | null; cover_image_path: string | null;
   };
+  const logoUrl = publicMediaUrl(BUCKETS.orgMedia, r.logo_path);
+  const coverUrl = publicMediaUrl(BUCKETS.orgMedia, r.cover_image_path);
   const org: OrgSettings = {
     id: r.id, name: r.name, slug: r.slug, shortDescription: r.short_description,
     description: r.description, websiteUrl: r.website_url, instagramUrl: r.instagram_url,
@@ -80,7 +85,7 @@ export default async function SettingsPage() {
         )}
       </div>
 
-      <SettingsClient org={org} />
+      <SettingsClient org={org} logoUrl={logoUrl} coverUrl={coverUrl} />
     </div>
   );
 }

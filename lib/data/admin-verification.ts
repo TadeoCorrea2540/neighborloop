@@ -8,6 +8,7 @@
  */
 import "server-only";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { getServerDb } from "@/lib/supabase/db";
 import type { VerificationStatus, OrganizationType } from "@/types/database";
 
 function fail(context: string, message: string): never {
@@ -49,6 +50,7 @@ export interface VerificationDetail {
   owner: { displayName: string; city: string | null } | null;
   missions: { id: string; title: string; status: string; startsAt: string }[];
   history: AdminVerificationItem[];
+  documentPath: string | null;
 }
 
 type RawVerif = {
@@ -126,6 +128,14 @@ export async function getVerificationDetailById(id: string): Promise<Verificatio
   if (!data) return null;
   const item = toItem(data as unknown as RawVerif);
 
+  // document_path isn't in generated types yet → read via the loosened client.
+  const { data: docRow } = await getServerDb()
+    .from("organization_verifications")
+    .select("document_path")
+    .eq("id", id)
+    .maybeSingle();
+  const documentPath = (docRow as { document_path: string | null } | null)?.document_path ?? null;
+
   // Full org profile (admin can read any org).
   const { data: orgRow } = await supabase
     .from("organizations")
@@ -170,6 +180,7 @@ export async function getVerificationDetailById(id: string): Promise<Verificatio
     owner: owner ? { displayName: owner.display_name, city: owner.city } : null,
     missions,
     history,
+    documentPath,
   };
 }
 

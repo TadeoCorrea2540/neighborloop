@@ -8,6 +8,8 @@ import { getApplicationsForMission } from "@/lib/data/organization-applications"
 import MissionForm from "@/components/manage/mission-form";
 import MissionStatusActions from "@/components/manage/mission-status-actions";
 import PrivateDetailsForm from "@/components/manage/private-details-form";
+import { publicMediaUrl } from "@/lib/storage/urls";
+import { BUCKETS } from "@/lib/storage/storage-paths";
 
 export const dynamic = "force-dynamic";
 
@@ -49,7 +51,12 @@ export default async function EditMissionPage({ params }: { params: { id: string
         <MissionStatusActions missionId={mission.id} status={mission.status} publicSlug={mission.slug} />
       </div>
 
-      <MissionForm mode="edit" mission={mission} categories={categories.map((c) => ({ id: c.id, name: c.name }))} />
+      <MissionForm
+        mode="edit"
+        mission={mission}
+        categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+        coverImageUrl={publicMediaUrl(BUCKETS.missionMedia, mission.coverImagePath)}
+      />
 
       <div style={{ marginTop: 18 }}>
         <PrivateDetailsForm missionId={mission.id} details={details} />

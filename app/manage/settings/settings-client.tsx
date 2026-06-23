@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import AuthToast from "@/components/auth/auth-toast";
-import { updateOrganizationAction } from "./actions";
+import { updateOrganizationAction, uploadOrganizationLogoAction, uploadOrganizationCoverAction } from "./actions";
+import ImageUpload from "@/components/manage/image-upload";
 import type { OrgSettings } from "./page";
 
 const labelStyle: React.CSSProperties = { fontSize: 13, fontWeight: 700, color: "#3a425e", display: "block", marginBottom: 6 };
@@ -12,7 +13,7 @@ const inputStyle: React.CSSProperties = {
   borderRadius: 12, padding: "11px 13px", fontSize: 14, outline: "none", background: "#fbfcfe",
 };
 
-export default function SettingsClient({ org }: { org: OrgSettings }) {
+export default function SettingsClient({ org, logoUrl, coverUrl }: { org: OrgSettings; logoUrl: string | null; coverUrl: string | null }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [toast, setToast] = useState<{ msg: string; tone: "error" | "success" } | null>(null);
@@ -59,6 +60,9 @@ export default function SettingsClient({ org }: { org: OrgSettings }) {
 
   return (
     <div style={{ background: "#fff", borderRadius: 18, border: "1px solid rgba(24,32,59,.06)", padding: 24 }}>
+      <ImageUpload label="Logo" shape="circle" currentUrl={logoUrl} hint="Square image, up to 2MB (JPG/PNG/WebP)." upload={uploadOrganizationLogoAction} />
+      <ImageUpload label="Cover image" currentUrl={coverUrl} hint="Wide banner, up to 5MB." upload={uploadOrganizationCoverAction} />
+
       <div style={{ marginBottom: 16 }}>
         <label style={labelStyle} htmlFor="name">Organization name</label>
         <input id="name" style={inputStyle} value={f.name} onChange={(e) => set("name", e.target.value)} maxLength={120} />

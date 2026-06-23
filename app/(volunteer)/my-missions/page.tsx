@@ -2,18 +2,24 @@ import { requireAuth } from "@/lib/auth/server";
 import { getVolunteerApplicationsWithMissions } from "@/lib/data/applications";
 import { getVolunteerSavedMissions } from "@/lib/data/profiles";
 import { getMissionCards, type MissionCard } from "@/lib/data/mission-cards";
+import { getVolunteerAttendanceHistory } from "@/lib/data/volunteer-impact";
+import { getVolunteerCertificates } from "@/lib/data/certificates";
 import type { MissionSummary } from "@/types/domain";
 import type { ApplicationStatus } from "@/types/database";
 import MyMissionsClient, { type MyRow } from "./my-missions-client";
+
+export const dynamic = "force-dynamic";
 
 const ACTIVE: ApplicationStatus[] = ["pending", "approved", "waitlisted"];
 
 export default async function MyMissions() {
   const user = await requireAuth();
 
-  const [apps, saved] = await Promise.all([
+  const [apps, saved, completed, certificates] = await Promise.all([
     getVolunteerApplicationsWithMissions(user.id),
     getVolunteerSavedMissions(user.id),
+    getVolunteerAttendanceHistory(user.id),
+    getVolunteerCertificates(user.id),
   ]);
 
   // Enrich all referenced missions with org/category/spots via the card pipeline.
@@ -60,6 +66,8 @@ export default async function MyMissions() {
       saved={savedCards}
       past={past}
       cancelled={cancelled}
+      completed={completed}
+      certificates={certificates}
     />
   );
 }

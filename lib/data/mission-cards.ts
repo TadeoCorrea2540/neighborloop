@@ -13,6 +13,8 @@ import {
   type MissionFilters,
 } from "@/lib/data/missions";
 import { getSavedMissionIdsForUser } from "@/lib/data/profiles";
+import { publicMediaUrl } from "@/lib/storage/urls";
+import { BUCKETS } from "@/lib/storage/storage-paths";
 import type { MissionSummary } from "@/types/domain";
 import type { ApplicationStatus } from "@/types/database";
 
@@ -23,6 +25,8 @@ export interface MissionCard {
   categoryName: string | null;
   categoryIconKey: string | null;
   categoryAccentColor: string | null;
+  /** Resolved public URL for the mission cover, or null → use gradient fallback. */
+  coverImageUrl: string | null;
   /** null = unlimited capacity. */
   spotsLeft: number | null;
   isFull: boolean;
@@ -95,6 +99,7 @@ export async function getMissionCards(
       categoryName: cat?.name ?? null,
       categoryIconKey: cat?.iconKey ?? null,
       categoryAccentColor: cat?.accentColor ?? null,
+      coverImageUrl: publicMediaUrl(BUCKETS.missionMedia, m.coverImagePath),
       spotsLeft,
       isFull: spotsLeft === 0,
       isSaved: savedSet.has(m.id),
