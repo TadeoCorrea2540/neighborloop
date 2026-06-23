@@ -1,17 +1,40 @@
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import { getAdminDashboardSummary } from "@/lib/data/admin-dashboard";
+import {
+  getAdminImpactAdditions,
+  getTopOrganizationsByHours,
+  getTopMissionsByHours,
+  getCategoryParticipation,
+  getAdminModerationSummary,
+} from "@/lib/data/analytics/admin";
+import { iconKeyToEmoji } from "@/lib/categories";
 import { fmtDate, VerificationBadge, ReportStatusBadge } from "@/components/admin/badges";
 
 export const dynamic = "force-dynamic";
 
-const card: React.CSSProperties = { background: "#fff", borderRadius: 16, padding: 18, border: "1px solid rgba(24,32,59,.05)" };
+const card: CSSProperties = { background: "#fff", borderRadius: 16, padding: 18, border: "1px solid rgba(24,32,59,.05)" };
 
 function readableEvent(eventType: string): string {
   return eventType.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export default async function AdminDashboard() {
-  const s = await getAdminDashboardSummary();
+  const [s, impact, topOrgs, topMissions, categories, moderation] = await Promise.all([
+    getAdminDashboardSummary(),
+    getAdminImpactAdditions(),
+    getTopOrganizationsByHours("all_time", 6),
+    getTopMissionsByHours("all_time", 6),
+    getCategoryParticipation(),
+    getAdminModerationSummary(),
+  ]);
+
+  const impactCards = [
+    { label: "Volunteer hours", value: impact.totalHours, color: "#e8543f" },
+    { label: "Completed attendances", value: impact.completedAttendances, color: "var(--mint)" },
+    { label: "Certificates issued", value: impact.certificatesIssued, color: "var(--lav)" },
+    { label: "Active volunteers", value: impact.uniqueActiveVolunteers, color: "var(--blue)" },
+  ];
 
   const metrics = [
     { label: "Total users", value: s.totalUsers, sub: `${s.volunteers} volunteers · ${s.organizers} organizers`, color: "var(--ink)" },
@@ -38,6 +61,105 @@ export default async function AdminDashboard() {
             <div style={{ fontSize: 12, color: "var(--muted-3)", fontWeight: 600, marginTop: 2 }}>{m.sub}</div>
           </div>
         ))}
+      </div>
+
+      {/* platform impact (real) */}
+      <div style={{ fontWeight: 700, fontSize: 16, margin: "2px 0 12px" }}>Platform impact</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 18 }} className="card-grid-4">
+        {impactCards.map((m) => (
+          <div key={m.label} style={card}>
+            <div style={{ fontSize: 13, color: "var(--muted-3)", fontWeight: 600 }}>{m.label}</div>
+            <div style={{ fontSize: 28, fontWeight: 800, marginTop: 6, color: m.color }}>{m.value.toLocaleString()}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* leaderboards */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }} className="dash-split">
+        <div style={{ ...card, padding: 20 }}>
+          <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 14 }}>Organizations with most impact</div>
+          {topOrgs.length === 0 ? (
+            <p style={{ fontSize: 13.5, color: "var(--muted-3)", margin: "6px 0" }}>No confirmed hours yet.</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {topOrgs.map((o, i) => (
+                <div key={o.orgId} style={{ display: "flex", alignItems: "center", gap: 11, padding: "9px 0", borderBottom: i < topOrgs.length - 1 ? "1px solid rgba(24,32,59,.05)" : "none" }}>
+                  <span style={{ width: 22, fontSize: 13, fontWeight: 800, color: "var(--muted-3)" }}>{i + 1}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.name}</div>
+                    <div style={{ fontSize: 12, color: "var(--muted-3)" }}>{o.completedAttendances} completed</div>
+                  </div>
+                  <span style={{ fontSize: 14, fontWeight: 800, color: "#e8543f" }}>{o.hours}h</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div style={{ ...card, padding: 20 }}>
+          <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 14 }}>Missions with most hours</div>
+          {topMissions.length === 0 ? (
+            <p style={{ fontSize: 13.5, color: "var(--muted-3)", margin: "6px 0" }}>No confirmed hours yet.</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {topMissions.map((m, i) => (
+                <div key={m.missionId} style={{ display: "flex", alignItems: "center", gap: 11, padding: "9px 0", borderBottom: i < topMissions.length - 1 ? "1px solid rgba(24,32,59,.05)" : "none" }}>
+                  <span style={{ width: 22, fontSize: 13, fontWeight: 800, color: "var(--muted-3)" }}>{i + 1}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.title}</div>
+                    <div style={{ fontSize: 12, color: "var(--muted-3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.orgName}</div>
+                  </div>
+                  <span style={{ fontSize: 14, fontWeight: 800, color: "#e8543f" }}>{m.hours}h</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* category participation + moderation summary */}
+      <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 16, marginBottom: 16 }} className="dash-split">
+        <div style={{ ...card, padding: 20 }}>
+          <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 14 }}>Participation by cause</div>
+          {categories.length === 0 ? (
+            <p style={{ fontSize: 13.5, color: "var(--muted-3)", margin: "6px 0" }}>No category data yet.</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+              {categories.slice(0, 6).map((c) => {
+                const max = Math.max(1, ...categories.map((x) => x.hours));
+                return (
+                  <div key={c.categoryId}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 5 }}>
+                      <span style={{ fontWeight: 600 }}>{iconKeyToEmoji(c.iconKey)} {c.name}</span>
+                      <span style={{ color: "var(--muted-3)", fontWeight: 700 }}>{c.hours}h · {c.missions} mission{c.missions === 1 ? "" : "s"}</span>
+                    </div>
+                    <div style={{ height: 8, borderRadius: 99, background: "#eef0f5", overflow: "hidden" }}>
+                      <span style={{ display: "block", height: "100%", width: `${Math.max(3, (c.hours / max) * 100)}%`, borderRadius: 99, background: c.accentColor ?? "#1fae82" }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div style={{ ...card, padding: 20 }}>
+          <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 14 }}>Moderation summary</div>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {[
+              { l: "Open reports", v: moderation.openReports, c: moderation.openReports > 0 ? "#c0392b" : "var(--ink)" },
+              { l: "Reviewing", v: moderation.reviewingReports, c: "var(--ink)" },
+              { l: "Resolved", v: moderation.resolvedReports, c: "var(--mint)" },
+              { l: "Dismissed", v: moderation.dismissedReports, c: "var(--muted-1)" },
+              { l: "Audit events", v: moderation.auditEvents, c: "var(--ink)" },
+            ].map((r, i, arr) => (
+              <div key={r.l} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", padding: "10px 0", borderBottom: i < arr.length - 1 ? "1px solid rgba(24,32,59,.05)" : "none" }}>
+                <span style={{ fontSize: 13.5, fontWeight: 600 }}>{r.l}</span>
+                <span style={{ fontSize: 16, fontWeight: 800, color: r.c }}>{r.v.toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }} className="dash-split">
