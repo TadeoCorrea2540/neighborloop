@@ -9,10 +9,11 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { getBrowserSupabase } from "@/lib/supabase/browser";
-import { fetchHeaderNotifications } from "@/app/header/actions";
+import { fetchHeaderNotifications, fetchUnreadNotificationCount } from "@/app/header/actions";
 import { markNotificationReadAction, markAllNotificationsReadAction } from "@/app/notifications/actions";
 import type { NotificationItem, NotificationType } from "@/lib/data/notifications";
 import { panelStyle, Caret, MenuHeader, MenuEmpty, MenuSkeleton, Badge } from "./menu-ui";
+import { useFocusPoll } from "./use-focus-poll";
 
 const ICON: Record<NotificationType, string> = {
   application_submitted: "📋",
@@ -72,6 +73,10 @@ export default function NotificationsMenu({ initialCount, userId }: { initialCou
     }
     return () => { if (channel) getBrowserSupabase().removeChannel(channel); };
   }, [userId]);
+
+  // Keep the badge fresh without relying on realtime: refresh on tab focus +
+  // every 30s. (While open, the list is already current and the badge is 0.)
+  useFocusPoll(() => { if (!open) fetchUnreadNotificationCount().then(setCount); }, 30_000);
 
   // close on outside click / Escape
   useEffect(() => {

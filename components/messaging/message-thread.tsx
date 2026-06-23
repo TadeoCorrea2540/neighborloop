@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { getBrowserSupabase } from "@/lib/supabase/browser";
 import { sendMessageAction, markConversationReadAction } from "@/app/messages/actions";
 import AuthToast from "@/components/auth/auth-toast";
+import { useFocusPoll } from "@/components/header/use-focus-poll";
 import type { MessageItem } from "@/lib/data/messages";
 import type { ConversationDetail } from "@/lib/data/conversations";
 
@@ -64,6 +65,10 @@ export default function MessageThread({
     } catch { /* realtime optional */ }
     return () => { if (channel) getBrowserSupabase().removeChannel(channel); };
   }, [conversation.id, router]);
+
+  // Backstop for realtime: pull new messages when the tab regains focus
+  // (skip mid-send so an optimistic bubble isn't dropped before it commits).
+  useFocusPoll(() => { if (!pending) router.refresh(); });
 
   function send() {
     const text = body.trim();
