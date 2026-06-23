@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SessionProvider, type SessionAccount } from "@/components/session-provider";
+import ChunkReloadGuard from "@/components/chunk-reload-guard";
 import { getCurrentUser, getCurrentUserRole } from "@/lib/auth/server";
 
 export const metadata: Metadata = {
@@ -39,6 +40,7 @@ export default async function RootLayout({
         />
       </head>
       <body>
+        <ChunkReloadGuard />
         <SessionProvider account={account}>{children}</SessionProvider>
       </body>
     </html>
