@@ -31,6 +31,7 @@ export interface ConversationDetail {
   organizationName: string;
   counterpartName: string;
   applicationStatus: string | null;
+  unreadCount: number; // unread incoming messages for the viewer (instant badge decrement on open)
 }
 
 type ConvRow = {
@@ -169,6 +170,24 @@ export async function getConversationByIdForUser(conversationId: string, userId:
   const lastRead = new Map<string, string | null>();
   const [item] = await decorate([data as ConvRow], lastRead, userId);
   if (!item) return null;
+
+  // Unread incoming messages in this conversation (head count — no rows transferred).
+  const { data: partRow } = await db
+    .from("conversation_participants")
+    .select("last_read_at")
+    .eq("conversation_id", conversationId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  const lastReadAt = (partRow as { last_read_at: string | null } | null)?.last_read_at ?? null;
+  let unreadQuery = db
+    .from("messages")
+    .select("id", { count: "exact", head: true })
+    .eq("conversation_id", conversationId)
+    .neq("sender_id", userId)
+    .eq("is_system_message", false);
+  if (lastReadAt) unreadQuery = unreadQuery.gt("created_at", lastReadAt);
+  const { count } = await unreadQuery;
+
   return {
     id: item.id,
     status: item.status,
@@ -178,5 +197,6 @@ export async function getConversationByIdForUser(conversationId: string, userId:
     organizationName: item.organizationName,
     counterpartName: item.counterpartName,
     applicationStatus: item.applicationStatus,
+    unreadCount: count ?? 0,
   };
 }

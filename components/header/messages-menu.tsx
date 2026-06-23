@@ -11,7 +11,7 @@ import { fetchHeaderConversations, fetchUnreadMessageCount } from "@/app/header/
 import type { ConversationListItem } from "@/lib/data/conversations";
 import { panelStyle, Caret, MenuHeader, MenuEmpty, MenuSkeleton, Badge } from "./menu-ui";
 import { useFocusPoll } from "./use-focus-poll";
-import { BADGE_REFRESH_EVENT } from "@/lib/badge-events";
+import { BADGE_REFRESH_EVENT, MESSAGES_READ_EVENT } from "@/lib/badge-events";
 
 function timeAgo(iso: string | null): string {
   if (!iso) return "";
@@ -52,6 +52,17 @@ export default function MessagesMenu({
     window.addEventListener(BADGE_REFRESH_EVENT, h);
     return () => window.removeEventListener(BADGE_REFRESH_EVENT, h);
   }, [open]);
+
+  // Speed-of-light: opening a conversation subtracts its unread count immediately
+  // (no server round-trip) — persistence happens in the background.
+  useEffect(() => {
+    const h = (e: Event) => {
+      const n = (e as CustomEvent<{ count: number }>).detail?.count ?? 0;
+      if (n > 0) setCount((c) => Math.max(0, c - n));
+    };
+    window.addEventListener(MESSAGES_READ_EVENT, h);
+    return () => window.removeEventListener(MESSAGES_READ_EVENT, h);
+  }, []);
 
   // close on outside click / Escape
   useEffect(() => {

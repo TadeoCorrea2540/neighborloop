@@ -11,7 +11,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getBrowserSupabase } from "@/lib/supabase/browser";
 import { sendMessageAction, markConversationReadAction } from "@/app/messages/actions";
-import { emitBadgeRefresh } from "@/lib/badge-events";
+import { emitBadgeRefresh, emitMessagesRead } from "@/lib/badge-events";
 import AuthToast from "@/components/auth/auth-toast";
 import { useFocusPoll } from "@/components/header/use-focus-poll";
 import type { MessageItem } from "@/lib/data/messages";
@@ -45,14 +45,12 @@ export default function MessageThread({
   useEffect(() => setMessages(initialMessages), [initialMessages]);
   useEffect(() => { endRef.current?.scrollIntoView({ block: "end" }); }, [messages.length]);
 
-  // mark read on open, then nudge the header badges to drop immediately
+  // Drop the envelope badge instantly by this conversation's unread count, then
+  // persist the read in the background (no extra count re-fetch).
   useEffect(() => {
-    let cancelled = false;
-    markConversationReadAction(conversation.id).then((res) => {
-      if (!cancelled && res?.ok) emitBadgeRefresh();
-    });
-    return () => { cancelled = true; };
-  }, [conversation.id]);
+    emitMessagesRead(conversation.unreadCount);
+    markConversationReadAction(conversation.id);
+  }, [conversation.id, conversation.unreadCount]);
 
   // realtime: new messages in this conversation → refresh (not mid-send)
   useEffect(() => {
