@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import PublicNav from "@/components/public-nav";
+import DefaultAvatar from "@/components/default-avatar";
 import { causeArt } from "@/lib/data";
 import { loadLiveMissionView } from "@/lib/mission-view";
 import { getCurrentUser, getCurrentUserRole } from "@/lib/auth/server";
@@ -145,14 +146,7 @@ export default async function MissionDetailPage({
               {mission.title}
             </h1>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
-              <span
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 11,
-                  background: causeArt(mission),
-                }}
-              />
+              <DefaultAvatar size={36} radius={11} kind="org" />
               <span style={{ fontWeight: 700, fontSize: 15 }}>{mission.org}</span>
               <span
                 style={{

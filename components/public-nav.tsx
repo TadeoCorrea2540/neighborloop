@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Logo from "./logo";
+import DefaultAvatar from "./default-avatar";
 import { useSession } from "./session-provider";
 import { signOutAction } from "@/app/auth/actions";
 
@@ -172,22 +173,7 @@ export default function PublicNav() {
                     cursor: "pointer",
                   }}
                 >
-                  <span
-                    style={{
-                      width: 30,
-                      height: 30,
-                      borderRadius: "50%",
-                      background: `linear-gradient(135deg, ${AVATARS[0]}, ${AVATARS[1]})`,
-                      color: "#fff",
-                      fontWeight: 800,
-                      fontSize: 13,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    {initial}
-                  </span>
+                  <DefaultAvatar size={30} radius={15} kind="user" />
                   <span style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {account.name}
                   </span>
