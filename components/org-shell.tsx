@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ORG_NAV } from "@/lib/data";
 import DefaultAvatar from "./default-avatar";
+import Icon, { type IconName } from "./icons";
 import LogoutButton from "./auth/logout-button";
 import NotificationsMenu from "./header/notifications-menu";
 import MessagesMenu from "./header/messages-menu";
@@ -29,6 +30,14 @@ export default function OrgShell({
   messageCount?: number;
 }) {
   const pathname = usePathname();
+  const NAV_ICON: Record<string, IconName> = {
+    "/manage/dashboard": "bar-chart",
+    "/manage/missions": "target",
+    "/manage/applicants": "clipboard",
+    "/manage/attendance": "check-square",
+    "/manage/messages": "message",
+    "/manage/reports": "trending-up",
+  };
   return (
     <div
       style={{
@@ -58,7 +67,7 @@ export default function OrgShell({
           <div>
             <div style={{ fontWeight: 800, fontSize: 14, lineHeight: 1.1 }}>{orgName || "Your organization"}</div>
             {verified ? (
-              <div style={{ fontSize: 11, color: "var(--mint)", fontWeight: 600 }}>✓ Verified</div>
+              <div style={{ fontSize: 11, color: "var(--mint)", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 3 }}><Icon name="check" size={12} strokeWidth={2.6} /> Verified</div>
             ) : (
               <div style={{ fontSize: 11, color: "var(--muted-3)", fontWeight: 600 }}>Organizer</div>
             )}
@@ -96,10 +105,9 @@ export default function OrgShell({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: 14,
                   }}
                 >
-                  {it.icon}
+                  <Icon name={NAV_ICON[it.href] ?? "target"} size={16} />
                 </span>
                 {it.label}
                 {badge && (
@@ -181,7 +189,7 @@ export default function OrgShell({
               fontSize: 14,
             }}
           >
-            🔎 {search}
+            <Icon name="search" size={16} style={{ color: "var(--muted-3)" }} /> {search}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 16 }}>
             {userId ? (

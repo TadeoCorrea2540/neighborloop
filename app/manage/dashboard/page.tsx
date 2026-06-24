@@ -7,6 +7,7 @@ import { getApplicationsForOrganization } from "@/lib/data/organization-applicat
 import { getPrimaryOrganizationForUser } from "@/lib/data/organization-membership";
 import { getOrganizationImpactSummary } from "@/lib/data/analytics/organization";
 import DefaultAvatar from "@/components/default-avatar";
+import Icon from "@/components/icons";
 import type { MissionStatus } from "@/types/database";
 
 export const dynamic = "force-dynamic";
@@ -112,7 +113,7 @@ export default async function OrgDashboard() {
             <span style={{ fontSize: 12, color: "var(--coral-deep)", fontWeight: 700 }}>{summary.pendingApplications} to review</span>
           </div>
           {pending.length === 0 ? (
-            <p style={{ fontSize: 13.5, color: "var(--muted-3)", margin: "6px 0" }}>No applications waiting. 🎉</p>
+            <p style={{ fontSize: 13.5, color: "var(--muted-3)", margin: "6px 0", display: "inline-flex", alignItems: "center", gap: 6 }}>No applications waiting. <Icon name="sparkles" size={14} style={{ color: "var(--mint)" }} /></p>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {pending.map((p) => (

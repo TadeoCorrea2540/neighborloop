@@ -23,7 +23,11 @@ export type IconName =
   | "pin"
   | "calendar"
   | "check"
-  | "compass";
+  | "compass"
+  | "bar-chart"
+  | "clipboard"
+  | "check-square"
+  | "trending-up";
 
 const PATHS: Record<IconName, ReactNode> = {
   home: (
@@ -131,6 +135,33 @@ const PATHS: Record<IconName, ReactNode> = {
     <>
       <circle cx="12" cy="12" r="8.5" />
       <path d="m15.6 8.4-2 5.2-5.2 2 2-5.2z" fill="currentColor" stroke="none" />
+    </>
+  ),
+  "bar-chart": (
+    <>
+      <path d="M3.5 20.5h17" />
+      <path d="M7 20.5V11" />
+      <path d="M12 20.5V4.5" />
+      <path d="M17 20.5v-6.5" />
+    </>
+  ),
+  clipboard: (
+    <>
+      <rect x="8" y="2.6" width="8" height="4" rx="1.3" />
+      <path d="M16 4.6h2a2 2 0 0 1 2 2v12.4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6.6a2 2 0 0 1 2-2h2" />
+      <path d="M9 11.6h6M9 15.4h4" />
+    </>
+  ),
+  "check-square": (
+    <>
+      <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" />
+      <path d="m8 12.2 2.8 2.8L16.6 9" />
+    </>
+  ),
+  "trending-up": (
+    <>
+      <path d="M3.5 16.5 9.5 10l3.5 3.5L21 5.5" />
+      <path d="M15 5.5h6v6" />
     </>
   ),
 };
