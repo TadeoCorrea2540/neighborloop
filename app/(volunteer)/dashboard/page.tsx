@@ -42,10 +42,7 @@ export default async function Dashboard() {
       {/* welcome */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14, marginBottom: 22 }}>
         <div>
-          <h2 style={{ fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: "-.02em", display: "inline-flex", alignItems: "center", gap: 9 }}>
-            {greetingText}
-            <Icon name="wave" size={23} style={{ color: "#ff9f43" }} />
-          </h2>
+          <h2 style={{ fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: "-.02em" }}>{greetingText} 👋</h2>
           <p style={{ margin: "4px 0 0", color: "var(--muted-2)", fontSize: 14.5 }}>{sub}</p>
         </div>
         <Link href="/explore" className="btn-coral" style={{ color: "#fff", fontWeight: 700, fontSize: 14, padding: "11px 18px", borderRadius: 12, boxShadow: "0 12px 24px -12px rgba(255,111,94,.8)" }}>+ Find a mission</Link>
