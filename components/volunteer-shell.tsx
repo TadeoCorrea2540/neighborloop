@@ -8,6 +8,7 @@ import DefaultAvatar from "./default-avatar";
 import LogoutButton from "./auth/logout-button";
 import NotificationsMenu from "./header/notifications-menu";
 import MessagesMenu from "./header/messages-menu";
+import HeaderUserMenu from "./header/user-menu";
 
 export default function VolunteerShell({
   children,
@@ -196,7 +197,16 @@ export default function VolunteerShell({
                 <Link href="/messages" className="hdr-trigger">✉️</Link>
               </>
             )}
-            <DefaultAvatar size={38} radius={12} kind="user" style={{ marginLeft: 8 }} />
+            <HeaderUserMenu
+              name={userName}
+              roleLabel={roleLabel}
+              kind="user"
+              links={[
+                { label: "Dashboard", href: "/dashboard" },
+                { label: "My Missions", href: "/my-missions" },
+                { label: "Settings", href: "/settings" },
+              ]}
+            />
           </div>
         </div>
         <main style={{ padding: "26px 28px", flex: 1 }} className="fade-up">
