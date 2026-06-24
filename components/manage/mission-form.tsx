@@ -15,6 +15,7 @@ import {
   createMissionDraftAction,
   updateMissionAction,
   uploadMissionCoverAction,
+  removeMissionCoverAction,
 } from "@/app/manage/missions/actions";
 import ImageUpload from "@/components/manage/image-upload";
 import type { MissionFull } from "@/types/domain";
@@ -259,8 +260,9 @@ export default function MissionForm({
             <ImageUpload
               label="Cover image"
               currentUrl={coverImageUrl}
-              hint="Shown on Explore and the mission page. Up to 5MB (JPG/PNG/WebP). Falls back to a category gradient if none."
+              hint="Shown on Explore and the mission page. Up to 5MB (JPG/PNG/WebP). Falls back to the coral placeholder if none."
               upload={(fd) => uploadMissionCoverAction(mission.id, fd)}
+              onRemove={() => removeMissionCoverAction(mission.id)}
             />
           </div>
         ) : (

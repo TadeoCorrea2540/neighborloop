@@ -341,6 +341,29 @@ export async function uploadMissionCoverAction(missionId: string, fd: FormData):
   return { ok: true };
 }
 
+// ---------- mission cover image removal ----------
+export async function removeMissionCoverAction(missionId: string): Promise<ActionResult> {
+  const guard = await requireOrganizer();
+  if (!guard.ok) return guard;
+  if (!UUID_RE.test(missionId)) return { ok: false, code: "validation", error: "Invalid mission." };
+
+  const owns = await assertOwnsMission(guard.orgId, missionId);
+  if (!owns.ok) return { ok: false, code: "forbidden", error: "You don’t have permission to edit this mission." };
+
+  const supabase = getServerSupabase();
+  const { error } = await supabase
+    .from("missions")
+    .update({ cover_image_path: null })
+    .eq("id", missionId)
+    .eq("organization_id", guard.orgId);
+  if (error) return { ok: false, code: "unknown", error: "Couldn’t remove the cover image." };
+
+  revalidateManage();
+  revalidatePath(`/manage/missions/${missionId}/edit`);
+  if (owns.status === "published") revalidatePublic();
+  return { ok: true };
+}
+
 // ---------- private details ----------
 export async function upsertMissionPrivateDetailsAction(
   missionId: string,

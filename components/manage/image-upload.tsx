@@ -18,18 +18,21 @@ export default function ImageUpload({
   currentUrl,
   shape = "rect",
   upload,
+  onRemove,
 }: {
   label: string;
   hint?: string;
   currentUrl: string | null;
   shape?: "rect" | "circle";
   upload: (fd: FormData) => Promise<Result>;
+  onRemove?: () => Promise<Result>;
 }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  const [removing, startRemove] = useTransition();
   const [toast, setToast] = useState<{ msg: string; tone: "error" | "success" } | null>(null);
   const [seq, setSeq] = useState(0);
   const show = (msg: string, tone: "error" | "success") => {
@@ -59,6 +62,22 @@ export default function ImageUpload({
       setFileName(null);
       if (inputRef.current) inputRef.current.value = "";
       show("Image uploaded.", "success");
+      router.refresh();
+    });
+  }
+
+  function remove() {
+    if (!onRemove) return;
+    startRemove(async () => {
+      const res = await onRemove();
+      if (!res.ok) {
+        if (res.code === "auth") return router.push("/auth?next=/manage/settings");
+        return show(res.error ?? "Couldn’t remove image.", "error");
+      }
+      setPreview(null);
+      setFileName(null);
+      if (inputRef.current) inputRef.current.value = "";
+      show("Image removed.", "success");
       router.refresh();
     });
   }
@@ -98,6 +117,16 @@ export default function ImageUpload({
               style={{ marginTop: 10, fontSize: 13, fontWeight: 700, color: "#fff", padding: "8px 16px", borderRadius: 10, border: "none", cursor: pending ? "not-allowed" : "pointer", opacity: pending ? 0.7 : 1 }}
             >
               {pending ? "Uploading…" : "Upload"}
+            </button>
+          )}
+          {onRemove && currentUrl && !preview && (
+            <button
+              type="button"
+              onClick={remove}
+              disabled={removing}
+              style={{ marginTop: 10, marginLeft: fileName ? 8 : 0, fontSize: 13, fontWeight: 600, color: "#c0392b", background: "transparent", padding: "8px 14px", borderRadius: 10, border: "1px solid rgba(192,57,43,.3)", cursor: removing ? "not-allowed" : "pointer", opacity: removing ? 0.7 : 1 }}
+            >
+              {removing ? "Removing…" : "Remove cover"}
             </button>
           )}
         </div>
