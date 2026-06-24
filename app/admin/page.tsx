@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
+import DefaultAvatar from "@/components/default-avatar";
 import { getAdminDashboardSummary } from "@/lib/data/admin-dashboard";
 import {
   getAdminImpactAdditions,
@@ -175,7 +176,7 @@ export default async function AdminDashboard() {
             <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
               {s.verificationQueue.map((v) => (
                 <Link key={v.id} href={`/admin/verification/${v.id}`} style={{ display: "flex", alignItems: "center", gap: 11 }}>
-                  <span style={{ width: 34, height: 34, borderRadius: 10, background: "linear-gradient(135deg,#8fe3bd,#1fae82)", flexShrink: 0 }} />
+                  <DefaultAvatar size={34} radius={10} kind="org" />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700, fontSize: 14 }}>{v.orgName}</div>
                     <div style={{ fontSize: 12, color: "var(--muted-3)" }}>{v.city ?? "—"} · submitted {fmtDate(v.submittedAt)}</div>

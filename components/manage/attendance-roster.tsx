@@ -9,6 +9,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AuthToast from "@/components/auth/auth-toast";
+import DefaultAvatar from "@/components/default-avatar";
 import {
   markCheckedInAction,
   markCheckedOutAction,
@@ -120,9 +121,7 @@ export default function AttendanceRoster({
         const pill = STATUS_PILL[r.status];
         return (
           <div key={r.volunteerId} style={{ background: "#fff", border: "1px solid rgba(24,32,59,.06)", borderRadius: 14, padding: "14px 16px", display: "flex", alignItems: "center", gap: 13, flexWrap: "wrap" }}>
-            <span style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, background: "linear-gradient(135deg,#bca6ff,#7a6bf5)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 14 }}>
-              {initials(r.displayName)}
-            </span>
+            <DefaultAvatar size={40} radius={12} kind="user" />
             <div style={{ flex: 1, minWidth: 150 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <span style={{ fontWeight: 700, fontSize: 14.5 }}>{r.displayName}</span>

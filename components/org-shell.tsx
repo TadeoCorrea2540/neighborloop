@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ORG_NAV } from "@/lib/data";
+import DefaultAvatar from "./default-avatar";
 import LogoutButton from "./auth/logout-button";
 import NotificationsMenu from "./header/notifications-menu";
 import MessagesMenu from "./header/messages-menu";
@@ -52,20 +53,7 @@ export default function OrgShell({
         className="app-sidebar"
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 8px 20px" }}>
-          <span
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: 11,
-              background: "linear-gradient(135deg,#8fe3bd,#1fae82)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 16,
-            }}
-          >
-            🌱
-          </span>
+          <DefaultAvatar size={34} radius={11} kind="org" />
           <div>
             <div style={{ fontWeight: 800, fontSize: 14, lineHeight: 1.1 }}>{orgName || "Your organization"}</div>
             {verified ? (
@@ -206,15 +194,7 @@ export default function OrgShell({
                 <Link href="/manage/messages" className="hdr-trigger">✉️</Link>
               </>
             )}
-            <span
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 12,
-                marginLeft: 8,
-                background: "linear-gradient(135deg,#8fe3bd,#1fae82)",
-              }}
-            />
+            <DefaultAvatar size={38} radius={12} kind="org" style={{ marginLeft: 8 }} />
           </div>
         </div>
         <main style={{ padding: "24px 28px", flex: 1 }} className="fade-up">

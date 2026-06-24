@@ -1,5 +1,6 @@
 /** Inbox list (presentational, server-importable). Role-aware primary label. */
 import Link from "next/link";
+import DefaultAvatar from "@/components/default-avatar";
 import type { ConversationListItem } from "@/lib/data/conversations";
 
 function timeAgo(iso: string | null): string {
@@ -38,9 +39,7 @@ export default function ConversationList({
         return (
           <Link key={c.id} href={`${basePath}/${c.id}`}
             style={{ display: "flex", alignItems: "center", gap: 13, background: c.unread ? "#fbfaff" : "#fff", border: `1px solid ${c.unread ? "rgba(122,107,245,.25)" : "rgba(24,32,59,.06)"}`, borderRadius: 14, padding: "14px 16px", textDecoration: "none", color: "inherit" }}>
-            <span style={{ width: 44, height: 44, borderRadius: 13, flexShrink: 0, background: "linear-gradient(135deg,#bca6ff,#7a6bf5)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 15 }}>
-              {(primary || "?").trim().charAt(0).toUpperCase()}
-            </span>
+            <DefaultAvatar size={44} radius={13} kind={viewer === "volunteer" ? "org" : "user"} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ fontWeight: 700, fontSize: 14.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{primary}</span>

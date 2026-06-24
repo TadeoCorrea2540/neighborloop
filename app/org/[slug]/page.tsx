@@ -1,4 +1,5 @@
 import PublicNav from "@/components/public-nav";
+import DefaultAvatar from "@/components/default-avatar";
 import { loadOrgView } from "@/lib/org-view";
 import { getPublicOrganizationImpact } from "@/lib/data/analytics/public-impact";
 
@@ -101,24 +102,20 @@ export default async function OrgProfile({
             }}
           >
             <div style={{ display: "flex", alignItems: "flex-end", gap: 18 }}>
-              <span
-                style={{
-                  width: 100,
-                  height: 100,
-                  borderRadius: 26,
-                  background: view.logoUrl
-                    ? `url('${view.logoUrl}') center/cover no-repeat`
-                    : "linear-gradient(135deg,#8fe3bd,#1fae82)",
-                  border: "5px solid #fff",
-                  boxShadow: "0 16px 32px -16px rgba(24,32,59,.5)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 44,
-                }}
-              >
-                {!view.logoUrl && "🌱"}
-              </span>
+              {view.logoUrl ? (
+                <span
+                  style={{
+                    width: 100,
+                    height: 100,
+                    borderRadius: 26,
+                    background: `url('${view.logoUrl}') center/cover no-repeat`,
+                    border: "5px solid #fff",
+                    boxShadow: "0 16px 32px -16px rgba(24,32,59,.5)",
+                  }}
+                />
+              ) : (
+                <DefaultAvatar size={100} radius={26} kind="org" style={{ border: "5px solid #fff", boxShadow: "0 16px 32px -16px rgba(24,32,59,.5)" }} />
+              )}
               <div style={{ paddingBottom: 6 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <h2 style={{ fontSize: 27, fontWeight: 800, margin: 0, letterSpacing: "-.02em" }}>

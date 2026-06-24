@@ -6,6 +6,7 @@ import { getOrganizationMissionsWithCounts } from "@/lib/data/organization-missi
 import { getApplicationsForOrganization } from "@/lib/data/organization-applications";
 import { getPrimaryOrganizationForUser } from "@/lib/data/organization-membership";
 import { getOrganizationImpactSummary } from "@/lib/data/analytics/organization";
+import DefaultAvatar from "@/components/default-avatar";
 import type { MissionStatus } from "@/types/database";
 
 export const dynamic = "force-dynamic";
@@ -116,9 +117,7 @@ export default async function OrgDashboard() {
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {pending.map((p) => (
                 <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 11 }}>
-                  <span style={{ width: 38, height: 38, borderRadius: 12, background: "linear-gradient(135deg,#bca6ff,#7a6bf5)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13 }}>
-                    {initials(p.volunteer?.displayName ?? null)}
-                  </span>
+                  <DefaultAvatar size={38} radius={12} kind="user" />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700, fontSize: 14 }}>{p.volunteer?.displayName ?? "Volunteer"}</div>
                     <div style={{ fontSize: 12, color: "var(--muted-3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.missionTitle}</div>

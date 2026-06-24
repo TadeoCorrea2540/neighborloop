@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getOrganizationVerifications, type VerificationFilter } from "@/lib/data/admin-verification";
 import { fmtDate, VerificationBadge, FilterChips } from "@/components/admin/badges";
+import DefaultAvatar from "@/components/default-avatar";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +47,7 @@ export default async function AdminVerificationPage({
               href={`/admin/verification/${v.id}`}
               style={{ background: "#fff", border: "1px solid rgba(24,32,59,.06)", borderRadius: 14, padding: "15px 18px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}
             >
-              <span style={{ width: 42, height: 42, borderRadius: 12, background: "linear-gradient(135deg,#8fe3bd,#1fae82)", flexShrink: 0 }} />
+              <DefaultAvatar size={42} radius={12} kind="org" />
               <div style={{ flex: 1, minWidth: 180 }}>
                 <div style={{ fontWeight: 700, fontSize: 15.5 }}>{v.orgName}</div>
                 <div style={{ fontSize: 13, color: "var(--muted-3)" }}>

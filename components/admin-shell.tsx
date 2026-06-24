@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import DefaultAvatar from "./default-avatar";
 import LogoutButton from "./auth/logout-button";
 import NotificationsMenu from "./header/notifications-menu";
 
@@ -207,22 +208,7 @@ export default function AdminShell({
             ) : (
               <Link href="/notifications" className="hdr-trigger">🔔</Link>
             )}
-            <span
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 12,
-                background: "linear-gradient(135deg,#ff8a5c,#ff5e7a)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#fff",
-                fontWeight: 800,
-                fontSize: 14,
-              }}
-            >
-              A
-            </span>
+            <DefaultAvatar size={38} radius={12} kind="user" />
           </div>
         </div>
         <main style={{ padding: "24px 28px", flex: 1 }} className="fade-up">

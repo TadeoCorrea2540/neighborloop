@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchHeaderConversations, fetchUnreadMessageCount } from "@/app/header/actions";
 import type { ConversationListItem } from "@/lib/data/conversations";
+import DefaultAvatar from "@/components/default-avatar";
 import { panelStyle, Caret, MenuHeader, MenuEmpty, MenuSkeleton, Badge } from "./menu-ui";
 import { useFocusPoll } from "./use-focus-poll";
 import { BADGE_REFRESH_EVENT, MESSAGES_READ_EVENT } from "@/lib/badge-events";
@@ -129,9 +130,7 @@ export default function MessagesMenu({
                     onKeyDown={(e) => { if (e.key === "Enter") openConv(c); }}
                     style={{ display: "flex", gap: 12, alignItems: "center", padding: "12px 16px", cursor: "pointer", background: c.unread ? "#fbfaff" : "#fff" }}
                   >
-                    <span style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, background: "linear-gradient(135deg,#bca6ff,#7a6bf5)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 15 }}>
-                      {(primary || "?").trim().charAt(0).toUpperCase()}
-                    </span>
+                    <DefaultAvatar size={40} radius={12} kind={viewer === "volunteer" ? "org" : "user"} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                         <span style={{ fontWeight: 700, fontSize: 13.8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{primary}</span>

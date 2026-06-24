@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getAdminOrganizations, type OrgFilter } from "@/lib/data/admin-organizations";
 import { fmtDate, VerificationBadge, FilterChips } from "@/components/admin/badges";
+import DefaultAvatar from "@/components/default-avatar";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +44,7 @@ export default async function AdminOrganizationsPage({
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {orgs.map((o) => (
             <div key={o.id} style={{ background: "#fff", border: "1px solid rgba(24,32,59,.06)", borderRadius: 14, padding: "15px 18px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-              <span style={{ width: 40, height: 40, borderRadius: 12, background: "linear-gradient(135deg,#8fe3bd,#1fae82)", flexShrink: 0 }} />
+              <DefaultAvatar size={40} radius={12} kind="org" />
               <div style={{ flex: 1, minWidth: 200 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap" }}>
                   {o.isPublic ? (

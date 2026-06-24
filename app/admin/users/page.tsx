@@ -1,5 +1,6 @@
 import { getAdminUsers } from "@/lib/data/admin-users";
 import { fmtDate, FilterChips } from "@/components/admin/badges";
+import DefaultAvatar from "@/components/default-avatar";
 import type { AppRole } from "@/types/database";
 
 export const dynamic = "force-dynamic";
@@ -50,9 +51,7 @@ export default async function AdminUsersPage({
             const pill = u.role ? ROLE_PILL[u.role] : { bg: "#f1f3f8", color: "#5a6685" };
             return (
               <div key={u.id} style={{ background: "#fff", border: "1px solid rgba(24,32,59,.06)", borderRadius: 14, padding: "13px 16px", display: "flex", alignItems: "center", gap: 13, flexWrap: "wrap" }}>
-                <span style={{ width: 38, height: 38, borderRadius: 11, background: "linear-gradient(135deg,#bca6ff,#7a6bf5)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 13, flexShrink: 0 }}>
-                  {initials(u.displayName)}
-                </span>
+                <DefaultAvatar size={38} radius={11} kind="user" />
                 <div style={{ flex: 1, minWidth: 160 }}>
                   <div style={{ fontWeight: 700, fontSize: 14.5 }}>{u.displayName}</div>
                   <div style={{ fontSize: 12.5, color: "var(--muted-3)" }}>

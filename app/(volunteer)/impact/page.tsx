@@ -5,6 +5,7 @@ import { getVolunteerImpactSummary } from "@/lib/data/volunteer-impact";
 import { getVolunteerCertificates } from "@/lib/data/certificates";
 import { getVolunteerTimeline, getVolunteerCauseBreakdown, milestonesFromSummary } from "@/lib/data/analytics/volunteer";
 import { fmtDate } from "@/components/admin/badges";
+import DefaultAvatar from "@/components/default-avatar";
 
 export const dynamic = "force-dynamic";
 
@@ -50,9 +51,7 @@ export default async function Impact() {
 
       <div style={{ padding: "0 34px 34px", marginTop: -52, position: "relative" }}>
         <div style={{ display: "flex", alignItems: "flex-end", gap: 18 }}>
-          <span style={{ width: 104, height: 104, borderRadius: 28, background: "linear-gradient(135deg,#bca6ff,#7a6bf5)", border: "5px solid #fff", boxShadow: "0 16px 32px -16px rgba(24,32,59,.5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40, color: "#fff", fontWeight: 800 }}>
-            {name.charAt(0).toUpperCase()}
-          </span>
+          <DefaultAvatar size={104} radius={28} kind="user" style={{ border: "5px solid #fff", boxShadow: "0 16px 32px -16px rgba(24,32,59,.5)" }} />
           <div style={{ paddingBottom: 6 }}>
             <h2 style={{ fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: "-.02em" }}>{name}</h2>
             <div style={{ fontSize: 14, color: "#6b7799", marginTop: 3 }}>

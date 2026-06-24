@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { VOL_NAV, VOL_STATS } from "@/lib/data";
 import Logo from "./logo";
+import DefaultAvatar from "./default-avatar";
 import LogoutButton from "./auth/logout-button";
 import NotificationsMenu from "./header/notifications-menu";
 import MessagesMenu from "./header/messages-menu";
@@ -131,14 +132,7 @@ export default function VolunteerShell({
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 14, padding: 8 }}>
-          <span
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: 12,
-              background: "linear-gradient(135deg,#bca6ff,#7a6bf5)",
-            }}
-          />
+          <DefaultAvatar size={38} radius={12} kind="user" />
           <div>
             <div style={{ fontWeight: 700, fontSize: 13.5 }}>{userName}</div>
             <div style={{ fontSize: 12, color: "var(--muted-3)" }}>{roleLabel}</div>
@@ -202,15 +196,7 @@ export default function VolunteerShell({
                 <Link href="/messages" className="hdr-trigger">✉️</Link>
               </>
             )}
-            <span
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 12,
-                marginLeft: 8,
-                background: "linear-gradient(135deg,#bca6ff,#7a6bf5)",
-              }}
-            />
+            <DefaultAvatar size={38} radius={12} kind="user" style={{ marginLeft: 8 }} />
           </div>
         </div>
         <main style={{ padding: "26px 28px", flex: 1 }} className="fade-up">

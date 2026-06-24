@@ -9,6 +9,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import AuthToast from "@/components/auth/auth-toast";
+import DefaultAvatar from "@/components/default-avatar";
 import MessageButton from "@/components/messaging/message-button";
 import {
   approveApplicationAction,
@@ -151,9 +152,7 @@ export default function ApplicationsReview({
             return (
               <div key={a.id} style={{ background: "#fff", border: "1px solid rgba(24,32,59,.06)", borderRadius: 18, padding: 18 }}>
                 <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-                  <span style={{ width: 50, height: 50, borderRadius: 14, flexShrink: 0, background: "linear-gradient(135deg,#bca6ff,#7a6bf5)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 16 }}>
-                    {initials(a.volunteer?.displayName ?? null)}
-                  </span>
+                  <DefaultAvatar size={50} radius={14} kind="user" />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                       <div style={{ fontWeight: 700, fontSize: 15.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</div>
