@@ -57,7 +57,7 @@ export default async function OrgDashboard() {
     { label: "Avg completion rate", value: impact.avgCompletionRate == null ? "—" : `${Math.round(impact.avgCompletionRate * 100)}%` },
   ];
 
-  const greeting = org?.name ? `Welcome back, ${org.name} 🌱` : "Welcome back 🌱";
+  const greeting = org?.name ? `Welcome back, ${org.name}  🌱` : "Welcome back  🌱";
   const pending = applications.filter((a) => a.status === "pending" || a.status === "waitlisted").slice(0, 4);
   const recentMissions = missions.slice(0, 4);
 
