@@ -1,43 +1,141 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { requireOrganizer } from "@/lib/auth/require-organizer";
 import { getOrganizerDashboardSummary } from "@/lib/data/organizer-dashboard";
 import { getOrganizationMissionsWithCounts } from "@/lib/data/organization-missions";
 import { getApplicationsForOrganization } from "@/lib/data/organization-applications";
 import { getPrimaryOrganizationForUser } from "@/lib/data/organization-membership";
 import { getOrganizationImpactSummary } from "@/lib/data/analytics/organization";
-import DefaultAvatar from "@/components/default-avatar";
-import Icon from "@/components/icons";
-import type { MissionStatus } from "@/types/database";
+import OrganizationDashboardStagger from "@/components/organization/dashboard/organization-dashboard-stagger";
+import OrganizationDashboardHero from "@/components/organization/dashboard/organization-dashboard-hero";
+import OrganizerQuickActions from "@/components/organization/dashboard/organizer-quick-actions";
+import OrganizationStatGrid from "@/components/organization/dashboard/organization-stat-grid";
+import NeedsAttentionPanel, { type AttentionItem } from "@/components/organization/dashboard/needs-attention-panel";
+import VerificationStatusPanel from "@/components/organization/dashboard/verification-status-panel";
+import UpcomingMissionControlCard from "@/components/organization/dashboard/upcoming-mission-control-card";
+import ApplicantPreviewPanel from "@/components/organization/dashboard/applicant-preview-panel";
+import OrganizationImpactSnapshot from "@/components/organization/dashboard/organization-impact-snapshot";
+import RecentActivityFeed, { type ActivityFeedItem } from "@/components/organization/dashboard/recent-activity-feed";
+import OrganizationDashboardEmptyState from "@/components/organization/dashboard/organization-dashboard-empty-state";
+import type { OrganizerMission, OrganizerApplication } from "@/types/domain";
 
 export const dynamic = "force-dynamic";
 
-const STATUS_PILL: Record<MissionStatus, { label: string; bg: string; color: string }> = {
-  draft: { label: "Draft", bg: "#f1f3f8", color: "#5a6685" },
-  pending_review: { label: "Pending", bg: "#fff0dd", color: "#b9651b" },
-  published: { label: "Published", bg: "#dff6ea", color: "#147a57" },
-  paused: { label: "Paused", bg: "#fff0dd", color: "#b9651b" },
-  closed: { label: "Closed", bg: "#e2effd", color: "#2b6cb0" },
-  cancelled: { label: "Cancelled", bg: "#ffeae6", color: "#c0392b" },
-  archived: { label: "Archived", bg: "#f1f3f8", color: "#5a6685" },
-};
-
 function fmtDate(iso: string): string {
   const d = new Date(iso);
-  // Fixed locale + timeZone so server and client render identically (no hydration mismatch).
-  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+  return Number.isNaN(d.getTime())
+    ? "—"
+    : d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 }
 
-function initials(name: string | null): string {
-  if (!name) return "V";
-  return name.trim().split(/\s+/).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? "").join("") || "V";
+function buildAttentionItems(
+  summary: Awaited<ReturnType<typeof getOrganizerDashboardSummary>>,
+  missions: OrganizerMission[],
+  verificationStatus: string
+): AttentionItem[] {
+  const items: AttentionItem[] = [];
+  const now = Date.now();
+
+  if (summary.pendingApplications > 0) {
+    items.push({
+      id: "pending-apps",
+      priority: "high",
+      label: `${summary.pendingApplications} applicant${summary.pendingApplications === 1 ? "" : "s"} waiting for review`,
+      href: "/manage/applicants",
+      cta: "Review",
+    });
+  }
+
+  if (summary.draftMissions > 0) {
+    items.push({
+      id: "drafts",
+      priority: "medium",
+      label: `${summary.draftMissions} draft mission${summary.draftMissions === 1 ? "" : "s"} need details before publishing`,
+      href: "/manage/missions",
+      cta: "Finish",
+    });
+  }
+
+  if (verificationStatus === "pending") {
+    items.push({
+      id: "verify-pending",
+      priority: "medium",
+      label: "Organization verification is pending admin review",
+      href: "/manage/settings",
+      cta: "Status",
+    });
+  }
+
+  for (const m of missions) {
+    if (m.status !== "published") continue;
+    const hoursUntil = (new Date(m.startsAt).getTime() - now) / (1000 * 60 * 60);
+    if (hoursUntil > 0 && hoursUntil <= 48) {
+      items.push({
+        id: `soon-${m.id}`,
+        priority: "high",
+        label: `"${m.title}" starts within 48 hours`,
+        href: `/manage/missions/${m.id}/edit`,
+        cta: "Prepare",
+      });
+    }
+  }
+
+  for (const m of missions.filter((x) => x.pendingCount > 0)) {
+    if (items.some((i) => i.id === `mission-apps-${m.id}`)) continue;
+    items.push({
+      id: `mission-apps-${m.id}`,
+      priority: "high",
+      label: `${m.pendingCount} pending for "${m.title}"`,
+      href: `/manage/missions/${m.id}/applications`,
+      cta: "Review",
+    });
+  }
+
+  return items.slice(0, 6);
+}
+
+function buildActivityFeed(
+  applications: OrganizerApplication[],
+  missions: OrganizerMission[]
+): ActivityFeedItem[] {
+  const items: ActivityFeedItem[] = [];
+
+  for (const app of applications.slice(0, 20)) {
+    const name = app.volunteer?.displayName ?? "A volunteer";
+    if (app.status === "pending" || app.status === "waitlisted") {
+      items.push({
+        id: `apply-${app.id}`,
+        at: app.appliedAt,
+        text: `${name} applied to ${app.missionTitle}`,
+        href: `/manage/missions/${app.missionId}/applications`,
+      });
+    }
+    if (app.status === "approved" && app.reviewedAt) {
+      items.push({
+        id: `approved-${app.id}`,
+        at: app.reviewedAt,
+        text: `${name} was approved for ${app.missionTitle}`,
+        href: `/manage/missions/${app.missionId}/applications`,
+      });
+    }
+  }
+
+  for (const m of missions.filter((x) => x.status === "published")) {
+    items.push({
+      id: `mission-${m.id}`,
+      at: m.updatedAt,
+      text: `${m.title} is live`,
+      href: `/manage/missions/${m.id}/edit`,
+    });
+  }
+
+  return items.sort((a, b) => b.at.localeCompare(a.at)).slice(0, 6);
 }
 
 export default async function OrgDashboard() {
   const guard = await requireOrganizer();
   if (!guard.ok) {
     if (guard.code === "auth") redirect("/auth?next=/manage/dashboard");
-    // organizer with no org yet → onboarding
     if (guard.code === "no_org") redirect("/manage/onboarding");
     redirect("/dashboard");
   }
@@ -50,114 +148,123 @@ export default async function OrgDashboard() {
     getOrganizationImpactSummary(guard.orgId),
   ]);
 
-  const impactCards = [
-    { label: "Volunteer hours", value: impact.totalHours.toLocaleString() },
-    { label: "Completed attendances", value: impact.completedAttendances.toLocaleString() },
-    { label: "Certificates issued", value: impact.certificatesIssued.toLocaleString() },
-    { label: "Avg completion rate", value: impact.avgCompletionRate == null ? "—" : `${Math.round(impact.avgCompletionRate * 100)}%` },
-  ];
+  if (!org) redirect("/manage/onboarding");
 
-  const greeting = org?.name ? `Welcome back, ${org.name}  🌱` : "Welcome back  🌱";
-  const pending = applications.filter((a) => a.status === "pending" || a.status === "waitlisted").slice(0, 4);
-  const recentMissions = missions.slice(0, 4);
+  const nowIso = new Date().toISOString();
+  const upcomingMissions = missions
+    .filter((m) => m.status === "published" && m.startsAt >= nowIso)
+    .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
+    .slice(0, 4);
 
-  const metrics = [
-    { label: "Active missions", value: summary.activeMissions },
-    { label: "Drafts", value: summary.draftMissions },
-    { label: "Pending applications", value: summary.pendingApplications },
-    { label: "Approved volunteers", value: summary.approvedVolunteers },
+  const pendingApplicants = applications
+    .filter((a) => a.status === "pending" || a.status === "waitlisted")
+    .slice(0, 4);
+
+  const attentionItems = buildAttentionItems(summary, missions, org.verificationStatus);
+  const activityItems = buildActivityFeed(applications, missions);
+
+  const stats = [
+    {
+      icon: "target" as const,
+      value: summary.activeMissions,
+      label: "Active missions",
+      hint: summary.activeMissions ? "Published and accepting volunteers" : "Publish your first mission",
+      warm: true,
+    },
+    {
+      icon: "clock" as const,
+      value: summary.pendingApplications,
+      label: "Pending applications",
+      hint: summary.pendingApplications ? "Awaiting your review" : "No applications in queue",
+    },
+    {
+      icon: "check-circle" as const,
+      value: summary.approvedVolunteers,
+      label: "Approved volunteers",
+      hint: "Across all active missions",
+      warm: true,
+    },
+    {
+      icon: "bar-chart" as const,
+      value: summary.draftMissions,
+      label: "Draft missions",
+      hint: summary.draftMissions ? "Ready to finish and publish" : "All missions published or archived",
+    },
   ];
 
   return (
-    <div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
-        <div>
-          <h2 style={{ fontSize: 25, fontWeight: 800, margin: 0, letterSpacing: "-.02em" }}>{greeting}</h2>
-          <p style={{ margin: "4px 0 0", color: "var(--muted-2)", fontSize: 14 }}>
-            {summary.activeMissions} active · {summary.pendingApplications} application{summary.pendingApplications === 1 ? "" : "s"} to review
-            {summary.nextUpcoming ? ` · next: ${summary.nextUpcoming.title} (${fmtDate(summary.nextUpcoming.startsAt)})` : ""}
-          </p>
+    <OrganizationDashboardStagger>
+      <OrganizationDashboardHero
+        orgName={org.name}
+        verificationStatus={org.verificationStatus}
+        activeMissions={summary.activeMissions}
+        pendingApplications={summary.pendingApplications}
+        draftMissions={summary.draftMissions}
+        nextUpcomingTitle={summary.nextUpcoming?.title ?? null}
+        nextUpcomingDate={summary.nextUpcoming ? fmtDate(summary.nextUpcoming.startsAt) : null}
+      />
+
+      <OrganizerQuickActions />
+
+      <div className="org-momentum" aria-label="Community momentum">
+        <span className="org-momentum-chip">
+          <strong>{summary.approvedVolunteers}</strong> volunteers approved
+        </span>
+        <span className="org-momentum-chip">
+          <strong>{summary.activeMissions}</strong> missions active
+        </span>
+        <span className="org-momentum-chip">
+          <strong>{impact.totalHours}</strong> hours tracked
+        </span>
+        <span className="org-momentum-chip">
+          <strong>{impact.certificatesIssued}</strong> certificates issued
+        </span>
+      </div>
+
+      <OrganizationStatGrid stats={stats} />
+
+      <div className="org-dash-split">
+        <NeedsAttentionPanel items={attentionItems} />
+        <VerificationStatusPanel status={org.verificationStatus} />
+      </div>
+
+      <section style={{ marginBottom: 20 }}>
+        <div className="org-section-header">
+          <div>
+            <h3 className="org-section-title">Upcoming missions</h3>
+            <p className="org-section-sub">Operational control panel for what&apos;s next</p>
+          </div>
+          <Link href="/manage/missions" style={{ fontSize: 13, fontWeight: 600, color: "var(--muted-1)" }}>
+            Manage all →
+          </Link>
         </div>
-        <Link href="/manage/missions/new" className="btn-coral" style={{ color: "#fff", fontWeight: 700, fontSize: 14, padding: "11px 18px", borderRadius: 12, boxShadow: "0 12px 24px -12px rgba(255,111,94,.8)" }}>+ Create mission</Link>
+        {upcomingMissions.length === 0 ? (
+          <OrganizationDashboardEmptyState
+            icon="target"
+            title="No upcoming missions"
+            body="Publish a mission with a future date — it will appear here with applicant counts, capacity, and quick actions."
+            ctaLabel="Create mission"
+            ctaHref="/manage/missions/new"
+          />
+        ) : (
+          <div className="org-upcoming-grid">
+            {upcomingMissions.map((m) => (
+              <UpcomingMissionControlCard key={m.id} mission={m} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <div className="org-dash-split">
+        <ApplicantPreviewPanel applicants={pendingApplicants} totalPending={summary.pendingApplications} />
+        <OrganizationImpactSnapshot
+          impact={impact}
+          approvedVolunteers={summary.approvedVolunteers}
+          totalApplications={applications.length}
+        />
       </div>
 
-      {/* metrics */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 18 }} className="card-grid-4">
-        {metrics.map((m, i) => (
-          <div key={m.label} style={{ background: "#fff", borderRadius: 18, padding: 18, border: "1px solid rgba(24,32,59,.05)" }}>
-            <div style={{ fontSize: 13, color: "var(--muted-3)", fontWeight: 600 }}>{m.label}</div>
-            <div style={{ fontSize: 32, fontWeight: 800, marginTop: 6, color: i % 2 === 0 ? "var(--coral)" : "var(--ink)" }}>{m.value}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* impact snapshot (real, all-time) */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "0 0 12px" }}>
-        <div style={{ fontWeight: 700, fontSize: 16 }}>Impact snapshot</div>
-        <Link href="/manage/reports" style={{ fontSize: 13, fontWeight: 600, color: "var(--coral-deep)" }}>Full report →</Link>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 18 }} className="card-grid-4">
-        {impactCards.map((c, i) => (
-          <div key={c.label} style={{ background: "#fff", borderRadius: 18, padding: 18, border: "1px solid rgba(24,32,59,.05)" }}>
-            <div style={{ fontSize: 13, color: "var(--muted-3)", fontWeight: 600 }}>{c.label}</div>
-            <div style={{ fontSize: 30, fontWeight: 800, marginTop: 6, color: i % 2 === 0 ? "var(--coral)" : "var(--ink)" }}>{c.value}</div>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }} className="dash-split">
-        {/* pending applicants */}
-        <div style={{ background: "#fff", borderRadius: 18, padding: 20, border: "1px solid rgba(24,32,59,.05)" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-            <div style={{ fontWeight: 700, fontSize: 16 }}>Pending applicants</div>
-            <span style={{ fontSize: 12, color: "var(--coral-deep)", fontWeight: 700 }}>{summary.pendingApplications} to review</span>
-          </div>
-          {pending.length === 0 ? (
-            <p style={{ fontSize: 13.5, color: "var(--muted-3)", margin: "6px 0", display: "inline-flex", alignItems: "center", gap: 6 }}>No applications waiting. <Icon name="sparkles" size={14} style={{ color: "var(--mint)" }} /></p>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {pending.map((p) => (
-                <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 11 }}>
-                  <DefaultAvatar size={38} radius={12} kind="user" />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: 14 }}>{p.volunteer?.displayName ?? "Volunteer"}</div>
-                    <div style={{ fontSize: 12, color: "var(--muted-3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.missionTitle}</div>
-                  </div>
-                </div>
-              ))}
-              <Link href="/manage/applicants" style={{ textAlign: "center", fontSize: 13, fontWeight: 600, color: "var(--muted-1)", paddingTop: 4 }}>Review all applicants →</Link>
-            </div>
-          )}
-        </div>
-
-        {/* your missions */}
-        <div style={{ background: "#fff", borderRadius: 18, padding: 20, border: "1px solid rgba(24,32,59,.05)" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-            <div style={{ fontWeight: 700, fontSize: 16 }}>Your missions</div>
-            <Link href="/manage/missions" style={{ fontSize: 13, fontWeight: 600, color: "var(--muted-1)" }}>Manage all →</Link>
-          </div>
-          {recentMissions.length === 0 ? (
-            <p style={{ fontSize: 13.5, color: "var(--muted-3)", margin: "6px 0" }}>
-              No missions yet. <Link href="/manage/missions/new" style={{ color: "var(--coral-deep)", fontWeight: 600 }}>Create your first →</Link>
-            </p>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              {recentMissions.map((m, i) => {
-                const pill = STATUS_PILL[m.status];
-                return (
-                  <Link key={m.id} href={`/manage/missions/${m.id}/edit`} style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 0", borderBottom: i < recentMissions.length - 1 ? "1px solid rgba(24,32,59,.05)" : "none" }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.title}</div>
-                      <div style={{ fontSize: 12, color: "var(--muted-3)" }}>{fmtDate(m.startsAt)} · {m.approvedCount}{m.volunteerCapacity != null ? `/${m.volunteerCapacity}` : ""} approved</div>
-                    </div>
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 99, ...pill }}>{pill.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+      <RecentActivityFeed items={activityItems} />
+    </OrganizationDashboardStagger>
   );
 }

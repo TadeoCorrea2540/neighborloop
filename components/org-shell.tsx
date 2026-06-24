@@ -48,7 +48,6 @@ export default function OrgShell({
       }}
       className="app-shell"
     >
-      {/* org sidebar */}
       <aside
         style={{
           background: "#fff",
@@ -60,70 +59,43 @@ export default function OrgShell({
           top: 0,
           height: "100vh",
         }}
-        className="app-sidebar"
+        className="app-sidebar org-sidebar"
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 8px 20px" }}>
+        <div className="org-sidebar-identity" style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
           <DefaultAvatar size={34} radius={11} kind="org" />
-          <div>
-            <div style={{ fontWeight: 800, fontSize: 14, lineHeight: 1.1 }}>{orgName || "Your organization"}</div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 800, fontSize: 14, lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {orgName || "Your organization"}
+            </div>
             {verified ? (
-              <div style={{ fontSize: 11, color: "var(--mint)", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 3 }}><Icon name="check" size={12} strokeWidth={2.6} /> Verified</div>
+              <div style={{ fontSize: 11, color: "var(--mint)", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 3, marginTop: 2 }}>
+                <Icon name="check" size={12} strokeWidth={2.6} /> Verified
+              </div>
             ) : (
-              <div style={{ fontSize: 11, color: "var(--muted-3)", fontWeight: 600 }}>Organizer</div>
+              <div style={{ fontSize: 11, color: "var(--muted-3)", fontWeight: 600, marginTop: 2 }}>Organizer</div>
             )}
           </div>
         </div>
 
-        <nav style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 14, fontWeight: 600 }}>
+        <nav className="org-sidebar-nav">
           {ORG_NAV.map((it) => {
             const active =
               pathname === it.href ||
               (it.href === "/manage/missions" && pathname.startsWith("/manage/missions"));
-            // Applicants badge reflects the real pending count; other static badges are dropped.
             const badge =
               it.href === "/manage/applicants" ? (pendingCount > 0 ? String(pendingCount) : undefined) : undefined;
             return (
               <Link
                 key={it.label}
                 href={it.href}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 11,
-                  padding: "11px 12px",
-                  borderRadius: 13,
-                  background: active ? "#fff0ec" : "transparent",
-                  color: active ? "var(--coral-deep)" : "var(--muted-1)",
-                }}
+                className={`org-sidebar-nav-link${active ? " org-sidebar-nav-link--active" : ""}`}
+                aria-current={active ? "page" : undefined}
               >
-                <span
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 8,
-                    background: active ? "#ffd9cf" : "var(--bg-chip)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
+                <span className="org-sidebar-nav-icon">
                   <Icon name={NAV_ICON[it.href] ?? "target"} size={16} />
                 </span>
-                {it.label}
-                {badge && (
-                  <span
-                    style={{
-                      marginLeft: "auto",
-                      background: "var(--coral)",
-                      color: "#fff",
-                      fontSize: 11,
-                      padding: "1px 8px",
-                      borderRadius: 99,
-                    }}
-                  >
-                    {badge}
-                  </span>
-                )}
+                <span>{it.label}</span>
+                {badge && <span className="org-sidebar-badge">{badge}</span>}
               </Link>
             );
           })}
@@ -141,6 +113,11 @@ export default function OrgShell({
             padding: 13,
             borderRadius: 14,
             boxShadow: "0 12px 24px -12px rgba(255,111,94,.8)",
+            textDecoration: "none",
+            minHeight: 44,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
           + Create mission
@@ -160,9 +137,9 @@ export default function OrgShell({
         />
       </aside>
 
-      {/* main */}
       <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
         <div
+          className="org-main-header"
           style={{
             display: "flex",
             alignItems: "center",
@@ -176,6 +153,7 @@ export default function OrgShell({
           }}
         >
           <div
+            className="org-search"
             style={{
               display: "flex",
               alignItems: "center",

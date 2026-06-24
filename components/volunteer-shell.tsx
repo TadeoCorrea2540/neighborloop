@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { VOL_NAV, VOL_STATS } from "@/lib/data";
+import { VOL_NAV } from "@/lib/data";
 import Logo from "./logo";
 import DefaultAvatar from "./default-avatar";
 import Icon, { type IconName } from "./icons";
@@ -19,6 +19,8 @@ export default function VolunteerShell({
   userId,
   notificationCount = 0,
   messageCount = 0,
+  monthlyGoalHours = 0,
+  monthlyGoalPct = 0,
 }: {
   children: React.ReactNode;
   search?: string;
@@ -27,6 +29,8 @@ export default function VolunteerShell({
   userId?: string;
   notificationCount?: number;
   messageCount?: number;
+  monthlyGoalHours?: number;
+  monthlyGoalPct?: number;
 }) {
   const pathname = usePathname();
   const NAV_ICON: Record<string, IconName> = {
@@ -59,7 +63,7 @@ export default function VolunteerShell({
           top: 0,
           height: "100vh",
         }}
-        className="app-sidebar"
+        className="app-sidebar vol-sidebar"
       >
         <Link
           href="/"
@@ -69,48 +73,27 @@ export default function VolunteerShell({
           <span style={{ fontWeight: 800, fontSize: 17 }}>NeighborLoop</span>
         </Link>
 
-        <nav style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+        <nav className="vol-sidebar-nav">
           {VOL_NAV.map((it) => {
             const active = pathname === it.href;
             return (
               <Link
                 key={it.label}
                 href={it.href}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: "11px 12px",
-                  borderRadius: 14,
-                  fontWeight: 600,
-                  fontSize: 14.5,
-                  transition: ".18s",
-                  background: active ? "#fff0ec" : "transparent",
-                  color: active ? "var(--coral-deep)" : "var(--muted-1)",
-                }}
+                className={`vol-sidebar-nav-link${active ? " vol-sidebar-nav-link--active" : ""}`}
+                aria-current={active ? "page" : undefined}
               >
-                <span
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: 30,
-                    height: 30,
-                    borderRadius: 9,
-                    fontSize: 15,
-                    flexShrink: 0,
-                    background: active ? "#ffd9cf" : "var(--bg-chip)",
-                  }}
-                >
+                <span className="vol-sidebar-nav-icon">
                   <Icon name={NAV_ICON[it.href] ?? "home"} size={17} />
                 </span>
-                {it.label}
+                <span className="vol-sidebar-nav-label">{it.label}</span>
               </Link>
             );
           })}
         </nav>
 
         <div
+          className="vol-sidebar-goal"
           style={{
             marginTop: "auto",
             background: "linear-gradient(135deg,#fff0ec,#ffe3d6)",
@@ -120,9 +103,10 @@ export default function VolunteerShell({
         >
           <div style={{ fontSize: 13, fontWeight: 700 }}>Monthly goal</div>
           <div style={{ fontSize: 12, color: "var(--muted-1)", margin: "2px 0 9px" }}>
-            {VOL_STATS.goalPct}% of 30 hrs
+            {monthlyGoalHours}h · {monthlyGoalPct}% of 30 hrs
           </div>
           <div
+            className="vol-sidebar-goal-bar"
             style={{
               height: 8,
               borderRadius: 99,
@@ -134,14 +118,25 @@ export default function VolunteerShell({
               style={{
                 display: "block",
                 height: "100%",
-                width: `${VOL_STATS.goalPct}%`,
+                width: `${monthlyGoalPct}%`,
                 borderRadius: 99,
                 background: "linear-gradient(90deg,#ff8a5c,#ff5e7a)",
               }}
             />
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 14, padding: 8 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            marginTop: 14,
+            padding: "10px 10px",
+            borderRadius: 14,
+            border: "1px solid rgba(24,32,59,.06)",
+            background: "#fff",
+          }}
+        >
           <DefaultAvatar size={38} radius={12} kind="user" />
           <div>
             <div style={{ fontWeight: 700, fontSize: 13.5 }}>{userName}</div>
@@ -166,6 +161,7 @@ export default function VolunteerShell({
       {/* main column */}
       <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
         <div
+          className="vol-main-header"
           style={{
             display: "flex",
             alignItems: "center",
@@ -179,6 +175,7 @@ export default function VolunteerShell({
           }}
         >
           <div
+            className="vol-search"
             style={{
               display: "flex",
               alignItems: "center",

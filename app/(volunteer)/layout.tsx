@@ -1,8 +1,12 @@
+import "@/app/volunteer-dashboard.css";
 import VolunteerShell from "@/components/volunteer-shell";
 import { requireAuth, getCurrentUserRole, getCurrentProfile } from "@/lib/auth/server";
 import { redirectToDashboardByRole } from "@/lib/auth/redirect-by-role";
 import { getUnreadNotificationCount } from "@/lib/data/notifications";
 import { getUnreadMessageCount } from "@/lib/data/conversations";
+import { getVolunteerImpactSummary } from "@/lib/data/volunteer-impact";
+
+const MONTHLY_GOAL_HOURS = 30;
 
 export default async function VolunteerLayout({
   children,
@@ -15,11 +19,13 @@ export default async function VolunteerLayout({
   if (role === "organizer") {
     redirectToDashboardByRole("organizer");
   }
-  const [profile, notificationCount, messageCount] = await Promise.all([
+  const [profile, notificationCount, messageCount, impact] = await Promise.all([
     getCurrentProfile(),
     getUnreadNotificationCount(user.id),
     getUnreadMessageCount(user.id),
+    getVolunteerImpactSummary(user.id),
   ]);
+  const monthlyGoalPct = Math.min(100, Math.round((impact.totalHours / MONTHLY_GOAL_HOURS) * 100));
   return (
     <VolunteerShell
       userName={profile?.display_name ?? "Neighbor"}
@@ -27,6 +33,8 @@ export default async function VolunteerLayout({
       userId={user.id}
       notificationCount={notificationCount}
       messageCount={messageCount}
+      monthlyGoalHours={impact.totalHours}
+      monthlyGoalPct={monthlyGoalPct}
     >
       {children}
     </VolunteerShell>

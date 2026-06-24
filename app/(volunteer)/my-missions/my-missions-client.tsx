@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { iconKeyToEmoji } from "@/lib/categories";
 import { withdrawApplicationAction } from "@/app/(volunteer)/actions";
 import SaveButton from "@/components/volunteer/save-button";
 import MessageButton from "@/components/messaging/message-button";
@@ -104,7 +103,6 @@ export default function MyMissionsClient({
   function AppCardRow({ row }: { row: MyRow }) {
     const c = row.card;
     const pill = STATUS_PILL[row.status];
-    const accent = c?.categoryAccentColor || "#ff8a5c";
     return (
       <div
         style={{
@@ -123,16 +121,10 @@ export default function MyMissionsClient({
             width: 52,
             height: 52,
             borderRadius: 14,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 24,
             flexShrink: 0,
-            background: `linear-gradient(135deg, ${accent}33, ${accent})`,
+            background: "linear-gradient(135deg, #fff1ec, #ffd9cf)",
           }}
-        >
-          {iconKeyToEmoji(c?.categoryIconKey)}
-        </span>
+        />
         <div style={{ flex: 1, minWidth: 180 }}>
           <div style={{ fontWeight: 700, fontSize: 16 }}>{c?.mission.title ?? row.title ?? "Mission unavailable"}</div>
           <div style={{ fontSize: 13, color: "#9aa3bd", marginTop: 2 }}>
@@ -175,12 +167,9 @@ export default function MyMissionsClient({
   }
 
   function SavedCardRow({ c }: { c: MissionCard }) {
-    const accent = c.categoryAccentColor || "#ff8a5c";
     return (
       <div style={{ background: "#fff", border: "1px solid rgba(24,32,59,.06)", borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-        <span style={{ width: 52, height: 52, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0, background: `linear-gradient(135deg, ${accent}33, ${accent})` }}>
-          {iconKeyToEmoji(c.categoryIconKey)}
-        </span>
+        <span style={{ width: 52, height: 52, borderRadius: 14, flexShrink: 0, background: "linear-gradient(135deg, #fff1ec, #ffd9cf)" }} />
         <div style={{ flex: 1, minWidth: 180 }}>
           <div style={{ fontWeight: 700, fontSize: 16 }}>{c.mission.title}</div>
           <div style={{ fontSize: 13, color: "#9aa3bd", marginTop: 2 }}>
