@@ -8,6 +8,7 @@ import ExploreMobileExperience from "@/components/explore/explore-mobile-experie
 import SaveButton from "@/components/volunteer/save-button";
 import "./explore-mobile.css";
 import { ALL_CATEGORY, type UICategory } from "@/lib/categories";
+import { MISSION_PLACEHOLDER_BG } from "@/lib/data";
 import type { MissionCard } from "@/lib/data/mission-cards";
 
 export interface ExploreParams {
@@ -335,7 +336,6 @@ export default function ExploreClient({
                 >
                   {cards.map((card) => {
                     const m = card.mission;
-                    const accent = card.categoryAccentColor || "#ff8a5c";
                     const spots =
                       card.spotsLeft == null
                         ? "Open spots"
@@ -369,7 +369,7 @@ export default function ExploreClient({
                               fontSize: 30,
                               background: card.coverImageUrl
                                 ? `linear-gradient(180deg, rgba(8,12,28,0) 40%, rgba(8,12,28,.45)), url('${card.coverImageUrl}') center/cover no-repeat`
-                                : `linear-gradient(135deg, ${accent}33, ${accent})`,
+                                : MISSION_PLACEHOLDER_BG,
                             }}
                           >
                             {card.applicationStatus && (

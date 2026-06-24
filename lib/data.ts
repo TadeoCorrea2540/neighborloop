@@ -83,10 +83,18 @@ export const MISSIONS: Mission[] = [
   mk("Park Trail Restoration", "Trailblazers", "Cleanup", "🥾", "#d6ecff", "#9fd0ff", "#3a8bf0", 12, "Mon, Jun 30 · 9:00 AM", "5.1 mi", "Hard"),
 ];
 
+/**
+ * Brand placeholder banner for any mission card without an uploaded cover
+ * image — a soft coral diagonal fade, used everywhere so missing photos look
+ * consistent instead of a per-cause rainbow.
+ */
+export const MISSION_PLACEHOLDER_BG =
+  "linear-gradient(135deg, rgba(255,138,92,0.2), rgb(255,138,92))";
+
 export const causeArt = (m: Mission) =>
   m.img
     ? `linear-gradient(180deg, rgba(8,12,28,0) 45%, rgba(8,12,28,.35)), url('${m.img}') center/cover no-repeat`
-    : `linear-gradient(135deg, ${m.c1}, ${m.c2})`;
+    : MISSION_PLACEHOLDER_BG;
 
 /** coral pill when spots are scarce, mint otherwise */
 export const spotStyle = (spots: number) =>

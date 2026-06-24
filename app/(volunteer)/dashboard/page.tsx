@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Icon, { type IconName } from "@/components/icons";
+import { MISSION_PLACEHOLDER_BG } from "@/lib/data";
 import { getCurrentProfile, getCurrentUser } from "@/lib/auth/server";
 import { getVolunteerDashboardSummary } from "@/lib/data/applications";
 import { getExploreMissionCards } from "@/lib/data/mission-cards";
@@ -133,11 +134,10 @@ export default async function Dashboard() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }} className="card-grid-3">
             {recs.map((card) => {
               const m = card.mission;
-              const accent = card.categoryAccentColor || "#ff8a5c";
               const spots = card.spotsLeft == null ? "Open" : card.isFull ? "Full" : `${card.spotsLeft} spots`;
               return (
                 <Link key={m.id} href={`/missions/${m.slug}`} className="lift" style={{ background: "#fff", border: "1px solid var(--line)", borderRadius: 16, overflow: "hidden", display: "block", textDecoration: "none", color: "inherit" }}>
-                  <div style={{ height: 84, background: `linear-gradient(135deg, ${accent}33, ${accent})` }} />
+                  <div style={{ height: 84, background: card.coverImageUrl ? `linear-gradient(180deg, rgba(8,12,28,0) 40%, rgba(8,12,28,.45)), url('${card.coverImageUrl}') center/cover no-repeat` : MISSION_PLACEHOLDER_BG }} />
                   <div style={{ padding: 14 }}>
                     <div style={{ fontWeight: 700, fontSize: 14.5, lineHeight: 1.25 }}>{m.title}</div>
                     <div style={{ fontSize: 12, color: "var(--muted-3)", margin: "2px 0 10px", display: "flex", alignItems: "center", gap: 5 }}><Icon name="pin" size={13} /> {m.isVirtual ? "Virtual" : m.city || m.locationLabel || "Nearby"} · {fmtDate(m.startsAt)}</div>
