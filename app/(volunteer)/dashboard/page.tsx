@@ -31,10 +31,10 @@ export default async function Dashboard() {
     : "Find a mission this week to get started.";
 
   const stats = [
-    { tile: "#dff6ea", icon: "🔖", v: summary.savedCount, l: "saved missions", c: "var(--mint)" },
-    { tile: "#fff0dd", icon: "⏳", v: summary.pendingCount, l: "pending applications", c: "var(--coral-deep)" },
-    { tile: "#e6f0fd", icon: "✅", v: summary.approvedCount, l: "approved missions", c: "var(--blue)" },
-    { tile: "#f0ecff", icon: "🎯", v: summary.totalApplied, l: "total applied", c: "var(--lav)" },
+    { tile: "#dff6ea", icon: "🔖", v: summary.savedCount, l: "saved missions", c: "var(--coral)" },
+    { tile: "#fff0dd", icon: "⏳", v: summary.pendingCount, l: "pending applications", c: "var(--ink)" },
+    { tile: "#e6f0fd", icon: "✅", v: summary.approvedCount, l: "approved missions", c: "var(--coral)" },
+    { tile: "#f0ecff", icon: "🎯", v: summary.totalApplied, l: "total applied", c: "var(--ink)" },
   ];
 
   return (
@@ -65,15 +65,15 @@ export default async function Dashboard() {
           <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 16 }}>Your impact</div>
           <div style={{ display: "flex", gap: 28, flexWrap: "wrap", marginBottom: 18 }}>
             <div>
-              <div style={{ fontSize: 34, fontWeight: 800, color: "#e8543f" }}>{impact.totalHours}</div>
+              <div style={{ fontSize: 34, fontWeight: 800, color: "var(--coral)" }}>{impact.totalHours}</div>
               <div style={{ fontSize: 12.5, color: "var(--muted-3)" }}>volunteer hours</div>
             </div>
             <div>
-              <div style={{ fontSize: 34, fontWeight: 800, color: "var(--mint)" }}>{impact.completedCount}</div>
+              <div style={{ fontSize: 34, fontWeight: 800, color: "var(--ink)" }}>{impact.completedCount}</div>
               <div style={{ fontSize: 12.5, color: "var(--muted-3)" }}>completed missions</div>
             </div>
             <div>
-              <div style={{ fontSize: 34, fontWeight: 800, color: "var(--blue)" }}>{impact.certificatesCount}</div>
+              <div style={{ fontSize: 34, fontWeight: 800, color: "var(--coral)" }}>{impact.certificatesCount}</div>
               <div style={{ fontSize: 12.5, color: "var(--muted-3)" }}>certificates</div>
             </div>
           </div>
