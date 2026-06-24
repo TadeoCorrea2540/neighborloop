@@ -90,7 +90,7 @@ export default async function Dashboard() {
                     <div style={{ fontSize: 12, color: "var(--muted-3)" }}>{m.organizationName}</div>
                   </div>
                   <span style={{ fontSize: 13, fontWeight: 800, color: "#e8543f" }}>{m.hoursCredited}h</span>
-                  {m.certificateId && <Link href={`/certificates/${m.certificateId}`} style={{ fontSize: 12, fontWeight: 700, color: "var(--blue)" }}>cert</Link>}
+                  {m.certificateId && <Link href={`/certificates/${m.certificateId}`} style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)" }}>cert</Link>}
                 </div>
               ))}
               <Link href="/impact" style={{ fontSize: 13, fontWeight: 600, color: "var(--muted-1)", paddingTop: 10 }}>View full impact →</Link>
