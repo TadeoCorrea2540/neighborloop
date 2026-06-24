@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { iconKeyToEmoji } from "@/lib/categories";
 import { getCurrentProfile, getCurrentUser } from "@/lib/auth/server";
 import { getVolunteerDashboardSummary } from "@/lib/data/applications";
 import { getExploreMissionCards } from "@/lib/data/mission-cards";
@@ -137,7 +136,7 @@ export default async function Dashboard() {
               const spots = card.spotsLeft == null ? "Open" : card.isFull ? "Full" : `${card.spotsLeft} spots`;
               return (
                 <Link key={m.id} href={`/missions/${m.slug}`} className="lift" style={{ background: "#fff", border: "1px solid var(--line)", borderRadius: 16, overflow: "hidden", display: "block", textDecoration: "none", color: "inherit" }}>
-                  <div style={{ height: 84, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, background: `linear-gradient(135deg, ${accent}33, ${accent})` }}>{iconKeyToEmoji(card.categoryIconKey)}</div>
+                  <div style={{ height: 84, background: `linear-gradient(135deg, ${accent}33, ${accent})` }} />
                   <div style={{ padding: 14 }}>
                     <div style={{ fontWeight: 700, fontSize: 14.5, lineHeight: 1.25 }}>{m.title}</div>
                     <div style={{ fontSize: 12, color: "var(--muted-3)", margin: "2px 0 10px" }}>📍 {m.isVirtual ? "Virtual" : m.city || m.locationLabel || "Nearby"} · {fmtDate(m.startsAt)}</div>

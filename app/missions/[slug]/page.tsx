@@ -361,15 +361,9 @@ export default async function MissionDetailPage({
                 <div
                   style={{
                     height: 84,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 30,
                     background: causeArt(m),
                   }}
-                >
-                  {m.emoji}
-                </div>
+                />
                 <div style={{ padding: 14 }}>
                   <div style={{ fontWeight: 700, fontSize: 14.5 }}>{m.title}</div>
                   <div style={{ fontSize: 12, color: "var(--muted-3)", margin: "2px 0 0" }}>

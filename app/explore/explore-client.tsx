@@ -7,7 +7,7 @@ import PublicNav from "@/components/public-nav";
 import ExploreMobileExperience from "@/components/explore/explore-mobile-experience";
 import SaveButton from "@/components/volunteer/save-button";
 import "./explore-mobile.css";
-import { ALL_CATEGORY, iconKeyToEmoji, type UICategory } from "@/lib/categories";
+import { ALL_CATEGORY, type UICategory } from "@/lib/categories";
 import type { MissionCard } from "@/lib/data/mission-cards";
 
 export interface ExploreParams {
@@ -372,7 +372,6 @@ export default function ExploreClient({
                                 : `linear-gradient(135deg, ${accent}33, ${accent})`,
                             }}
                           >
-                            {!card.coverImageUrl && iconKeyToEmoji(card.categoryIconKey)}
                             {card.applicationStatus && (
                               <span
                                 style={{
