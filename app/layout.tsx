@@ -3,6 +3,8 @@ import "./globals.css";
 import { SessionProvider, type SessionAccount } from "@/components/session-provider";
 import ChunkReloadGuard from "@/components/chunk-reload-guard";
 import { getCurrentUser, getCurrentUserRole } from "@/lib/auth/server";
+import { getUnreadNotificationCount } from "@/lib/data/notifications";
+import { getUnreadMessageCount } from "@/lib/data/conversations";
 
 export const metadata: Metadata = {
   title: "NeighborLoop — Turn free time into real-world impact",
@@ -15,8 +17,14 @@ async function resolveAccount(): Promise<SessionAccount | null> {
   if (!user) return null;
   const meta = (user.user_metadata ?? {}) as { display_name?: string; full_name?: string };
   const name = meta.display_name || meta.full_name || user.email?.split("@")[0] || "Neighbor";
-  const role = await getCurrentUserRole();
-  return { name, role };
+  // Header badge counts are best-effort: a transient Supabase failure must never
+  // break the whole layout, so fall back to 0 (the menus refresh on focus/poll).
+  const [role, notificationCount, messageCount] = await Promise.all([
+    getCurrentUserRole(),
+    getUnreadNotificationCount(user.id).catch(() => 0),
+    getUnreadMessageCount(user.id).catch(() => 0),
+  ]);
+  return { name, role, userId: user.id, notificationCount, messageCount };
 }
 
 export default async function RootLayout({

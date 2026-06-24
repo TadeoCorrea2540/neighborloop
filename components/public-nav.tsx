@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Logo from "./logo";
 import DefaultAvatar from "./default-avatar";
+import NotificationsMenu from "./header/notifications-menu";
+import MessagesMenu from "./header/messages-menu";
 import { useSession } from "./session-provider";
 import { signOutAction } from "@/app/auth/actions";
 
@@ -156,6 +158,17 @@ export default function PublicNav() {
 
           <div className="public-nav-desktop-actions" style={{ display: "flex", gap: 10, alignItems: "center" }}>
             {account ? (
+              <>
+              {account.userId ? (
+                <>
+                  <NotificationsMenu initialCount={account.notificationCount} userId={account.userId} />
+                  <MessagesMenu
+                    initialCount={account.messageCount}
+                    viewer={account.role === "organizer" ? "organizer" : "volunteer"}
+                    basePath={account.role === "organizer" ? "/manage/messages" : "/messages"}
+                  />
+                </>
+              ) : null}
               <div ref={acctRef} style={{ position: "relative" }}>
                 <button
                   type="button"
@@ -226,6 +239,7 @@ export default function PublicNav() {
                   </div>
                 )}
               </div>
+              </>
             ) : (
               <>
                 <Link href="/auth" style={{ fontSize: 14.5, fontWeight: 600, color: "var(--muted-1)" }}>
