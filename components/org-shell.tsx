@@ -7,6 +7,7 @@ import DefaultAvatar from "./default-avatar";
 import LogoutButton from "./auth/logout-button";
 import NotificationsMenu from "./header/notifications-menu";
 import MessagesMenu from "./header/messages-menu";
+import HeaderUserMenu from "./header/user-menu";
 
 export default function OrgShell({
   children,
@@ -194,7 +195,12 @@ export default function OrgShell({
                 <Link href="/manage/messages" className="hdr-trigger">✉️</Link>
               </>
             )}
-            <DefaultAvatar size={38} radius={12} kind="org" style={{ marginLeft: 8 }} />
+            <HeaderUserMenu
+              name={orgName || "Your organization"}
+              roleLabel={verified ? "Verified organizer" : "Organizer"}
+              kind="org"
+              links={[{ label: "Dashboard", href: "/manage/dashboard" }]}
+            />
           </div>
         </div>
         <main style={{ padding: "24px 28px", flex: 1 }} className="fade-up">
