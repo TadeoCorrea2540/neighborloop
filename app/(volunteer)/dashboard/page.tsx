@@ -31,9 +31,9 @@ export default async function Dashboard() {
     : "Find a mission this week to get started.";
 
   const stats = [
-    { tile: "#ffe3da", icon: "🔖", v: summary.savedCount, l: "saved missions", c: "var(--coral)" },
+    { tile: "#fff1ec", icon: "🔖", v: summary.savedCount, l: "saved missions", c: "var(--coral)" },
     { tile: "#eef0f5", icon: "⏳", v: summary.pendingCount, l: "pending applications", c: "var(--ink)" },
-    { tile: "#ffe3da", icon: "✅", v: summary.approvedCount, l: "approved missions", c: "var(--coral)" },
+    { tile: "#fff1ec", icon: "✅", v: summary.approvedCount, l: "approved missions", c: "var(--coral)" },
     { tile: "#eef0f5", icon: "🎯", v: summary.totalApplied, l: "total applied", c: "var(--ink)" },
   ];
 
