@@ -50,10 +50,10 @@ export default async function OrgDashboard() {
   ]);
 
   const impactCards = [
-    { label: "Volunteer hours", value: impact.totalHours.toLocaleString(), color: "#e8543f" },
-    { label: "Completed attendances", value: impact.completedAttendances.toLocaleString(), color: "var(--mint)" },
-    { label: "Certificates issued", value: impact.certificatesIssued.toLocaleString(), color: "var(--lav)" },
-    { label: "Avg completion rate", value: impact.avgCompletionRate == null ? "—" : `${Math.round(impact.avgCompletionRate * 100)}%`, color: "var(--blue)" },
+    { label: "Volunteer hours", value: impact.totalHours.toLocaleString() },
+    { label: "Completed attendances", value: impact.completedAttendances.toLocaleString() },
+    { label: "Certificates issued", value: impact.certificatesIssued.toLocaleString() },
+    { label: "Avg completion rate", value: impact.avgCompletionRate == null ? "—" : `${Math.round(impact.avgCompletionRate * 100)}%` },
   ];
 
   const greeting = org?.name ? `Welcome back, ${org.name} 🌱` : "Welcome back 🌱";
@@ -61,10 +61,10 @@ export default async function OrgDashboard() {
   const recentMissions = missions.slice(0, 4);
 
   const metrics = [
-    { label: "Active missions", value: summary.activeMissions, color: "var(--ink)" },
-    { label: "Drafts", value: summary.draftMissions, color: "var(--blue)" },
-    { label: "Pending applications", value: summary.pendingApplications, color: "var(--coral-deep)" },
-    { label: "Approved volunteers", value: summary.approvedVolunteers, color: "var(--mint)" },
+    { label: "Active missions", value: summary.activeMissions },
+    { label: "Drafts", value: summary.draftMissions },
+    { label: "Pending applications", value: summary.pendingApplications },
+    { label: "Approved volunteers", value: summary.approvedVolunteers },
   ];
 
   return (
@@ -82,10 +82,10 @@ export default async function OrgDashboard() {
 
       {/* metrics */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 18 }} className="card-grid-4">
-        {metrics.map((m) => (
+        {metrics.map((m, i) => (
           <div key={m.label} style={{ background: "#fff", borderRadius: 18, padding: 18, border: "1px solid rgba(24,32,59,.05)" }}>
             <div style={{ fontSize: 13, color: "var(--muted-3)", fontWeight: 600 }}>{m.label}</div>
-            <div style={{ fontSize: 32, fontWeight: 800, marginTop: 6, color: m.color }}>{m.value}</div>
+            <div style={{ fontSize: 32, fontWeight: 800, marginTop: 6, color: i % 2 === 0 ? "var(--coral)" : "var(--ink)" }}>{m.value}</div>
           </div>
         ))}
       </div>
@@ -96,10 +96,10 @@ export default async function OrgDashboard() {
         <Link href="/manage/reports" style={{ fontSize: 13, fontWeight: 600, color: "var(--coral-deep)" }}>Full report →</Link>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 18 }} className="card-grid-4">
-        {impactCards.map((c) => (
+        {impactCards.map((c, i) => (
           <div key={c.label} style={{ background: "#fff", borderRadius: 18, padding: 18, border: "1px solid rgba(24,32,59,.05)" }}>
             <div style={{ fontSize: 13, color: "var(--muted-3)", fontWeight: 600 }}>{c.label}</div>
-            <div style={{ fontSize: 30, fontWeight: 800, marginTop: 6, color: c.color }}>{c.value}</div>
+            <div style={{ fontSize: 30, fontWeight: 800, marginTop: 6, color: i % 2 === 0 ? "var(--coral)" : "var(--ink)" }}>{c.value}</div>
           </div>
         ))}
       </div>
