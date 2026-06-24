@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Icon, { type IconName } from "@/components/icons";
 import { getCurrentProfile, getCurrentUser } from "@/lib/auth/server";
 import { getVolunteerDashboardSummary } from "@/lib/data/applications";
 import { getExploreMissionCards } from "@/lib/data/mission-cards";
@@ -15,7 +16,7 @@ function fmtDate(iso: string): string {
 export default async function Dashboard() {
   const [profile, user] = await Promise.all([getCurrentProfile(), getCurrentUser()]);
   const name = profile?.display_name?.trim();
-  const greeting = name ? `Welcome back, ${name} 👋` : "Welcome back 👋";
+  const greetingText = name ? `Welcome back, ${name}` : "Welcome back";
 
   const [summary, impact] = user
     ? await Promise.all([getVolunteerDashboardSummary(user.id), getVolunteerImpactSummary(user.id)])
@@ -29,11 +30,11 @@ export default async function Dashboard() {
     ? `Next up: ${summary.nextUpcoming.title} · ${fmtDate(summary.nextUpcoming.startsAt)}`
     : "Find a mission this week to get started.";
 
-  const stats = [
-    { tile: "#fff1ec", icon: "🔖", v: summary.savedCount, l: "saved missions", c: "var(--coral)" },
-    { tile: "#eef0f5", icon: "⏳", v: summary.pendingCount, l: "pending applications", c: "var(--ink)" },
-    { tile: "#fff1ec", icon: "✅", v: summary.approvedCount, l: "approved missions", c: "var(--coral)" },
-    { tile: "#eef0f5", icon: "🎯", v: summary.totalApplied, l: "total applied", c: "var(--ink)" },
+  const stats: { tile: string; icon: IconName; v: number; l: string; c: string }[] = [
+    { tile: "#fff1ec", icon: "bookmark", v: summary.savedCount, l: "saved missions", c: "var(--coral)" },
+    { tile: "#eef0f5", icon: "clock", v: summary.pendingCount, l: "pending applications", c: "var(--ink)" },
+    { tile: "#fff1ec", icon: "check-circle", v: summary.approvedCount, l: "approved missions", c: "var(--coral)" },
+    { tile: "#eef0f5", icon: "send", v: summary.totalApplied, l: "total applied", c: "var(--ink)" },
   ];
 
   return (
@@ -41,7 +42,10 @@ export default async function Dashboard() {
       {/* welcome */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14, marginBottom: 22 }}>
         <div>
-          <h2 style={{ fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: "-.02em" }}>{greeting}</h2>
+          <h2 style={{ fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: "-.02em", display: "inline-flex", alignItems: "center", gap: 9 }}>
+            {greetingText}
+            <Icon name="wave" size={23} style={{ color: "#ff9f43" }} />
+          </h2>
           <p style={{ margin: "4px 0 0", color: "var(--muted-2)", fontSize: 14.5 }}>{sub}</p>
         </div>
         <Link href="/explore" className="btn-coral" style={{ color: "#fff", fontWeight: 700, fontSize: 14, padding: "11px 18px", borderRadius: 12, boxShadow: "0 12px 24px -12px rgba(255,111,94,.8)" }}>+ Find a mission</Link>
@@ -51,7 +55,7 @@ export default async function Dashboard() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 20 }} className="card-grid-4">
         {stats.map((s) => (
           <div key={s.l} style={{ background: "#fff", borderRadius: 18, padding: 18, border: "1px solid rgba(24,32,59,.05)" }}>
-            <div style={{ width: 38, height: 38, borderRadius: 11, background: s.tile, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>{s.icon}</div>
+            <div style={{ width: 38, height: 38, borderRadius: 11, background: s.tile, display: "flex", alignItems: "center", justifyContent: "center", color: s.c }}><Icon name={s.icon} size={19} /></div>
             <div style={{ fontSize: 30, fontWeight: 800, marginTop: 12, color: s.c }}>{s.v.toLocaleString()}</div>
             <div style={{ fontSize: 13, color: "var(--muted-3)" }}>{s.l}</div>
           </div>
@@ -102,14 +106,14 @@ export default async function Dashboard() {
           <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 14 }}>Next mission</div>
           {summary.nextUpcoming ? (
             <div style={{ background: "#fbfcfe", border: "1px solid rgba(24,32,59,.06)", borderRadius: 14, padding: 16 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--mint)" }}>✓ Approved</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--mint)", display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="check" size={14} strokeWidth={2.4} /> Approved</div>
               <div style={{ fontWeight: 700, fontSize: 15.5, marginTop: 6 }}>{summary.nextUpcoming.title}</div>
-              <div style={{ fontSize: 13, color: "var(--muted-3)", marginTop: 2 }}>📅 {fmtDate(summary.nextUpcoming.startsAt)}</div>
+              <div style={{ fontSize: 13, color: "var(--muted-3)", marginTop: 4, display: "flex", alignItems: "center", gap: 6 }}><Icon name="calendar" size={14} /> {fmtDate(summary.nextUpcoming.startsAt)}</div>
               <Link href="/my-missions" style={{ display: "inline-block", marginTop: 12, fontSize: 13, fontWeight: 700, color: "#fff", background: "#18203b", padding: "9px 14px", borderRadius: 11 }}>View My Missions</Link>
             </div>
           ) : (
             <div style={{ fontSize: 13.5, color: "var(--muted-3)", textAlign: "center", padding: "20px 8px" }}>
-              <div style={{ fontSize: 26, marginBottom: 6 }}>🗓️</div>
+              <div style={{ marginBottom: 8, display: "flex", justifyContent: "center", color: "var(--muted-3)" }}><Icon name="calendar" size={26} /></div>
               No upcoming mission yet. <Link href="/explore" style={{ color: "var(--coral-deep)", fontWeight: 600 }}>Find one →</Link>
             </div>
           )}
@@ -124,7 +128,7 @@ export default async function Dashboard() {
         </div>
         {recs.length === 0 ? (
           <div style={{ background: "#fff", borderRadius: 16, border: "1px dashed rgba(24,32,59,.14)", padding: "34px 20px", textAlign: "center" }}>
-            <div style={{ fontSize: 30 }}>🌱</div>
+            <div style={{ display: "flex", justifyContent: "center", color: "var(--muted-3)" }}><Icon name="compass" size={30} /></div>
             <div style={{ fontWeight: 700, marginTop: 8 }}>No missions published yet</div>
             <div style={{ fontSize: 13.5, color: "var(--muted-3)", marginTop: 2 }}>New opportunities will appear here as organizations post them.</div>
           </div>
@@ -139,7 +143,7 @@ export default async function Dashboard() {
                   <div style={{ height: 84, background: `linear-gradient(135deg, ${accent}33, ${accent})` }} />
                   <div style={{ padding: 14 }}>
                     <div style={{ fontWeight: 700, fontSize: 14.5, lineHeight: 1.25 }}>{m.title}</div>
-                    <div style={{ fontSize: 12, color: "var(--muted-3)", margin: "2px 0 10px" }}>📍 {m.isVirtual ? "Virtual" : m.city || m.locationLabel || "Nearby"} · {fmtDate(m.startsAt)}</div>
+                    <div style={{ fontSize: 12, color: "var(--muted-3)", margin: "2px 0 10px", display: "flex", alignItems: "center", gap: 5 }}><Icon name="pin" size={13} /> {m.isVirtual ? "Virtual" : m.city || m.locationLabel || "Nearby"} · {fmtDate(m.startsAt)}</div>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                       <span style={{ fontSize: 11.5, fontWeight: 700, padding: "4px 9px", borderRadius: 999, background: card.isFull ? "#f1f3f8" : "#dff6ea", color: card.isFull ? "var(--muted-2)" : "#1fae82" }}>{spots}</span>
                       <span style={{ fontSize: 13, fontWeight: 700, color: "var(--coral-deep)" }}>View →</span>

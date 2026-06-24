@@ -13,6 +13,7 @@ import { fetchHeaderNotifications, fetchUnreadNotificationCount } from "@/app/he
 import { markNotificationReadAction, markAllNotificationsReadAction } from "@/app/notifications/actions";
 import type { NotificationItem, NotificationType } from "@/lib/data/notifications";
 import { panelStyle, Caret, MenuHeader, MenuEmpty, MenuSkeleton, Badge } from "./menu-ui";
+import Icon from "../icons";
 import { useFocusPoll } from "./use-focus-poll";
 import { BADGE_REFRESH_EVENT } from "@/lib/badge-events";
 
@@ -128,7 +129,7 @@ export default function NotificationsMenu({ initialCount, userId }: { initialCou
         aria-expanded={open}
         onClick={toggle}
       >
-        🔔
+        <Icon name="bell" size={19} />
         <Badge count={count} />
       </button>
 

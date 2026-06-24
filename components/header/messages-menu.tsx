@@ -11,6 +11,7 @@ import { fetchHeaderConversations, fetchUnreadMessageCount } from "@/app/header/
 import type { ConversationListItem } from "@/lib/data/conversations";
 import DefaultAvatar from "@/components/default-avatar";
 import { panelStyle, Caret, MenuHeader, MenuEmpty, MenuSkeleton, Badge } from "./menu-ui";
+import Icon from "../icons";
 import { useFocusPoll } from "./use-focus-poll";
 import { BADGE_REFRESH_EVENT, MESSAGES_READ_EVENT } from "@/lib/badge-events";
 
@@ -99,7 +100,7 @@ export default function MessagesMenu({
         aria-expanded={open}
         onClick={toggle}
       >
-        ✉️
+        <Icon name="mail" size={19} />
         <Badge count={count} />
       </button>
 

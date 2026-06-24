@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { VOL_NAV, VOL_STATS } from "@/lib/data";
 import Logo from "./logo";
 import DefaultAvatar from "./default-avatar";
+import Icon, { type IconName } from "./icons";
 import LogoutButton from "./auth/logout-button";
 import NotificationsMenu from "./header/notifications-menu";
 import MessagesMenu from "./header/messages-menu";
@@ -28,6 +29,14 @@ export default function VolunteerShell({
   messageCount?: number;
 }) {
   const pathname = usePathname();
+  const NAV_ICON: Record<string, IconName> = {
+    "/dashboard": "home",
+    "/my-missions": "target",
+    "/impact": "sparkles",
+    "/badges": "award",
+    "/messages": "message",
+    "/settings": "settings",
+  };
   return (
     <div
       style={{
@@ -93,7 +102,7 @@ export default function VolunteerShell({
                     background: active ? "#ffd9cf" : "var(--bg-chip)",
                   }}
                 >
-                  {it.icon}
+                  <Icon name={NAV_ICON[it.href] ?? "home"} size={17} />
                 </span>
                 {it.label}
               </Link>
@@ -183,7 +192,7 @@ export default function VolunteerShell({
               fontSize: 14,
             }}
           >
-            🔎 {search}
+            <Icon name="search" size={17} style={{ color: "var(--muted-3)" }} /> {search}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 16 }}>
             {userId ? (
