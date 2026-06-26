@@ -1,4 +1,5 @@
 import "@/app/volunteer-dashboard.css";
+import "@/app/volunteer-impact.css";
 import VolunteerShell from "@/components/volunteer-shell";
 import { requireAuth, getCurrentUserRole, getCurrentProfile } from "@/lib/auth/server";
 import { redirectToDashboardByRole } from "@/lib/auth/redirect-by-role";
