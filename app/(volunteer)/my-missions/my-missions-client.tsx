@@ -7,6 +7,7 @@ import { withdrawApplicationAction } from "@/app/(volunteer)/actions";
 import SaveButton from "@/components/volunteer/save-button";
 import MessageButton from "@/components/messaging/message-button";
 import AuthToast from "@/components/auth/auth-toast";
+import Icon from "@/components/icons";
 import type { MissionCard } from "@/lib/data/mission-cards";
 import type { ApplicationStatus } from "@/types/database";
 import type { CompletedMission } from "@/lib/data/volunteer-impact";
@@ -131,7 +132,7 @@ export default function MyMissionsClient({
             {c ? (
               <>
                 {c.categoryName ? `${c.categoryName} · ` : ""}
-                {c.organizationName ?? "Organization"} · 📅 {fmtDate(c.mission.startsAt)}
+                {c.organizationName ?? "Organization"} · <Icon name="calendar" size={12} style={{ display: "inline-block", verticalAlign: "-2px" }} /> {fmtDate(c.mission.startsAt)}
               </>
             ) : (
               "This mission is no longer listed."
@@ -174,7 +175,7 @@ export default function MyMissionsClient({
           <div style={{ fontWeight: 700, fontSize: 16 }}>{c.mission.title}</div>
           <div style={{ fontSize: 13, color: "#9aa3bd", marginTop: 2 }}>
             {c.categoryName ? `${c.categoryName} · ` : ""}
-            {c.organizationName ?? "Organization"} · 📅 {fmtDate(c.mission.startsAt)}
+            {c.organizationName ?? "Organization"} · <Icon name="calendar" size={12} style={{ display: "inline-block", verticalAlign: "-2px" }} /> {fmtDate(c.mission.startsAt)}
           </div>
         </div>
         <div style={{ display: "flex", gap: 9, alignItems: "center" }}>
@@ -194,7 +195,7 @@ export default function MyMissionsClient({
         <div style={{ flex: 1, minWidth: 180 }}>
           <div style={{ fontWeight: 700, fontSize: 16 }}>{m.missionTitle}</div>
           <div style={{ fontSize: 13, color: "#9aa3bd", marginTop: 2 }}>
-            {m.organizationName}{m.startsAt ? ` · 📅 ${fmtDate(m.startsAt)}` : ""}
+            {m.organizationName}{m.startsAt ? (<> · <Icon name="calendar" size={12} style={{ display: "inline-block", verticalAlign: "-2px" }} /> {fmtDate(m.startsAt)}</>) : ""}
           </div>
         </div>
         <span style={{ fontSize: 13.5, fontWeight: 800, color: "#e8543f" }}>{m.hoursCredited}h</span>

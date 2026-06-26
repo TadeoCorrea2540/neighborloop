@@ -7,6 +7,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import AuthToast from "@/components/auth/auth-toast";
+import Icon from "@/components/icons";
 import { createConversationForApplicationAction } from "@/app/messages/actions";
 
 export default function MessageButton({
@@ -46,12 +47,19 @@ export default function MessageButton({
         disabled={pending}
         style={
           style ?? {
+            display: "inline-flex", alignItems: "center", gap: 6,
             fontSize: 13, fontWeight: 600, color: "#18203b", border: "1px solid rgba(24,32,59,.12)",
             padding: "9px 13px", borderRadius: 11, background: "#fff", cursor: pending ? "not-allowed" : "pointer", opacity: pending ? 0.6 : 1,
           }
         }
       >
-        {pending ? "Opening…" : `💬 ${label}`}
+        {pending ? (
+          "Opening…"
+        ) : (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <Icon name="message" size={14} /> {label}
+          </span>
+        )}
       </button>
       {toast && <AuthToast key={seq} message={toast.msg} tone={toast.tone} onClose={() => setToast(null)} />}
     </>
