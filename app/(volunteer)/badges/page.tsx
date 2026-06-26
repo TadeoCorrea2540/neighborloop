@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/server";
 import { getVolunteerImpactSummary } from "@/lib/data/volunteer-impact";
 import { milestonesFromSummary } from "@/lib/data/analytics/volunteer";
+import Icon from "@/components/icons";
+import { MILESTONE_ICON } from "@/components/impact/milestones-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -26,16 +28,16 @@ export default async function Badges() {
             {unlocked} of {milestones.length} unlocked · earned from real completed missions
           </p>
         </div>
-        <Link href="/explore" className="btn-coral" style={{ color: "#fff", fontWeight: 700, fontSize: 14, padding: "11px 18px", borderRadius: 12, boxShadow: "0 12px 24px -12px rgba(255,111,94,.8)" }}>
-          ✦ Find a mission
+        <Link href="/explore" className="btn-coral" style={{ display: "inline-flex", alignItems: "center", gap: 7, color: "#fff", fontWeight: 700, fontSize: 14, padding: "11px 18px", borderRadius: 12, boxShadow: "0 12px 24px -12px rgba(255,111,94,.8)" }}>
+          <Icon name="sparkles" size={15} /> Find a mission
         </Link>
       </div>
 
       {/* next milestone progress banner (real) */}
       {next ? (
         <div style={{ background: "linear-gradient(120deg,#fff0ec,#f0ecff)", borderRadius: 18, padding: 20, marginBottom: 20, display: "flex", alignItems: "center", gap: 18 }}>
-          <span style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg,#ff8a5c,#ff5e7a)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0 }}>
-            {next.emoji}
+          <span style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg,#ff8a5c,#ff5e7a)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flexShrink: 0, boxShadow: "0 12px 24px -12px rgba(255,94,122,.7)" }}>
+            <Icon name={MILESTONE_ICON[next.key] ?? "sparkles"} size={26} strokeWidth={2.1} />
           </span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 700, fontSize: 16 }}>Next: {next.label}</div>
@@ -49,7 +51,9 @@ export default async function Badges() {
         </div>
       ) : (
         <div style={{ background: "linear-gradient(120deg,#eafaf2,#f0ecff)", borderRadius: 18, padding: 20, marginBottom: 20, display: "flex", alignItems: "center", gap: 16 }}>
-          <span style={{ fontSize: 30 }}>🏆</span>
+          <span style={{ width: 52, height: 52, borderRadius: "50%", background: "linear-gradient(135deg,#ffe08a,#ff9e3c)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flexShrink: 0, boxShadow: "0 12px 22px -12px rgba(255,158,60,.75)" }}>
+            <Icon name="award" size={26} strokeWidth={2} />
+          </span>
           <div style={{ fontWeight: 700, fontSize: 16 }}>Every milestone unlocked — incredible impact. Thank you for showing up.</div>
         </div>
       )}
@@ -60,12 +64,18 @@ export default async function Badges() {
           const locked = !m.achieved;
           return (
             <div key={m.key} style={{ background: "#fff", border: "1px solid rgba(24,32,59,.06)", borderRadius: 18, padding: 20, textAlign: "center", opacity: locked ? 0.82 : 1 }}>
-              <div style={{ width: 64, height: 64, margin: "0 auto", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, background: locked ? "#eef0f5" : "linear-gradient(135deg,#ffe08a,#ff9e3c)", filter: locked ? "grayscale(.7)" : "none", boxShadow: locked ? "none" : "0 10px 20px -12px rgba(255,158,60,.7)" }}>
-                {m.emoji}
+              <div style={{ width: 64, height: 64, margin: "0 auto", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: locked ? "var(--muted-3)" : "#fff", background: locked ? "#eef0f5" : "linear-gradient(135deg,#ffe08a,#ff9e3c)", boxShadow: locked ? "none" : "0 10px 20px -12px rgba(255,158,60,.7)" }}>
+                <Icon name={MILESTONE_ICON[m.key] ?? "sparkles"} size={28} strokeWidth={2} />
               </div>
               <div style={{ fontWeight: 700, fontSize: 14.5, marginTop: 12 }}>{m.label}</div>
               <div style={{ fontSize: 12, color: locked ? "#9aa3bd" : "var(--mint,#1fae82)", marginTop: 2, fontWeight: 600 }}>
-                {locked ? `${Math.min(m.current, m.target)} / ${m.target}` : "Unlocked ✓"}
+                {locked ? (
+                  `${Math.min(m.current, m.target)} / ${m.target}`
+                ) : (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+                    <Icon name="check" size={12} strokeWidth={2.6} /> Unlocked
+                  </span>
+                )}
               </div>
               {locked && (
                 <div style={{ height: 6, borderRadius: 99, background: "#eef0f5", overflow: "hidden", marginTop: 11 }}>

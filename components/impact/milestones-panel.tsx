@@ -2,7 +2,7 @@ import Link from "next/link";
 import Icon, { type IconName } from "@/components/icons";
 import type { VolunteerMilestone } from "@/lib/data/analytics/volunteer";
 
-const MILESTONE_ICON: Record<string, IconName> = {
+export const MILESTONE_ICON: Record<string, IconName> = {
   first_mission: "sparkles",
   five_missions: "target",
   ten_hours: "clock",
