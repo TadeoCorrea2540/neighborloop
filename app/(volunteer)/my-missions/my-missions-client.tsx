@@ -191,7 +191,7 @@ export default function MyMissionsClient({
   function CompletedRow({ m }: { m: CompletedMission }) {
     return (
       <div style={{ background: "#fff", border: "1px solid rgba(24,32,59,.06)", borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-        <span style={{ width: 52, height: 52, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0, background: "linear-gradient(135deg,#8fe3bd,#1fae82)" }}>✅</span>
+        <span style={{ width: 52, height: 52, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#fff", background: "linear-gradient(135deg,#8fe3bd,#1fae82)" }}><Icon name="check-circle" size={24} strokeWidth={2.2} /></span>
         <div style={{ flex: 1, minWidth: 180 }}>
           <div style={{ fontWeight: 700, fontSize: 16 }}>{m.missionTitle}</div>
           <div style={{ fontSize: 13, color: "#9aa3bd", marginTop: 2 }}>
@@ -211,7 +211,7 @@ export default function MyMissionsClient({
   function CertRow({ c }: { c: CertificateItem }) {
     return (
       <Link href={`/certificates/${c.id}`} style={{ background: "linear-gradient(180deg,#fff,#fffaf8)", border: "1px solid rgba(255,111,94,.25)", borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-        <span style={{ width: 52, height: 52, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0, background: "linear-gradient(135deg,#ffd9cf,#ff8a5c)" }}>🏅</span>
+        <span style={{ width: 52, height: 52, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#fff", background: "linear-gradient(135deg,#ffd9cf,#ff8a5c)" }}><Icon name="award" size={24} strokeWidth={2} /></span>
         <div style={{ flex: 1, minWidth: 180 }}>
           <div style={{ fontWeight: 700, fontSize: 16 }}>{c.missionTitle}</div>
           <div style={{ fontSize: 13, color: "#9aa3bd", marginTop: 2 }}>{c.organizationName} · {c.hoursCredited}h · {c.certificateNumber}</div>
@@ -279,8 +279,8 @@ export default function MyMissionsClient({
 
         {isEmpty && (
           <div style={{ textAlign: "center", padding: "54px 20px", background: "#fff", borderRadius: 18, border: "1px dashed rgba(24,32,59,.14)" }}>
-            <div style={{ fontSize: 46 }}>🗂️</div>
-            <div style={{ fontWeight: 700, fontSize: 17, marginTop: 10 }}>Nothing here yet</div>
+            <div style={{ display: "flex", justifyContent: "center", color: "#ffb4a3" }}><Icon name="inbox" size={46} strokeWidth={1.6} /></div>
+            <div style={{ fontWeight: 700, fontSize: 17, marginTop: 12 }}>Nothing here yet</div>
             <div style={{ fontSize: 14, color: "#9aa3bd", marginTop: 4 }}>
               {tab === "Saved" ? "Missions you save will show up here." : "Missions in this tab will show up here."}
             </div>

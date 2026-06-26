@@ -27,7 +27,8 @@ export type IconName =
   | "bar-chart"
   | "clipboard"
   | "check-square"
-  | "trending-up";
+  | "trending-up"
+  | "inbox";
 
 const PATHS: Record<IconName, ReactNode> = {
   home: (
@@ -162,6 +163,12 @@ const PATHS: Record<IconName, ReactNode> = {
     <>
       <path d="M3.5 16.5 9.5 10l3.5 3.5L21 5.5" />
       <path d="M15 5.5h6v6" />
+    </>
+  ),
+  inbox: (
+    <>
+      <path d="M21 12.5h-4.5l-1.6 2.4a1 1 0 0 1-.83.45H9.93a1 1 0 0 1-.83-.45L7.5 12.5H3" />
+      <path d="M6.4 5.6 3.5 12v5.5a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2V12l-2.9-6.4a2 2 0 0 0-1.82-1.18H8.22A2 2 0 0 0 6.4 5.6z" />
     </>
   ),
 };
