@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { requireOrganizer } from "@/lib/auth/require-organizer";
 import { getOrganizationAttendanceMissions } from "@/lib/data/attendance";
 import { fmtDate, MissionStatusBadge } from "@/components/admin/badges";
+import Icon from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,7 @@ export default async function AttendancePage() {
 
       {missions.length === 0 ? (
         <div style={{ ...card, padding: "44px 24px", textAlign: "center", color: "var(--muted-3)" }}>
-          <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
+          <div style={{ display: "flex", justifyContent: "center", color: "var(--muted-3)", marginBottom: 8 }}><Icon name="check-square" size={32} /></div>
           <div style={{ fontSize: 16, fontWeight: 700 }}>No missions to track yet</div>
           <p style={{ fontSize: 14, margin: "6px 0 0" }}>Publish a mission and approve volunteers — attendance shows up here.</p>
         </div>
@@ -42,7 +43,7 @@ export default async function AttendancePage() {
                   <span style={{ fontWeight: 700, fontSize: 15.5 }}>{m.title}</span>
                   <MissionStatusBadge status={m.status} />
                 </div>
-                <div style={{ fontSize: 13, color: "var(--muted-3)", marginTop: 4 }}>📅 {fmtDate(m.startsAt)}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--muted-3)", marginTop: 4 }}><Icon name="calendar" size={13} style={{ flexShrink: 0 }} /> {fmtDate(m.startsAt)}</div>
               </div>
               <div style={{ display: "flex", gap: 16, fontSize: 12.5, color: "var(--muted-1)", textAlign: "center" }}>
                 <span><strong style={{ display: "block", fontSize: 16 }}>{m.approvedCount}</strong>approved</span>
