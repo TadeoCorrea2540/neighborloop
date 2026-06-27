@@ -1,16 +1,7 @@
 import Link from "next/link";
-import Icon, { type IconName } from "@/components/icons";
+import Icon from "@/components/icons";
+import { MILESTONE_ICON } from "@/components/badges/milestone-meta";
 import type { VolunteerMilestone } from "@/lib/data/analytics/volunteer";
-
-export const MILESTONE_ICON: Record<string, IconName> = {
-  first_mission: "sparkles",
-  five_missions: "target",
-  ten_hours: "clock",
-  fifty_hours: "bar-chart",
-  hundred_hours: "award",
-  three_causes: "compass",
-  certified: "check-circle",
-};
 
 export default function MilestonesPanel({ milestones }: { milestones: VolunteerMilestone[] }) {
   const achieved = milestones.filter((m) => m.achieved).length;

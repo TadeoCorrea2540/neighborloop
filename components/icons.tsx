@@ -18,6 +18,8 @@ export type IconName =
   | "bookmark"
   | "clock"
   | "check-circle"
+  | "shield-check"
+  | "verified"
   | "send"
   | "wave"
   | "pin"
@@ -100,6 +102,18 @@ const PATHS: Record<IconName, ReactNode> = {
     <>
       <path d="M21 11.1V12a9 9 0 1 1-5.34-8.22" />
       <path d="m8.6 11.8 2.9 2.9 8.2-8.7" />
+    </>
+  ),
+  "shield-check": (
+    <>
+      <path d="M12 21.4s7.5-3.4 7.5-9.2V5.8L12 3.2 4.5 5.8v6.4c0 5.8 7.5 9.2 7.5 9.2z" />
+      <path d="m9 12.2 2.2 2.2 5.4-5" />
+    </>
+  ),
+  verified: (
+    <>
+      <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
+      <path d="m9 12 2 2 4-4" />
     </>
   ),
   send: (

@@ -91,6 +91,7 @@ export default async function Impact() {
           totalHours={impact.totalHours}
           completedCount={impact.completedCount}
           causes={impact.causes}
+          recentCompleted={impact.recentCompleted}
         />
 
         <div className="impact-page-content">

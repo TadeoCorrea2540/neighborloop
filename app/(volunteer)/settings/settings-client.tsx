@@ -98,7 +98,7 @@ export default function SettingsClient({
   }
 
   return (
-    <div style={{ maxWidth: 640 }}>
+    <div style={{ maxWidth: 640, margin: "0 auto", width: "100%" }}>
       <h2 style={{ fontSize: 26, fontWeight: 800, margin: "0 0 18px", letterSpacing: "-.02em" }}>Settings</h2>
 
       {/* Profile */}

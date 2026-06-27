@@ -1,5 +1,16 @@
 import DefaultAvatar from "@/components/default-avatar";
 import Icon from "@/components/icons";
+import ImpactHeroFootprint from "./impact-hero-footprint";
+import type { CompletedMission } from "@/lib/data/volunteer-impact";
+
+function formatCauseSentence(causes: string[]): string {
+  if (causes.length === 0) return "";
+  const list = causes.slice(0, 3).map((c) => c.toLowerCase());
+  if (list.length === 1) return `Supporting ${list[0]} in your community.`;
+  if (list.length === 2) return `Supporting ${list[0]} and ${list[1]} in your community.`;
+  const tail = list.pop()!;
+  return `Supporting ${list.join(", ")}, and ${tail} in your community.`;
+}
 
 export default function VolunteerImpactHero({
   name,
@@ -9,6 +20,7 @@ export default function VolunteerImpactHero({
   totalHours,
   completedCount,
   causes,
+  recentCompleted = [],
 }: {
   name: string;
   city: string | null;
@@ -17,78 +29,113 @@ export default function VolunteerImpactHero({
   totalHours: number;
   completedCount: number;
   causes: string[];
+  recentCompleted?: CompletedMission[];
 }) {
   const firstName = name.split(/\s+/)[0] ?? name;
-  const story =
-    completedCount > 0
-      ? `${totalHours} volunteer hour${totalHours === 1 ? "" : "s"} contributed across ${completedCount} completed mission${completedCount === 1 ? "" : "s"}.`
-      : "Your impact story starts with your first completed mission.";
-
-  const causeNote =
-    causes.length > 0
-      ? ` Supporting ${causes.slice(0, 3).join(", ")}${causes.length > 3 ? ` +${causes.length - 3} more` : ""}.`
-      : "";
+  const hasImpact = completedCount > 0;
+  const causeSentence = formatCauseSentence(causes);
 
   return (
-    <header>
+    <header className="impact-hero">
       <div className="impact-hero-banner" aria-hidden>
         <span className="impact-hero-glow" />
+        <span className="impact-hero-banner-orb impact-hero-banner-orb--left" />
+        <span className="impact-hero-banner-orb impact-hero-banner-orb--right" />
       </div>
+
       <div className="impact-hero-body">
-        <div className="impact-hero-head">
-          <DefaultAvatar
-            size={104}
-            radius={28}
-            kind="user"
-            style={{ border: "5px solid #fff", boxShadow: "0 16px 32px -16px rgba(24,32,59,.5)" }}
-          />
-          <div className="impact-hero-meta">
-            <h1 style={{ fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: "-.03em", lineHeight: 1.15 }}>
-              {firstName}&apos;s Impact Story
-            </h1>
-            <div style={{ fontSize: 14, color: "var(--muted-2)", marginTop: 4, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-              {city && (
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                  <Icon name="pin" size={14} />
-                  {city}
+        <div className="impact-hero-card">
+          <span className="impact-hero-card-accent" aria-hidden />
+          <span className="impact-hero-card-texture" aria-hidden />
+
+          <div className="impact-hero-grid">
+            <div className="impact-hero-identity impact-hero-reveal impact-hero-reveal--1">
+              <div className="impact-hero-avatar-block">
+                <span className="impact-hero-avatar-blob" aria-hidden />
+                <div className="impact-hero-avatar-inner">
+                  <DefaultAvatar
+                    size={84}
+                    radius={22}
+                    kind="user"
+                    style={{
+                      border: "3px solid #fff",
+                      boxShadow: "0 10px 24px -14px rgba(24,32,59,.45)",
+                    }}
+                  />
+                </div>
+                <span className="impact-hero-avatar-badge">
+                  <Icon name="sparkles" size={11} strokeWidth={2.3} />
+                  Volunteer
                 </span>
-              )}
-              <span className="impact-role-badge">
-                <Icon name="sparkles" size={12} />
-                Volunteer
-              </span>
+              </div>
+
+              <div className="impact-hero-meta">
+                <p className="impact-hero-eyebrow">
+                  <Icon name="award" size={12} strokeWidth={2.2} />
+                  Personal impact
+                </p>
+                <h1 className="impact-hero-title">
+                  {firstName}&apos;s
+                  <span className="impact-hero-title-dot" aria-hidden>
+                    ·
+                  </span>
+                  <span className="impact-hero-title-accent">Impact</span> Story
+                </h1>
+                {city && (
+                  <p className="impact-hero-location">
+                    <Icon name="pin" size={14} strokeWidth={2.2} />
+                    {city}
+                  </p>
+                )}
+                <div className="impact-hero-story-copy">
+                  {hasImpact ? (
+                    <p className="impact-story-line">
+                      <strong className="impact-story-em">{totalHours}</strong> volunteer hour
+                      {totalHours === 1 ? "" : "s"} contributed across{" "}
+                      <strong className="impact-story-em">{completedCount}</strong> completed mission
+                      {completedCount === 1 ? "" : "s"}.
+                    </p>
+                  ) : (
+                    <p className="impact-story-line impact-story-line--empty">
+                      Your impact story starts with your first completed mission.
+                    </p>
+                  )}
+                  {causeSentence && <p className="impact-story-causes">{causeSentence}</p>}
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="impact-btn-share impact-hero-reveal impact-hero-reveal--2"
+              disabled
+              aria-disabled="true"
+              title="Coming soon"
+            >
+              <Icon name="send" size={15} strokeWidth={2.2} />
+              Share impact
+            </button>
+
+            <div className="impact-hero-footprint-row impact-hero-reveal impact-hero-reveal--3">
+              <ImpactHeroFootprint missions={hasImpact ? recentCompleted : []} />
             </div>
           </div>
-          <span className="impact-btn-ghost" aria-disabled title="Coming soon">
-            Share impact
-          </span>
+
+          {(bio || interests.length > 0) && (
+            <div className="impact-hero-footer impact-hero-reveal impact-hero-reveal--3">
+              {bio && <p className="impact-hero-bio">{bio}</p>}
+              {interests.length > 0 && (
+                <div className="impact-hero-interests" aria-label="Interests">
+                  {interests.map((c) => (
+                    <span key={c} className="impact-interest-pill">
+                      {c}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
-
-        <p className="impact-story-line">
-          {story}
-          {causeNote}
-        </p>
-
-        {totalHours > 0 && (
-          <div className="impact-hours-highlight" aria-label={`${totalHours} total volunteer hours`}>
-            <span style={{ fontSize: 28, fontWeight: 800, color: "var(--coral-deep)", lineHeight: 1 }}>{totalHours}</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--muted-2)" }}>total hours</span>
-          </div>
-        )}
-
-        {bio && (
-          <p style={{ fontSize: 14.5, color: "var(--muted-1)", lineHeight: 1.6, maxWidth: 620, margin: "14px 0 0" }}>{bio}</p>
-        )}
-
-        {interests.length > 0 && (
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 14 }} aria-label="Interests">
-            {interests.map((c) => (
-              <span key={c} className="impact-interest-pill">
-                {c}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
     </header>
   );

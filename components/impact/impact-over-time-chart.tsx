@@ -133,23 +133,37 @@ export default function ImpactOverTimeChart({ timeline }: { timeline: VolunteerT
             return (
               <div
                 key={c.period}
-                className={`ioc-col${c.ghost ? " ioc-col--ghost" : ""}${active ? " is-active" : ""}`}
+                className={`ioc-col${c.ghost ? " ioc-col--ghost" : ""}${isBest ? " ioc-col--best" : ""}${active ? " is-active" : ""}`}
                 onMouseEnter={() => !c.ghost && setHovered(c.period)}
                 onMouseLeave={() => setHovered(null)}
               >
-                <div className="ioc-valwrap">
-                  {!c.ghost && (
-                    <div className="ioc-tip" role="presentation">
+                {isBest && <div className="ioc-peak-beacon" aria-hidden />}
+
+                <div className="ioc-label-slot">
+                  {c.ghost ? (
+                    <span className="ioc-val ioc-val--ghost">—</span>
+                  ) : active ? (
+                    <div className={`ioc-tip-open${isBest ? " ioc-tip-open--peak" : ""}`} role="presentation">
+                      {isBest && (
+                        <span className="ioc-tip-badge">
+                          <Icon name="award" size={11} strokeWidth={2.3} />
+                          Your peak
+                        </span>
+                      )}
                       <strong>{c.label}</strong>
                       <span>
                         {c.hours}h · {c.completed} mission{c.completed === 1 ? "" : "s"}
                       </span>
                     </div>
-                  )}
-                  {c.ghost ? (
-                    <span className="ioc-val ioc-val--ghost">—</span>
+                  ) : isBest ? (
+                    <span className="ioc-medallion" aria-label={`Peak month: ${c.hours} hours`}>
+                      <span className="ioc-medallion-halo" aria-hidden />
+                      <span className="ioc-medallion-core">
+                        <span className="ioc-medallion-val">{c.hours}h</span>
+                      </span>
+                    </span>
                   ) : (
-                    <span className={`ioc-val${isBest ? " ioc-val--best" : ""}`}>
+                    <span className="ioc-val">
                       {c.hours}h
                       {isLast && rising && (
                         <Icon name="trending-up" size={11} strokeWidth={2.6} style={{ color: "var(--mint)", marginLeft: 2 }} />
@@ -159,17 +173,29 @@ export default function ImpactOverTimeChart({ timeline }: { timeline: VolunteerT
                 </div>
 
                 <div className="ioc-bar-wrap">
-                  {isBest && <span className="ioc-peak" aria-hidden />}
                   <div
                     className={`ioc-bar${isBest ? " ioc-bar--best" : ""}${c.ghost ? " ioc-bar--ghost" : ""}`}
                     style={{
                       height: c.ghost ? "100%" : animated ? `${heightPct}%` : "0%",
                       transitionDelay: animated ? `${i * 70}ms` : "0ms",
                     }}
-                  />
+                  >
+                    {isBest && (
+                      <>
+                        <span className="ioc-bar-shine" aria-hidden />
+                        <span className="ioc-bar-flare ioc-bar-flare--l" aria-hidden />
+                        <span className="ioc-bar-flare ioc-bar-flare--r" aria-hidden />
+                      </>
+                    )}
+                  </div>
                 </div>
 
-                <span className={`ioc-month${c.ghost ? " ioc-month--ghost" : ""}`}>{shortMonth(c.label)}</span>
+                <span
+                  className={`ioc-month${c.ghost ? " ioc-month--ghost" : ""}${isBest ? " ioc-month--best" : ""}`}
+                >
+                  {isBest && <Icon name="sparkles" size={10} strokeWidth={2.2} />}
+                  {shortMonth(c.label)}
+                </span>
               </div>
             );
           })}
