@@ -455,6 +455,62 @@
   color: #147a57;
   box-shadow: 0 8px 18px -10px rgba(31, 174, 130, 0.4);
 }
+
+/* animated trust-seal emblem (no checkmark) */
+.ve {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+}
+.ve-svg {
+  position: relative;
+  z-index: 1;
+  display: block;
+  overflow: visible;
+}
+.ve-seal {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: veSpin 16s linear infinite;
+}
+.ve-star {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: veTwinkle 2.8s ease-in-out infinite;
+}
+.ve-halo {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(31, 174, 130, 0.4), transparent 68%);
+  animation: veHalo 2.8s ease-in-out infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+@keyframes veSpin {
+  to { transform: rotate(360deg); }
+}
+@keyframes veTwinkle {
+  0%, 100% { transform: scale(1); opacity: 0.92; }
+  50% { transform: scale(1.16); opacity: 1; }
+}
+@keyframes veHalo {
+  0%, 100% { opacity: 0.35; transform: scale(0.82); }
+  50% { opacity: 0.8; transform: scale(1.08); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ve-seal,
+  .ve-star,
+  .ve-halo {
+    animation: none;
+  }
+  .ve-halo {
+    opacity: 0.5;
+  }
+}
 .org-verify-panel--verified .org-verify-status-pill {
   background: linear-gradient(135deg, #e8faf3, #dff6ea);
   color: #147a57;

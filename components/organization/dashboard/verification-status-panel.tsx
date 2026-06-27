@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Icon, { type IconName } from "@/components/icons";
+import VerifiedEmblem from "./verified-emblem";
 import type { VerificationStatus } from "@/types/database";
 
 type Benefit = { icon: IconName; label: string };
@@ -79,7 +80,7 @@ export default function VerificationStatusPanel({ status }: { status: Verificati
     >
       <div className="org-verify-head">
         <div className={`org-verify-emblem ${c.emblemClass}`} aria-hidden>
-          <Icon name={c.emblemIcon} size={22} strokeWidth={2.2} />
+          {status === "verified" ? <VerifiedEmblem /> : <Icon name={c.emblemIcon} size={22} strokeWidth={2.2} />}
         </div>
 
         <div className="org-verify-head-main">
