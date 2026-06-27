@@ -31,7 +31,10 @@ export type IconName =
   | "check-square"
   | "trending-up"
   | "inbox"
-  | "globe";
+  | "globe"
+  | "megaphone"
+  | "x-circle"
+  | "info";
 
 const PATHS: Record<IconName, ReactNode> = {
   home: (
@@ -191,6 +194,26 @@ const PATHS: Record<IconName, ReactNode> = {
       <circle cx="12" cy="12" r="9" />
       <path d="M3 12h18" />
       <path d="M12 3a13 13 0 0 1 0 18 13 13 0 0 1 0-18" />
+    </>
+  ),
+  megaphone: (
+    <>
+      <path d="M3.5 11 19 6.2v11.6L3.5 13.2z" />
+      <path d="M3.5 11H2.6a1.4 1.4 0 0 0-1.4 1.4v.4a1.4 1.4 0 0 0 1.4 1.4h.9" />
+      <path d="M11 16.8a3 3 0 0 1-5.6.6" />
+    </>
+  ),
+  "x-circle": (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="m15 9-6 6M9 9l6 6" />
+    </>
+  ),
+  info: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 16.2v-4.4" />
+      <path d="M12 8.1h.01" />
     </>
   ),
 };

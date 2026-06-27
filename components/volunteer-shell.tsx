@@ -1,7 +1,8 @@
 "use client";
 
+import { type FormEvent, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { VOL_NAV } from "@/lib/data";
 import Logo from "./logo";
 import DefaultAvatar from "./default-avatar";
@@ -13,7 +14,6 @@ import HeaderUserMenu from "./header/user-menu";
 
 export default function VolunteerShell({
   children,
-  search = "Search missions, orgs, causes…",
   userName = "Neighbor",
   roleLabel = "Volunteer",
   userId,
@@ -23,7 +23,6 @@ export default function VolunteerShell({
   monthlyGoalPct = 0,
 }: {
   children: React.ReactNode;
-  search?: string;
   userName?: string;
   roleLabel?: string;
   userId?: string;
@@ -33,6 +32,15 @@ export default function VolunteerShell({
   monthlyGoalPct?: number;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+
+  function handleSearch(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const q = query.trim();
+    router.push(q ? `/explore?q=${encodeURIComponent(q)}` : "/explore");
+  }
+
   const NAV_ICON: Record<string, IconName> = {
     "/dashboard": "home",
     "/my-missions": "target",
@@ -172,26 +180,22 @@ export default function VolunteerShell({
             position: "sticky",
             top: 0,
             zIndex: 10,
+            gap: 12,
+            minWidth: 0,
           }}
         >
-          <div
-            className="vol-search"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              background: "var(--bg-chip)",
-              borderRadius: 12,
-              padding: "10px 14px",
-              maxWidth: 340,
-              flex: 1,
-              color: "var(--muted-3)",
-              fontSize: 14,
-            }}
-          >
-            <Icon name="search" size={17} style={{ color: "var(--muted-3)" }} /> {search}
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 16 }}>
+          <form className="vol-search" onSubmit={handleSearch} role="search">
+            <Icon name="search" size={17} style={{ color: "var(--muted-3)", flexShrink: 0 }} aria-hidden />
+            <input
+              type="search"
+              className="vol-search-input"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search missions"
+              aria-label="Search missions"
+            />
+          </form>
+          <div className="vol-main-header-actions" style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 16, flexShrink: 0 }}>
             {userId ? (
               <>
                 <NotificationsMenu initialCount={notificationCount} userId={userId} />

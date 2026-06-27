@@ -7,25 +7,9 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { markNotificationReadAction, markAllNotificationsReadAction } from "@/app/notifications/actions";
-import type { NotificationItem, NotificationType } from "@/lib/data/notifications";
-
-const ICON: Record<NotificationType, string> = {
-  application_submitted: "📋",
-  application_approved: "🎉",
-  application_declined: "📭",
-  application_waitlisted: "⏳",
-  mission_update: "📣",
-  mission_reminder: "⏰",
-  mission_cancelled: "🚫",
-  attendance_checked_in: "✅",
-  attendance_completed: "🙌",
-  certificate_issued: "🏅",
-  message_received: "💬",
-  organization_verified: "✓",
-  organization_rejected: "ℹ️",
-  report_resolved: "🛡️",
-  system: "🔔",
-};
+import type { NotificationItem } from "@/lib/data/notifications";
+import Icon from "@/components/icons";
+import NotificationIcon from "@/components/header/notification-icon";
 
 function timeAgo(iso: string): string {
   const d = new Date(iso);
@@ -84,7 +68,7 @@ export default function NotificationList({ initial }: { initial: NotificationIte
 
       {shown.length === 0 ? (
         <div style={{ background: "#fff", border: "1px solid rgba(24,32,59,.06)", borderRadius: 18, padding: "48px 24px", textAlign: "center" }}>
-          <div style={{ fontSize: 34, marginBottom: 8 }}>🔔</div>
+          <div style={{ display: "flex", justifyContent: "center", color: "var(--muted-3)", marginBottom: 8 }}><Icon name="bell" size={34} /></div>
           <div style={{ fontSize: 16, fontWeight: 700 }}>{filter === "unread" ? "You’re all caught up" : "No notifications yet"}</div>
           <p style={{ fontSize: 14, color: "var(--muted-3)", margin: "6px 0 0" }}>Updates about your missions, applications, and messages show up here.</p>
         </div>
@@ -103,9 +87,7 @@ export default function NotificationList({ initial }: { initial: NotificationIte
                 borderRadius: 14, padding: "14px 16px",
               }}
             >
-              <span style={{ width: 38, height: 38, borderRadius: 11, flexShrink: 0, background: "#f1f3f8", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>
-                {ICON[n.type] ?? "🔔"}
-              </span>
+              <NotificationIcon type={n.type} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span style={{ fontWeight: 700, fontSize: 14.5 }}>{n.title}</span>

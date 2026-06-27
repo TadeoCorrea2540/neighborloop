@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ORG_NAV } from "@/lib/data";
+import Logo from "./logo";
 import DefaultAvatar from "./default-avatar";
 import Icon, { type IconName } from "./icons";
 import LogoutButton from "./auth/logout-button";
@@ -12,7 +13,6 @@ import HeaderUserMenu from "./header/user-menu";
 
 export default function OrgShell({
   children,
-  search = "Search missions, volunteers…",
   orgName,
   verified = false,
   pendingCount = 0,
@@ -21,7 +21,6 @@ export default function OrgShell({
   messageCount = 0,
 }: {
   children: React.ReactNode;
-  search?: string;
   orgName?: string | null;
   verified?: boolean;
   pendingCount?: number;
@@ -37,6 +36,7 @@ export default function OrgShell({
     "/manage/attendance": "check-square",
     "/manage/messages": "message",
     "/manage/reports": "trending-up",
+    "/manage/settings": "settings",
   };
   return (
     <div
@@ -61,6 +61,14 @@ export default function OrgShell({
         }}
         className="app-sidebar org-sidebar"
       >
+        <Link
+          href="/"
+          style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 6px 18px" }}
+        >
+          <Logo size={32} />
+          <span style={{ fontWeight: 800, fontSize: 17 }}>NeighborLoop</span>
+        </Link>
+
         <div className="org-sidebar-identity" style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
           <DefaultAvatar size={34} radius={11} kind="org" />
           <div style={{ minWidth: 0 }}>
@@ -143,7 +151,7 @@ export default function OrgShell({
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
+            justifyContent: "flex-end",
             padding: "18px 28px",
             background: "#fff",
             borderBottom: "1px solid var(--line)",
@@ -152,24 +160,7 @@ export default function OrgShell({
             zIndex: 10,
           }}
         >
-          <div
-            className="org-search"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              background: "var(--bg-chip)",
-              borderRadius: 12,
-              padding: "10px 14px",
-              maxWidth: 320,
-              flex: 1,
-              color: "var(--muted-3)",
-              fontSize: 14,
-            }}
-          >
-            <Icon name="search" size={16} style={{ color: "var(--muted-3)" }} /> {search}
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             {userId ? (
               <>
                 <NotificationsMenu initialCount={notificationCount} userId={userId} />
@@ -185,7 +176,10 @@ export default function OrgShell({
               name={orgName || "Your organization"}
               roleLabel={verified ? "Verified organizer" : "Organizer"}
               kind="org"
-              links={[{ label: "Dashboard", href: "/manage/dashboard" }]}
+              links={[
+                { label: "Dashboard", href: "/manage/dashboard" },
+                { label: "Settings", href: "/manage/settings" },
+              ]}
             />
           </div>
         </div>

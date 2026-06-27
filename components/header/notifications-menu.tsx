@@ -11,29 +11,12 @@ import { useRouter } from "next/navigation";
 import { getBrowserSupabase } from "@/lib/supabase/browser";
 import { fetchHeaderNotifications, fetchUnreadNotificationCount } from "@/app/header/actions";
 import { markNotificationReadAction, markAllNotificationsReadAction } from "@/app/notifications/actions";
-import type { NotificationItem, NotificationType } from "@/lib/data/notifications";
+import type { NotificationItem } from "@/lib/data/notifications";
 import { panelStyle, Caret, MenuHeader, MenuEmpty, MenuSkeleton, Badge } from "./menu-ui";
 import Icon from "../icons";
+import NotificationIcon from "./notification-icon";
 import { useFocusPoll } from "./use-focus-poll";
 import { BADGE_REFRESH_EVENT } from "@/lib/badge-events";
-
-const ICON: Record<NotificationType, string> = {
-  application_submitted: "📋",
-  application_approved: "🎉",
-  application_declined: "📭",
-  application_waitlisted: "⏳",
-  mission_update: "📣",
-  mission_reminder: "⏰",
-  mission_cancelled: "🚫",
-  attendance_checked_in: "✅",
-  attendance_completed: "🙌",
-  certificate_issued: "🏅",
-  message_received: "💬",
-  organization_verified: "✓",
-  organization_rejected: "ℹ️",
-  report_resolved: "🛡️",
-  system: "🔔",
-};
 
 function timeAgo(iso: string): string {
   const d = new Date(iso);
@@ -154,9 +137,7 @@ export default function NotificationsMenu({ initialCount, userId }: { initialCou
                   onKeyDown={(e) => { if (e.key === "Enter") openItem(n); }}
                   style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "12px 16px", cursor: n.linkUrl ? "pointer" : "default", background: n.readAt ? "#fff" : "#fbfaff" }}
                 >
-                  <span style={{ width: 38, height: 38, borderRadius: 11, flexShrink: 0, background: "#f1f3f8", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>
-                    {ICON[n.type] ?? "🔔"}
-                  </span>
+                  <NotificationIcon type={n.type} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                       <span style={{ fontWeight: 700, fontSize: 13.8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.title}</span>

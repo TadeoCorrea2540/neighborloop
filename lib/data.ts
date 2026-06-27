@@ -156,6 +156,7 @@ export const ORG_NAV: {
   { label: "Attendance", icon: "✅", href: "/manage/attendance" },
   { label: "Messages", icon: "💬", href: "/manage/messages" },
   { label: "Impact reports", icon: "📈", href: "/manage/reports" },
+  { label: "Settings", icon: "⚙️", href: "/manage/settings" },
 ];
 
 /* ---------- my missions (by tab) ---------- */

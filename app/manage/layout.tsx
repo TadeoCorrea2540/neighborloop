@@ -1,4 +1,6 @@
 import "@/app/organizer-dashboard.css";
+import "@/app/organizer-reports.css";
+import "@/app/volunteer-impact.css";
 import OrgShell from "@/components/org-shell";
 import { requireRole } from "@/lib/auth/server";
 import { getPrimaryOrganizationForUser } from "@/lib/data/organization-membership";

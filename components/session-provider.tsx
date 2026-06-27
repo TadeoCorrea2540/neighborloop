@@ -4,6 +4,7 @@ import { createContext, useContext, type ReactNode } from "react";
 
 export interface SessionAccount {
   name: string;
+  orgName?: string | null;
   role: "volunteer" | "organizer" | "admin" | null;
   userId: string;
   notificationCount: number;

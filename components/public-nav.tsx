@@ -81,7 +81,10 @@ export default function PublicNav() {
     startSignOut(() => void signOutAction());
   }
 
-  const initial = account?.name?.charAt(0).toUpperCase() || "N";
+  const displayName =
+    account?.role === "organizer" && account.orgName ? account.orgName : account?.name ?? "Neighbor";
+  const avatarKind = account?.role === "organizer" && account.orgName ? "org" : "user";
+
   const acctLinks = [
     { label: "Dashboard", href: dashboardPath(account?.role ?? null) },
     ...(account?.role !== "organizer" && account?.role !== "admin"
@@ -186,9 +189,9 @@ export default function PublicNav() {
                     cursor: "pointer",
                   }}
                 >
-                  <DefaultAvatar size={30} radius={15} kind="user" />
+                  <DefaultAvatar size={30} radius={15} kind={avatarKind} />
                   <span style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {account.name}
+                    {displayName}
                   </span>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ color: "var(--muted-2)" }} aria-hidden="true">
                     <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
@@ -212,7 +215,7 @@ export default function PublicNav() {
                     }}
                   >
                     <div style={{ padding: "8px 12px 10px", borderBottom: "1px solid rgba(24,32,59,.07)", marginBottom: 4 }}>
-                      <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{account.name}</div>
+                      <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</div>
                       <div style={{ fontSize: 12, color: "var(--muted-3)", textTransform: "capitalize" }}>{account.role ?? "volunteer"}</div>
                     </div>
                     {acctLinks.map((l) => (
@@ -301,7 +304,7 @@ export default function PublicNav() {
         <div className="mobile-nav-drawer-footer">
           {account ? (
             <>
-              <p className="mobile-nav-drawer-auth-label">Signed in as {account.name}</p>
+              <p className="mobile-nav-drawer-auth-label">Signed in as {displayName}</p>
               <div className="mobile-nav-drawer-auth">
                 <button type="button" onClick={logout} disabled={signingOut} className="mobile-nav-drawer-btn-login" style={{ width: "100%", cursor: signingOut ? "wait" : "pointer" }}>
                   {signingOut ? "Signing out…" : "Log out"}
