@@ -30,7 +30,8 @@ export type IconName =
   | "clipboard"
   | "check-square"
   | "trending-up"
-  | "inbox";
+  | "inbox"
+  | "globe";
 
 const PATHS: Record<IconName, ReactNode> = {
   home: (
@@ -183,6 +184,13 @@ const PATHS: Record<IconName, ReactNode> = {
     <>
       <path d="M21 12.5h-4.5l-1.6 2.4a1 1 0 0 1-.83.45H9.93a1 1 0 0 1-.83-.45L7.5 12.5H3" />
       <path d="M6.4 5.6 3.5 12v5.5a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2V12l-2.9-6.4a2 2 0 0 0-1.82-1.18H8.22A2 2 0 0 0 6.4 5.6z" />
+    </>
+  ),
+  globe: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18" />
+      <path d="M12 3a13 13 0 0 1 0 18 13 13 0 0 1 0-18" />
     </>
   ),
 };

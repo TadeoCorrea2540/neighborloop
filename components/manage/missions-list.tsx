@@ -7,6 +7,7 @@
  */
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import Icon from "@/components/icons";
 import type { OrganizerMission } from "@/types/domain";
 import type { MissionStatus } from "@/types/database";
 
@@ -58,12 +59,15 @@ export default function MissionsList({ missions }: { missions: OrganizerMission[
     <div>
       {/* filters */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18, flexWrap: "wrap" }}>
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="🔎 Search your missions…"
-          style={{ flex: 1, minWidth: 180, border: "1px solid rgba(24,32,59,.1)", borderRadius: 12, padding: "11px 14px", fontSize: 14, outline: "none", background: "#fff" }}
-        />
+        <div style={{ position: "relative", flex: 1, minWidth: 180, display: "flex", alignItems: "center" }}>
+          <Icon name="search" size={16} style={{ position: "absolute", left: 13, color: "var(--muted-3)", pointerEvents: "none" }} />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search your missions…"
+            style={{ width: "100%", border: "1px solid rgba(24,32,59,.1)", borderRadius: 12, padding: "11px 14px 11px 38px", fontSize: 14, outline: "none", background: "#fff" }}
+          />
+        </div>
         {FILTERS.map((f) => {
           const active = filter === f;
           return (
@@ -85,7 +89,7 @@ export default function MissionsList({ missions }: { missions: OrganizerMission[
 
       {rows.length === 0 ? (
         <div style={{ background: "#fff", border: "1px solid rgba(24,32,59,.06)", borderRadius: 18, padding: "48px 24px", textAlign: "center" }}>
-          <div style={{ fontSize: 34, marginBottom: 10 }}>🎯</div>
+          <div style={{ display: "flex", justifyContent: "center", color: "var(--muted-3)", marginBottom: 10 }}><Icon name="compass" size={34} /></div>
           <div style={{ fontSize: 16, fontWeight: 700 }}>{missions.length === 0 ? "No missions yet" : "Nothing matches that filter"}</div>
           <p style={{ fontSize: 14, color: "var(--muted-3)", margin: "6px 0 18px" }}>
             {missions.length === 0 ? "Create your first mission to start recruiting volunteers." : "Try a different status or search."}
@@ -106,8 +110,17 @@ export default function MissionsList({ missions }: { missions: OrganizerMission[
                     <Link href={`/manage/missions/${m.id}/edit`} style={{ fontWeight: 700, fontSize: 15.5, color: "var(--ink)" }}>{m.title}</Link>
                     <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 99, ...pill }}>{pill.label}</span>
                   </div>
-                  <div style={{ fontSize: 13, color: "var(--muted-3)", marginTop: 4 }}>
-                    📅 {fmtDate(m.startsAt)} · {m.isVirtual ? "🌐 Virtual" : `📍 ${m.city ?? m.locationLabel ?? "Location TBD"}`}
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", fontSize: 13, color: "var(--muted-3)", marginTop: 4 }}>
+                    <Icon name="calendar" size={13} style={{ flexShrink: 0 }} /> {fmtDate(m.startsAt)} ·{" "}
+                    {m.isVirtual ? (
+                      <>
+                        <Icon name="globe" size={13} style={{ flexShrink: 0 }} /> Virtual
+                      </>
+                    ) : (
+                      <>
+                        <Icon name="pin" size={13} style={{ flexShrink: 0 }} /> {m.city ?? m.locationLabel ?? "Location TBD"}
+                      </>
+                    )}
                   </div>
                 </div>
 
