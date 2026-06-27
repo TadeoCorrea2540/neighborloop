@@ -18,11 +18,14 @@ import {
   removeMissionCoverAction,
 } from "@/app/manage/missions/actions";
 import ImageUpload from "@/components/manage/image-upload";
+import AIMissionBuilder from "@/components/manage/ai-mission-builder";
+import type { AIMissionDraft } from "@/lib/ai/mission-draft-schema";
 import type { MissionFull } from "@/types/domain";
 
 interface CategoryOption {
   id: string;
   name: string;
+  slug: string;
 }
 
 type Mode = "create" | "edit";
@@ -161,6 +164,41 @@ export default function MissionForm({
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setS((prev) => ({ ...prev, [k]: v }));
 
+  // Fill the form from an approved AI draft. Everything stays editable, and
+  // nothing is saved — the organizer still hits Save/Publish below.
+  function applyDraft(d: AIMissionDraft) {
+    const catId = d.categorySlug ? categories.find((c) => c.slug === d.categorySlug)?.id ?? "" : "";
+    const descParts = [d.description.trim()];
+    if (d.whatYouWillDo.length) descParts.push("What you’ll do:\n" + d.whatYouWillDo.map((x) => `• ${x}`).join("\n"));
+    if (d.impactGoal.trim()) descParts.push("Impact goal:\n" + d.impactGoal.trim());
+    setS((prev) => ({
+      ...prev,
+      title: d.title || prev.title,
+      summary: d.summary || prev.summary,
+      description: descParts.filter(Boolean).join("\n\n") || prev.description,
+      category_id: catId || prev.category_id,
+      difficulty: d.difficulty ?? prev.difficulty,
+      is_beginner_friendly: d.isBeginnerFriendly,
+      estimated_hours: d.estimatedHours != null ? String(d.estimatedHours) : prev.estimated_hours,
+      volunteer_capacity: d.volunteerCapacity != null ? String(d.volunteerCapacity) : prev.volunteer_capacity,
+      is_virtual: d.isVirtual,
+      location_label: d.publicLocationLabel ?? prev.location_label,
+      city: d.city ?? prev.city,
+      skills: d.requiredSkills.length ? d.requiredSkills.join(", ") : prev.skills,
+      materials_needed: d.materialsNeeded.length ? d.materialsNeeded.join(", ") : prev.materials_needed,
+      perks: d.perks.length ? d.perks.join(", ") : prev.perks,
+      safety_notes: d.safetyNotes.length ? d.safetyNotes.join("\n") : prev.safety_notes,
+      starts_at: d.suggestedStartsAt ? toLocalInput(d.suggestedStartsAt) : prev.starts_at,
+      ends_at: d.suggestedEndsAt ? toLocalInput(d.suggestedEndsAt) : prev.ends_at,
+    }));
+    show(
+      d.privateMeetingInstructions
+        ? "Draft added below — review and edit. Tip: add the suggested private meeting details under private details after saving."
+        : "Draft added below — review and edit, then save when you’re ready.",
+      "success"
+    );
+  }
+
   const previewWhen = useMemo(() => {
     if (!s.starts_at) return "Date TBD";
     const d = new Date(s.starts_at);
@@ -225,6 +263,8 @@ export default function MissionForm({
 
   return (
     <div>
+      {mode === "create" && <AIMissionBuilder categories={categories} onApply={applyDraft} />}
+
       {/* Basics */}
       <div style={sectionCard}>
         <h3 style={sectionTitle}>Basics</h3>

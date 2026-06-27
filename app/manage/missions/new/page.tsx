@@ -26,7 +26,7 @@ export default async function CreateMissionPage() {
       <p style={{ margin: "0 0 22px", color: "var(--muted-2)", fontSize: 14 }}>
         Save it as a private draft, or publish straight to Explore. You can edit anything later.
       </p>
-      <MissionForm mode="create" mission={null} categories={categories.map((c) => ({ id: c.id, name: c.name }))} />
+      <MissionForm mode="create" mission={null} categories={categories.map((c) => ({ id: c.id, name: c.name, slug: c.slug }))} />
     </div>
   );
 }

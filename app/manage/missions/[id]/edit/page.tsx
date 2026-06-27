@@ -62,7 +62,7 @@ export default async function EditMissionPage({ params }: { params: { id: string
       <MissionForm
         mode="edit"
         mission={mission}
-        categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+        categories={categories.map((c) => ({ id: c.id, name: c.name, slug: c.slug }))}
         coverImageUrl={publicMediaUrl(BUCKETS.missionMedia, mission.coverImagePath)}
       />
 
