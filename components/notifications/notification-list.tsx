@@ -10,6 +10,7 @@ import { markNotificationReadAction, markAllNotificationsReadAction } from "@/ap
 import type { NotificationItem } from "@/lib/data/notifications";
 import Icon from "@/components/icons";
 import NotificationIcon from "@/components/header/notification-icon";
+import { stripEmoji } from "@/lib/strip-emoji";
 
 function timeAgo(iso: string): string {
   const d = new Date(iso);
@@ -90,10 +91,10 @@ export default function NotificationList({ initial }: { initial: NotificationIte
               <NotificationIcon type={n.type} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontWeight: 700, fontSize: 14.5 }}>{n.title}</span>
+                  <span style={{ fontWeight: 700, fontSize: 14.5 }}>{stripEmoji(n.title)}</span>
                   {!n.readAt && <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--coral)", flexShrink: 0 }} />}
                 </div>
-                {n.body && <div style={{ fontSize: 13.5, color: "var(--muted-1)", marginTop: 2, lineHeight: 1.45 }}>{n.body}</div>}
+                {n.body && <div style={{ fontSize: 13.5, color: "var(--muted-1)", marginTop: 2, lineHeight: 1.45 }}>{stripEmoji(n.body)}</div>}
                 <div style={{ fontSize: 12, color: "var(--muted-3)", marginTop: 4 }}>{timeAgo(n.createdAt)}</div>
               </div>
               {!n.readAt && (

@@ -190,7 +190,7 @@ export async function markCompletedAction(attendanceId: string, hours: number): 
   const meta = await missionMeta(att.missionId);
   await createNotification(att.volunteerId, {
     type: "attendance_completed",
-    title: "Attendance confirmed ✅",
+    title: "Attendance confirmed",
     body: `Your ${roundQuarter(hours)} hour${roundQuarter(hours) === 1 ? "" : "s"} for “${meta.title}” are confirmed.`,
     linkUrl: "/impact",
     entityType: "mission",
@@ -282,7 +282,7 @@ export async function issueCertificateAction(attendanceRecordId: string): Promis
       const meta = await missionMeta(att.mission_id);
       await createNotification(att.volunteer_id, {
         type: "certificate_issued",
-        title: "Certificate issued 🏅",
+        title: "Certificate issued",
         body: `Your certificate for “${meta.title}” is ready.`,
         linkUrl: `/certificates/${certId}`,
         entityType: "certificate",

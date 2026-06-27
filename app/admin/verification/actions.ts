@@ -90,7 +90,7 @@ async function applyDecision(
   if (org?.owner_id && (next === "verified" || next === "rejected")) {
     await createNotification(org.owner_id, {
       type: next === "verified" ? "organization_verified" : "organization_rejected",
-      title: next === "verified" ? "Organization verified ✓" : "Verification update",
+      title: next === "verified" ? "Organization verified" : "Verification update",
       body:
         next === "verified"
           ? `${org.name} is now verified — your verified badge is live.`

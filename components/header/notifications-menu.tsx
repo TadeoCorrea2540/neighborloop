@@ -15,6 +15,7 @@ import type { NotificationItem } from "@/lib/data/notifications";
 import { panelStyle, Caret, MenuHeader, MenuEmpty, MenuSkeleton, Badge } from "./menu-ui";
 import Icon from "../icons";
 import NotificationIcon from "./notification-icon";
+import { stripEmoji } from "@/lib/strip-emoji";
 import { useFocusPoll } from "./use-focus-poll";
 import { BADGE_REFRESH_EVENT } from "@/lib/badge-events";
 
@@ -140,12 +141,12 @@ export default function NotificationsMenu({ initialCount, userId }: { initialCou
                   <NotificationIcon type={n.type} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                      <span style={{ fontWeight: 700, fontSize: 13.8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.title}</span>
+                      <span style={{ fontWeight: 700, fontSize: 13.8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{stripEmoji(n.title)}</span>
                       {!n.readAt && <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--coral)", flexShrink: 0, marginLeft: "auto" }} />}
                     </div>
                     {n.body && (
                       <div style={{ fontSize: 12.8, color: "var(--muted-1)", marginTop: 2, lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-                        {n.body}
+                        {stripEmoji(n.body)}
                       </div>
                     )}
                     <div style={{ fontSize: 11.5, color: "var(--muted-3)", marginTop: 3 }}>{timeAgo(n.createdAt)}</div>

@@ -52,7 +52,7 @@ async function loadOwnedApplication(
 }
 
 const STATUS_NOTIF: Record<"approved" | "declined" | "waitlisted", { type: NotificationType; title: string; body: (t: string) => string }> = {
-  approved: { type: "application_approved", title: "You’re approved 🎉", body: (t) => `You’re approved for “${t}”. See you there!` },
+  approved: { type: "application_approved", title: "You’re approved", body: (t) => `You’re approved for “${t}”. See you there!` },
   declined: { type: "application_declined", title: "Application update", body: (t) => `Your application for “${t}” wasn’t selected this time.` },
   waitlisted: { type: "application_waitlisted", title: "You’re on the waitlist", body: (t) => `You’ve been added to the waitlist for “${t}”.` },
 };
