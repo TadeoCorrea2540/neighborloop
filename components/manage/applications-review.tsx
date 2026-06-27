@@ -10,6 +10,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import AuthToast from "@/components/auth/auth-toast";
 import DefaultAvatar from "@/components/default-avatar";
+import Icon from "@/components/icons";
 import MessageButton from "@/components/messaging/message-button";
 import {
   approveApplicationAction,
@@ -138,7 +139,7 @@ export default function ApplicationsReview({
 
       {filtered.length === 0 ? (
         <div style={{ background: "#fff", border: "1px solid rgba(24,32,59,.06)", borderRadius: 18, padding: "40px 24px", textAlign: "center", color: "var(--muted-3)" }}>
-          <div style={{ fontSize: 30, marginBottom: 8 }}>📭</div>
+          <div style={{ display: "flex", justifyContent: "center", color: "var(--muted-3)", marginBottom: 8 }}><Icon name="inbox" size={30} /></div>
           <div style={{ fontSize: 15, fontWeight: 600, color: "var(--muted-1)" }}>No {tab === "All" ? "" : tab.toLowerCase() + " "}applications yet</div>
           <p style={{ fontSize: 13.5, marginTop: 4 }}>When volunteers apply, they’ll show up here for review.</p>
         </div>
@@ -162,7 +163,7 @@ export default function ApplicationsReview({
                       {a.volunteer?.city ? `${a.volunteer.city} · ` : isPrivate ? "Private profile · " : ""}Applied {fmtDate(a.appliedAt)}
                     </div>
                     {showMission && (
-                      <div style={{ fontSize: 12.5, color: "var(--muted-1)", marginTop: 3, fontWeight: 600 }}>🎯 {a.missionTitle}</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12.5, color: "var(--muted-1)", marginTop: 3, fontWeight: 600 }}><Icon name="target" size={13} style={{ flexShrink: 0 }} /> {a.missionTitle}</div>
                     )}
                   </div>
                 </div>
@@ -173,7 +174,7 @@ export default function ApplicationsReview({
                   </p>
                 )}
                 {a.organizerNote && (
-                  <p style={{ fontSize: 12.5, color: "var(--muted-3)", margin: "8px 0 0" }}>📝 Note: {a.organizerNote}</p>
+                  <p style={{ display: "flex", alignItems: "flex-start", gap: 5, fontSize: 12.5, color: "var(--muted-3)", margin: "8px 0 0" }}><Icon name="clipboard" size={13} style={{ flexShrink: 0, marginTop: 1 }} /> <span>Note: {a.organizerNote}</span></p>
                 )}
 
                 {(a.status === "pending" || a.status === "waitlisted" || a.status === "approved") && (
