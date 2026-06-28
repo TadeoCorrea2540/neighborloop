@@ -65,8 +65,57 @@ interface MissionInput {
   materials_needed: string[];
   perks: string[];
   safety_notes: string | null;
-  // cover_image_path is managed only via uploadMissionCoverAction — never set
-  // from the form, so saving the form can't wipe an uploaded cover.
+  show_exact_address_publicly: boolean;
+}
+
+interface PrivateDetailsInput {
+  exact_address: string | null;
+  private_meeting_instructions: string | null;
+  private_contact_name: string | null;
+  private_contact_phone: string | null;
+  private_contact_email: string | null;
+}
+
+function parsePrivateDetails(fd: FormData): PrivateDetailsInput {
+  return {
+    exact_address: str(fd, "exact_address"),
+    private_meeting_instructions: str(fd, "private_meeting_instructions"),
+    private_contact_name: str(fd, "private_contact_name"),
+    private_contact_phone: str(fd, "private_contact_phone"),
+    private_contact_email: str(fd, "private_contact_email"),
+  };
+}
+
+/** When the exact address is public, sync it to the public location label. */
+function withAddressVisibility(
+  m: MissionInput,
+  pd: PrivateDetailsInput
+): MissionInput {
+  if (m.is_virtual) return { ...m, show_exact_address_publicly: false };
+  if (m.show_exact_address_publicly && pd.exact_address) {
+    return { ...m, location_label: pd.exact_address };
+  }
+  return m;
+}
+
+async function savePrivateDetails(
+  missionId: string,
+  pd: PrivateDetailsInput
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = getServerSupabase();
+  const { error } = await supabase.from("mission_private_details").upsert(
+    {
+      mission_id: missionId,
+      exact_address: pd.exact_address,
+      private_meeting_instructions: pd.private_meeting_instructions,
+      private_contact_name: pd.private_contact_name,
+      private_contact_phone: pd.private_contact_phone,
+      private_contact_email: pd.private_contact_email,
+    },
+    { onConflict: "mission_id" }
+  );
+  if (error) return { ok: false, error: "Couldn't save the private details." };
+  return { ok: true };
 }
 
 function parseMission(fd: FormData): MissionInput {
@@ -92,6 +141,7 @@ function parseMission(fd: FormData): MissionInput {
     materials_needed: list(fd, "materials_needed"),
     perks: list(fd, "perks"),
     safety_notes: str(fd, "safety_notes"),
+    show_exact_address_publicly: bool(fd, "show_exact_address_publicly"),
   };
 }
 
@@ -139,13 +189,14 @@ export async function createMissionDraftAction(
   const guard = await requireOrganizer();
   if (!guard.ok) return guard;
 
-  const m = parseMission(fd);
+  const m = withAddressVisibility(parseMission(fd), parsePrivateDetails(fd));
   if (!m.title) return { ok: false, code: "validation", error: "Please add a mission title." };
   if (!m.summary) return { ok: false, code: "validation", error: "Please add a short summary." };
   if (!m.starts_at) return { ok: false, code: "validation", error: "Please choose a start date & time." };
   const checkErr = checkConstraints(m);
   if (checkErr) return { ok: false, code: "validation", error: checkErr };
 
+  const pd = parsePrivateDetails(fd);
   const supabase = getServerSupabase();
   // Generate a unique slug; retry once on the (astronomically unlikely) collision.
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -156,11 +207,18 @@ export async function createMissionDraftAction(
       .select("id, slug")
       .single();
     if (!error && data) {
+      const missionId = (data as { id: string }).id;
+      if (!m.is_virtual) {
+        const pdRes = await savePrivateDetails(missionId, pd);
+        if (!pdRes.ok) return { ok: false, code: "unknown", error: pdRes.error };
+      }
       revalidateManage();
-      return { ok: true, missionId: (data as { id: string }).id, slug: (data as { slug: string }).slug };
+      return { ok: true, missionId, slug: (data as { slug: string }).slug };
     }
     if (error && error.code !== "23505") {
-      return { ok: false, code: error.code === "23514" ? "validation" : "unknown", error: "Couldn’t save this mission. Please check the fields and try again." };
+      console.error("[createMissionDraftAction] insert failed:", error);
+      // TEMP DEBUG: surface the DB error to pinpoint the failing constraint.
+      return { ok: false, code: error.code === "23514" ? "validation" : "unknown", error: `Couldn’t save this mission. [${error.code}] ${error.message}` };
     }
   }
   return { ok: false, code: "conflict", error: "Couldn’t generate a unique link for this mission. Try again." };
@@ -175,7 +233,8 @@ export async function updateMissionAction(missionId: string, fd: FormData): Prom
   const owns = await assertOwnsMission(guard.orgId, missionId);
   if (!owns.ok) return { ok: false, code: "forbidden", error: "You don’t have permission to edit this mission." };
 
-  const m = parseMission(fd);
+  const pd = parsePrivateDetails(fd);
+  const m = withAddressVisibility(parseMission(fd), pd);
   if (!m.title) return { ok: false, code: "validation", error: "Please add a mission title." };
   if (!m.summary) return { ok: false, code: "validation", error: "Please add a short summary." };
   if (!m.starts_at) return { ok: false, code: "validation", error: "Please choose a start date & time." };
@@ -190,6 +249,11 @@ export async function updateMissionAction(missionId: string, fd: FormData): Prom
     .eq("id", missionId)
     .eq("organization_id", guard.orgId);
   if (error) return { ok: false, code: error.code === "23514" ? "validation" : "unknown", error: "Couldn’t save your changes." };
+
+  if (!m.is_virtual) {
+    const pdRes = await savePrivateDetails(missionId, pd);
+    if (!pdRes.ok) return { ok: false, code: "unknown", error: pdRes.error };
+  }
 
   revalidateManage();
   revalidatePath(`/manage/missions/${missionId}/edit`);
@@ -376,20 +440,30 @@ export async function upsertMissionPrivateDetailsAction(
   const owns = await assertOwnsMission(guard.orgId, missionId);
   if (!owns.ok) return { ok: false, code: "forbidden", error: "You don’t have permission for this mission." };
 
+  const pd = parsePrivateDetails(fd);
+  const showPublic = bool(fd, "show_exact_address_publicly");
+
   const supabase = getServerSupabase();
-  const { error } = await supabase.from("mission_private_details").upsert(
-    {
-      mission_id: missionId,
-      exact_address: str(fd, "exact_address"),
-      private_meeting_instructions: str(fd, "private_meeting_instructions"),
-      private_contact_name: str(fd, "private_contact_name"),
-      private_contact_phone: str(fd, "private_contact_phone"),
-      private_contact_email: str(fd, "private_contact_email"),
-    },
-    { onConflict: "mission_id" }
-  );
-  if (error) return { ok: false, code: "unknown", error: "Couldn’t save the private details." };
+  const pdRes = await savePrivateDetails(missionId, pd);
+  if (!pdRes.ok) return { ok: false, code: "unknown", error: pdRes.error };
+
+  if (showPublic && pd.exact_address) {
+    const { error: locErr } = await supabase
+      .from("missions")
+      .update({ location_label: pd.exact_address, show_exact_address_publicly: true })
+      .eq("id", missionId)
+      .eq("organization_id", guard.orgId);
+    if (locErr) return { ok: false, code: "unknown", error: "Couldn’t update the public address." };
+  } else {
+    const { error: visErr } = await supabase
+      .from("missions")
+      .update({ show_exact_address_publicly: false })
+      .eq("id", missionId)
+      .eq("organization_id", guard.orgId);
+    if (visErr) return { ok: false, code: "unknown", error: "Couldn’t update address visibility." };
+  }
 
   revalidatePath(`/manage/missions/${missionId}/edit`);
+  if (owns.status === "published") revalidatePublic();
   return { ok: true };
 }
