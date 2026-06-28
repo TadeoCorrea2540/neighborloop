@@ -12,6 +12,7 @@ import type { MissionCard } from "@/lib/data/mission-cards";
 import type { ApplicationStatus } from "@/types/database";
 import type { CompletedMission } from "@/lib/data/volunteer-impact";
 import type { CertificateItem } from "@/lib/data/certificates";
+import "./my-missions.css";
 
 export interface MyRow {
   applicationId: string;
@@ -38,7 +39,9 @@ const STATUS_PILL: Record<ApplicationStatus, { label: string; bg: string; color:
 function fmtDate(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "Date TBA";
-  return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  // Include the year so past missions aren't mistaken for upcoming ones, and pin
+  // the timeZone so server and client render identically (no hydration mismatch).
+  return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZone: "UTC" });
 }
 
 export default function MyMissionsClient({
@@ -234,34 +237,30 @@ export default function MyMissionsClient({
       : rows.length === 0;
 
   return (
-    <div>
-      <h2 style={{ fontSize: 26, fontWeight: 800, margin: "0 0 16px", letterSpacing: "-.02em" }}>My Missions</h2>
+    <div className="mm-page">
+      <h2>My Missions</h2>
 
-      <div style={{ display: "flex", gap: 9, marginBottom: 20, flexWrap: "wrap" }}>
+      <div className="mm-tabs" role="tablist" aria-label="Mission filters">
         {TABS.map((t) => {
           const active = t === tab;
+          const count = counts[t];
           return (
-            <span
+            <button
               key={t}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              className={`mm-tab${active ? " mm-tab--active" : ""}`}
               onClick={() => setTab(t)}
-              style={{
-                cursor: "pointer",
-                fontSize: 13.5,
-                fontWeight: 700,
-                padding: "9px 16px",
-                borderRadius: 999,
-                background: active ? "#ff6f5e" : "#fff",
-                color: active ? "#fff" : "#5a6685",
-                border: active ? "1px solid #ff6f5e" : "1px solid rgba(24,32,59,.12)",
-              }}
             >
-              {t} {counts[t] > 0 ? `· ${counts[t]}` : ""}
-            </span>
+              <span className="mm-tab-label">{t}</span>
+              {count > 0 ? <span className="mm-tab-count">{count}</span> : null}
+            </button>
           );
         })}
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
+      <div className="mm-list">
         {tab === "All" ? (
           <>
             {allAppRows.map((r) => <AppCardRow key={r.applicationId} row={r} />)}
