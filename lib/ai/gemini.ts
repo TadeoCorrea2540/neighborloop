@@ -30,7 +30,7 @@ VOICE: warm, clear, community-centered, professional, optimistic, practical. Nev
 HARD RULES:
 - Do NOT invent precise facts (exact times, addresses, counts) that the organizer did not provide. When something is unknown, leave that field null/empty and add a short note to "missingInformation".
 - Do NOT exaggerate impact or make promises. Do NOT promise payment unless the organizer mentioned it. Do NOT invent certificates.
-- Do NOT put a private/exact home address in any public field. If the organizer gave a private address or access details, put a general public meeting point in publicLocationLabel and move the precise details into privateMeetingInstructions.
+- Do NOT put a private/exact home address in publicLocationLabel unless the organizer explicitly wants it shown publicly (showExactAddressPublicly: true). If they gave an exact street address, put it in exactAddress and set showExactAddressPublicly based on whether they want everyone (including non-logged-in visitors) to see it. Otherwise use a general public meeting point in publicLocationLabel and keep precise details in privateMeetingInstructions.
 - Generate reasonable, non-dangerous safetyNotes when the work involves children, animals, health, elderly people, physical labor, or public spaces. Never give medical, legal, or hazardous instructions.
 - Keep language simple and welcoming for volunteers. Be concise.
 - Pick categorySlug ONLY from the provided list of allowed categories; if none clearly fit, use null.
@@ -55,6 +55,8 @@ OUTPUT: Respond with a SINGLE JSON object only (no markdown, no prose) using exa
   "perks": string[],
   "safetyNotes": string[],
   "impactGoal": string,
+  "exactAddress": string | null,
+  "showExactAddressPublicly": boolean,
   "privateMeetingInstructions": string | null,
   "suggestedStartsAt": string | null,      // ISO 8601 if clearly given, else null
   "suggestedEndsAt": string | null,
@@ -71,6 +73,8 @@ function buildUserPrompt(a: AIMissionAnswers, categories: { slug: string; name: 
     "Organizer answers:",
     `1) What is this mission about?\n${a.purpose}`,
     `2) Where and when will it happen?\n${a.whereWhen}`,
+    `2b) Exact street address (organizer provided): ${a.exactAddress.trim() || "(not provided — optional)"}`,
+    `2c) Should the exact address be public? ${a.addressVisibility === "public" ? "Yes — visible to everyone including visitors not logged in" : "No — private, shared only after volunteer approval"}`,
     `3) What will volunteers do, and what should they bring or know?\n${a.tasksRequirements}`,
     `4) How many volunteers are needed, and what impact should it create?\n${a.volunteersImpact}`,
     "",
@@ -114,7 +118,10 @@ export async function generateMissionDraft(
         generationConfig: {
           responseMimeType: "application/json",
           temperature: 0.55,
-          maxOutputTokens: 2048,
+          maxOutputTokens: 4096,
+          // Gemini 2.5 "thinking" is on by default and can consume the output
+          // budget, truncating the JSON. Disable it for reliable structured output.
+          thinkingConfig: { thinkingBudget: 0 },
         },
       }),
     });
@@ -128,10 +135,14 @@ export async function generateMissionDraft(
   }
 
   const data = (await res.json().catch(() => null)) as
-    | { candidates?: { content?: { parts?: { text?: string }[] } }[] }
+    | { candidates?: { finishReason?: string; content?: { parts?: { text?: string }[] } }[]; promptFeedback?: { blockReason?: string } }
     | null;
-  const text = data?.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("").trim() ?? "";
-  if (!text) throw new GeminiGenerationError("Gemini returned an empty response.");
+  const cand = data?.candidates?.[0];
+  const text = cand?.content?.parts?.map((p) => p.text ?? "").join("").trim() ?? "";
+  if (!text) {
+    const reason = cand?.finishReason ?? data?.promptFeedback?.blockReason ?? "unknown";
+    throw new GeminiGenerationError(`Gemini returned no usable text (finishReason=${reason}).`);
+  }
 
   const draft = sanitizeDraft(parseJson(text), categories.map((c) => c.slug));
   if (!draft.title && !draft.description) {

@@ -45,12 +45,25 @@ export async function generateMissionDraftAction(answers: AIMissionAnswers): Pro
       {
         purpose: answers.purpose.trim(),
         whereWhen: answers.whereWhen.trim(),
+        exactAddress: answers.exactAddress.trim(),
+        addressVisibility: answers.addressVisibility,
         tasksRequirements: answers.tasksRequirements.trim(),
         volunteersImpact: answers.volunteersImpact.trim(),
       },
       categories.map((c) => ({ slug: c.slug, name: c.name }))
     );
-    return { ok: true, draft };
+    const exactFromOrganizer = answers.exactAddress.trim();
+    return {
+      ok: true,
+      draft: {
+        ...draft,
+        exactAddress: exactFromOrganizer || draft.exactAddress,
+        showExactAddressPublicly:
+          exactFromOrganizer.length > 0
+            ? answers.addressVisibility === "public"
+            : draft.showExactAddressPublicly,
+      },
+    };
   } catch (e) {
     if (e instanceof GeminiConfigError) {
       // Developer-facing only; never leak config state to the client.
@@ -62,10 +75,14 @@ export async function generateMissionDraftAction(answers: AIMissionAnswers): Pro
       };
     }
     console.error("[ai-mission-builder] draft generation failed:", e);
+    // TEMP DEBUG: surface the underlying reason in the UI to diagnose. Contains
+    // no secrets (the API key is never included in these messages). Revert to a
+    // generic message once the cause is confirmed.
+    const detail = e instanceof Error ? e.message : String(e);
     return {
       ok: false,
       code: "unknown",
-      error: "We couldn’t generate a draft right now. Please try again, or use the manual form.",
+      error: `We couldn’t generate a draft. Reason: ${detail}`,
     };
   }
 }
