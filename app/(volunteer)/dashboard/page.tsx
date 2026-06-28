@@ -10,6 +10,7 @@ import VolunteerDashboardHero from "@/components/volunteer/dashboard/volunteer-d
 import ImpactStoryCard from "@/components/volunteer/dashboard/impact-story-card";
 import NextMissionPanel from "@/components/volunteer/dashboard/next-mission-panel";
 import RecommendedMissionCard from "@/components/volunteer/dashboard/recommended-mission-card";
+import "@/app/explore/explore-mission-cards.css";
 
 export const dynamic = "force-dynamic";
 
@@ -75,7 +76,7 @@ export default async function Dashboard() {
         </div>
       </div>
 
-      <section style={{ marginTop: 22 }}>
+      <section className="vol-rec-section">
         <DashboardSectionHeader
           title="Recommended for you"
           subtitle="Soonest missions you can explore next"
@@ -91,9 +92,9 @@ export default async function Dashboard() {
           />
         ) : (
           <div className="vol-rec-grid card-grid-3" role="list" aria-label="Recommended missions">
-            {recs.map((card) => (
+            {recs.map((card, i) => (
               <div key={card.mission.id} role="listitem">
-                <RecommendedMissionCard card={card} />
+                <RecommendedMissionCard card={card} index={i} />
               </div>
             ))}
           </div>

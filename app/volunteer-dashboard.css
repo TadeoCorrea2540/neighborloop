@@ -375,54 +375,25 @@
   font-weight: 500;
 }
 
+.vol-rec-section {
+  margin-top: 22px;
+}
+
 .vol-rec-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
 }
 
-.vol-rec-card {
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  overflow: hidden;
-  display: block;
-  text-decoration: none;
-  color: inherit;
-  transition: transform 0.22s ease, box-shadow 0.22s ease;
-}
-
-.vol-rec-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 22px 44px -26px rgba(24, 32, 59, 0.38);
-}
-
-.vol-rec-cover {
-  height: 96px;
-  position: relative;
-}
-
-.vol-rec-badges {
-  position: absolute;
-  top: 10px;
-  left: 10px;
+.vol-rec-grid > [role="listitem"] {
+  min-width: 0;
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
 }
 
-.vol-rec-badge {
-  font-size: 10.5px;
-  font-weight: 700;
-  padding: 4px 9px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--ink);
-  backdrop-filter: blur(6px);
-}
-
-.vol-rec-body {
-  padding: 14px 15px 15px;
+.vol-rec-grid .exp-card.vol-rec-card {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
 }
 
 .vol-empty {
@@ -709,7 +680,7 @@ a.vol-sidebar-nav-link--active:is(:link, :visited, :active) {
     grid-template-columns: repeat(2, 1fr);
   }
   .vol-rec-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .vol-main-header {
     padding: 14px 18px !important;
@@ -779,17 +750,21 @@ a.vol-sidebar-nav-link--active:is(:link, :visited, :active) {
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     gap: 14px;
-    padding-bottom: 6px;
+    margin: 0 -28px;
+    padding: 2px 28px 8px;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
   .vol-rec-grid::-webkit-scrollbar {
     display: none;
   }
-  .vol-rec-grid > * {
-    min-width: min(280px, 86vw);
-    flex-shrink: 0;
+  .vol-rec-grid > [role="listitem"] {
+    flex: 0 0 min(78vw, 300px);
+    max-width: min(78vw, 300px);
     scroll-snap-align: start;
+  }
+  .vol-rec-grid .exp-card.vol-rec-card {
+    height: auto;
   }
   .vol-impact-header {
     flex-direction: column;
@@ -834,7 +809,6 @@ a.vol-sidebar-nav-link--active:is(:link, :visited, :active) {
     animation: none;
   }
   .vol-stat-card:hover,
-  .vol-rec-card:hover,
   .vol-next-mission:hover {
     transform: none;
   }

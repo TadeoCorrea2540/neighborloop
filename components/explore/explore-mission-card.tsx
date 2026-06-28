@@ -38,7 +38,7 @@ export default function ExploreMissionCard({
       <h3 className="exp-card-title">{m.title}</h3>
       <p className="exp-card-org">{card.organizationName ?? "Organization"}</p>
 
-      {layout === "feed" ? (
+      {layout === "feed" || layout === "compact" ? (
         <p className="exp-card-meta">
           <MissionDateLabel>{fmtMissionDate(m.startsAt)}</MissionDateLabel>
           {" · "}
