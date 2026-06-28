@@ -882,6 +882,18 @@
   background: rgba(255, 255, 255, 0.92) !important;
 }
 
+.org-mobile-brand {
+  display: none;
+}
+
+.org-mobile-brand-text {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--ink);
+}
+
 .org-dash-split {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -917,6 +929,31 @@
 }
 
 @media (max-width: 720px) {
+  .org-main-header {
+    justify-content: space-between !important;
+    padding: 12px 16px !important;
+    padding-top: calc(12px + env(safe-area-inset-top, 0px)) !important;
+    gap: 10px;
+  }
+
+  .org-mobile-brand {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    text-decoration: none;
+    min-width: 0;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .org-mobile-brand:active {
+    opacity: 0.82;
+  }
+
+  .org-main-header-actions {
+    flex-shrink: 0;
+  }
+
   .org-dash-hero {
     padding: 20px 18px;
   }

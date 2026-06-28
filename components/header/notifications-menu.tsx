@@ -17,6 +17,7 @@ import Icon from "../icons";
 import NotificationIcon from "./notification-icon";
 import { stripEmoji } from "@/lib/strip-emoji";
 import { useFocusPoll } from "./use-focus-poll";
+import { useMobileHeaderPop } from "./use-mobile-pop-style";
 import { BADGE_REFRESH_EVENT } from "@/lib/badge-events";
 
 function timeAgo(iso: string): string {
@@ -32,6 +33,7 @@ export default function NotificationsMenu({ initialCount, userId }: { initialCou
   const [items, setItems] = useState<NotificationItem[] | null>(null);
   const [, start] = useTransition();
   const ref = useRef<HTMLDivElement>(null);
+  const { panelStyle: mobilePanelStyle, backdropStyle: mobileBackdropStyle } = useMobileHeaderPop(open);
 
   useEffect(() => setCount(initialCount), [initialCount]);
 
@@ -118,15 +120,17 @@ export default function NotificationsMenu({ initialCount, userId }: { initialCou
       </button>
 
       {open && (
-        <div className="hdr-pop" style={panelStyle} role="menu">
-          <Caret />
-          <MenuHeader title="Notifications" />
+        <>
+          <div className="hdr-pop-backdrop" style={mobileBackdropStyle} onClick={() => setOpen(false)} aria-hidden />
+          <div className="hdr-pop" style={{ ...panelStyle, ...mobilePanelStyle }} role="menu">
+            <Caret />
+            <MenuHeader title="Notifications" />
 
-          <div style={{ maxHeight: "min(70vh, 480px)", overflowY: "auto" }}>
+            <div className="hdr-pop-body">
             {items === null ? (
               <MenuSkeleton rows={3} />
             ) : items.length === 0 ? (
-              <MenuEmpty emoji="🔔" title="You’re all caught up" hint="Updates about your missions, applications, and messages show up here." />
+              <MenuEmpty icon="bell" title="You’re all caught up" hint="Updates about your missions, applications, and messages show up here." />
             ) : (
               items.map((n) => (
                 <div
@@ -154,8 +158,9 @@ export default function NotificationsMenu({ initialCount, userId }: { initialCou
                 </div>
               ))
             )}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

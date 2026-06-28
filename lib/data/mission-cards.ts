@@ -18,6 +18,11 @@ import { BUCKETS } from "@/lib/storage/storage-paths";
 import type { MissionSummary } from "@/types/domain";
 import type { ApplicationStatus } from "@/types/database";
 
+export function isValidMissionCard(card: MissionCard): boolean {
+  const slug = card.mission.slug?.trim();
+  return Boolean(card.mission.id && slug);
+}
+
 export interface MissionCard {
   mission: MissionSummary;
   organizationName: string | null;
@@ -119,5 +124,5 @@ export async function getExploreMissionCards(
     // Unlimited (null) ranks highest, then by most spots left.
     cards.sort((a, b) => (b.spotsLeft ?? Infinity) - (a.spotsLeft ?? Infinity));
   }
-  return cards;
+  return cards.filter(isValidMissionCard);
 }

@@ -213,6 +213,7 @@ export default function VolunteerShell({
               kind="user"
               links={[
                 { label: "Dashboard", href: "/dashboard" },
+                { label: "Find a mission", href: "/explore" },
                 { label: "My Missions", href: "/my-missions" },
                 { label: "Settings", href: "/settings" },
               ]}

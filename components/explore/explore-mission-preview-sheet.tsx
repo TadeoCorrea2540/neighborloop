@@ -2,16 +2,17 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { Mission, causeArt, spotStyle } from "@/lib/data";
-import { missionPurpose } from "@/lib/volunteers-mobile-data";
+import type { MissionCard } from "@/lib/data/mission-cards";
+import { fmtMissionDate, locationLabel, spotsLabel } from "@/lib/explore-card-helpers";
+import { MissionDateLabel, MissionLocationLabel } from "@/components/mission-meta-label";
 
 export default function ExploreMissionPreviewSheet({
-  mission,
+  card,
   saved,
   onClose,
   onSave,
 }: {
-  mission: Mission | null;
+  card: MissionCard | null;
   saved: boolean;
   onClose: () => void;
   onSave: () => void;
@@ -19,7 +20,7 @@ export default function ExploreMissionPreviewSheet({
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (!mission) return;
+    if (!card) return;
     const prevFocus = document.activeElement as HTMLElement | null;
     document.body.style.overflow = "hidden";
     const focusId = requestAnimationFrame(() => closeRef.current?.focus());
@@ -33,11 +34,12 @@ export default function ExploreMissionPreviewSheet({
       cancelAnimationFrame(focusId);
       prevFocus?.focus?.();
     };
-  }, [mission, onClose]);
+  }, [card, onClose]);
 
-  if (!mission) return null;
+  if (!card) return null;
 
-  const ss = spotStyle(mission.spots);
+  const m = card.mission;
+  const spots = spotsLabel(card);
 
   return (
     <>
@@ -58,29 +60,33 @@ export default function ExploreMissionPreviewSheet({
         >
           ×
         </button>
-        <div className="exp-sheet-media" style={{ background: causeArt(mission) }}>
-          <span className="exp-sheet-cause">{mission.cause}</span>
+        <span className="exp-sheet-accent exp-brand-accent" aria-hidden="true" />
+        {card.coverImageUrl ? (
+          <div className="exp-sheet-cover" style={{ backgroundImage: `url('${card.coverImageUrl}')` }} aria-hidden="true" />
+        ) : null}
+        <div className="exp-sheet-badges">
+          {card.categoryName && <span className="exp-tag">{card.categoryName}</span>}
+          {m.isBeginnerFriendly && <span className="exp-tag exp-tag--beginner">Beginner-friendly</span>}
         </div>
         <h3 id="exp-sheet-title" className="exp-sheet-title">
-          {mission.title}
+          {m.title}
         </h3>
-        <p className="exp-sheet-desc">{missionPurpose(mission)}</p>
+        <p className="exp-sheet-org">{card.organizationName ?? "Organization"}</p>
+        {m.summary && <p className="exp-sheet-desc">{m.summary}</p>}
         <ul className="exp-sheet-meta">
-          <li>{mission.date}</li>
-          <li>{mission.dist}</li>
-          <li>{mission.diff}</li>
           <li>
-            <span
-              style={{
-                ...ss,
-                padding: "4px 9px",
-                borderRadius: 999,
-                fontSize: 11,
-                fontWeight: 700,
-              }}
-            >
-              {mission.spots} spots left
-            </span>
+            <MissionDateLabel>{fmtMissionDate(m.startsAt)}</MissionDateLabel>
+          </li>
+          <li>
+            <MissionLocationLabel virtual={m.isVirtual}>{locationLabel(card)}</MissionLocationLabel>
+          </li>
+          <li className="exp-sheet-meta-tags">
+            {m.difficulty && (
+              <span className="exp-tag exp-tag--diff">
+                {m.difficulty.charAt(0).toUpperCase() + m.difficulty.slice(1).toLowerCase()}
+              </span>
+            )}
+            <span className="exp-tag exp-tag--spots">{spots}</span>
           </li>
         </ul>
         <div className="exp-sheet-actions">
@@ -92,7 +98,7 @@ export default function ExploreMissionPreviewSheet({
           >
             {saved ? "Saved ✓" : "Save mission"}
           </button>
-          <Link href={`/missions/${mission.slug}`} className="exp-btn-primary" onClick={onClose}>
+          <Link href={`/missions/${m.slug}`} className="exp-btn-primary" onClick={onClose}>
             View mission
           </Link>
         </div>

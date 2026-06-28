@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { requireOrganizer, UUID_RE } from "@/lib/auth/require-organizer";
 import { getMissionCategories } from "@/lib/data/missions";
@@ -7,9 +6,11 @@ import { getMissionPrivateDetails } from "@/lib/data/mission-private-details";
 import { getApplicationsForMission } from "@/lib/data/organization-applications";
 import MissionForm from "@/components/manage/mission-form";
 import MissionStatusActions from "@/components/manage/mission-status-actions";
-import PrivateDetailsForm from "@/components/manage/private-details-form";
+import MissionControlHeader from "@/components/manage/mission-control-header";
+import { emptyPrivateDetails } from "@/components/manage/mission-private-details-section";
 import { publicMediaUrl } from "@/lib/storage/urls";
 import { BUCKETS } from "@/lib/storage/storage-paths";
+import "@/components/manage/edit-mission.css";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,7 @@ export default async function EditMissionPage({ params }: { params: { id: string
     getOrganizationMissionById(guard.orgId, params.id),
     getMissionCategories(),
   ]);
-  if (!mission) notFound(); // not your org, or doesn't exist
+  if (!mission) notFound();
 
   const [details, applications] = await Promise.all([
     getMissionPrivateDetails(mission.id),
@@ -34,40 +35,44 @@ export default async function EditMissionPage({ params }: { params: { id: string
   ]);
   const pending = applications.filter((a) => a.status === "pending" || a.status === "waitlisted").length;
 
+  const initialPrivateDetails = {
+    ...emptyPrivateDetails(),
+    exact_address: details?.exact_address ?? "",
+    private_meeting_instructions: details?.private_meeting_instructions ?? "",
+    private_contact_name: details?.private_contact_name ?? "",
+    private_contact_phone: details?.private_contact_phone ?? "",
+    private_contact_email: details?.private_contact_email ?? "",
+    show_exact_address_publicly: mission.showExactAddressPublicly,
+  };
+
   return (
-    <div style={{ maxWidth: 880, margin: "0 auto" }}>
-      <div style={{ fontSize: 12.5, color: "var(--muted-3)", marginBottom: 4 }}>
-        <Link href="/manage/missions" style={{ color: "var(--muted-3)" }}>Missions</Link> /{" "}
-        <span style={{ color: "var(--muted-1)", fontWeight: 600 }}>{mission.title}</span>
-      </div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 18 }}>
-        <h2 style={{ fontSize: 25, fontWeight: 800, margin: 0, letterSpacing: "-.02em" }}>Edit mission</h2>
-        <div style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
-          <Link href={`/manage/missions/${mission.id}/reports`} style={{ fontSize: 13.5, fontWeight: 700, color: "var(--muted-1)", background: "#fff", border: "1px solid rgba(24,32,59,.12)", padding: "10px 16px", borderRadius: 12 }}>
-            📊 Report
-          </Link>
-          <Link href={`/manage/missions/${mission.id}/updates`} style={{ fontSize: 13.5, fontWeight: 700, color: "var(--muted-1)", background: "#fff", border: "1px solid rgba(24,32,59,.12)", padding: "10px 16px", borderRadius: 12 }}>
-            📣 Updates
-          </Link>
-          <Link href={`/manage/missions/${mission.id}/applications`} style={{ fontSize: 13.5, fontWeight: 700, color: "var(--muted-1)", background: "#fff", border: "1px solid rgba(24,32,59,.12)", padding: "10px 16px", borderRadius: 12 }}>
-            Review applicants{pending > 0 ? ` · ${pending} new` : ""}
-          </Link>
-        </div>
-      </div>
-
-      <div style={{ marginBottom: 18 }}>
-        <MissionStatusActions missionId={mission.id} status={mission.status} publicSlug={mission.slug} />
-      </div>
-
-      <MissionForm
-        mode="edit"
-        mission={mission}
-        categories={categories.map((c) => ({ id: c.id, name: c.name, slug: c.slug }))}
-        coverImageUrl={publicMediaUrl(BUCKETS.missionMedia, mission.coverImagePath)}
+    <div className="me-page">
+      <MissionControlHeader
+        missionId={mission.id}
+        missionTitle={mission.title}
+        status={mission.status}
+        publicSlug={mission.slug}
+        pendingApplicants={pending}
       />
 
-      <div style={{ marginTop: 18 }}>
-        <PrivateDetailsForm missionId={mission.id} details={details} />
+      <div className="me-layout">
+        <aside className="me-status-panel" aria-label="Mission status and lifecycle">
+          <MissionStatusActions
+            missionId={mission.id}
+            status={mission.status}
+            publicSlug={mission.slug}
+          />
+        </aside>
+
+        <div className="me-form">
+          <MissionForm
+            mode="edit"
+            mission={mission}
+            categories={categories.map((c) => ({ id: c.id, name: c.name, slug: c.slug }))}
+            coverImageUrl={publicMediaUrl(BUCKETS.missionMedia, mission.coverImagePath)}
+            initialPrivateDetails={initialPrivateDetails}
+          />
+        </div>
       </div>
     </div>
   );

@@ -106,7 +106,7 @@ export function filterExploreMissions(
   source?: Mission[],
   geo: boolean = true
 ): Mission[] {
-  let list = source ? [...source] : [...MISSIONS];
+  let list = source ? [...source] : [];
 
   if (causeChip !== "All") {
     list = list.filter((m) => m.cause === causeChip);
@@ -171,6 +171,143 @@ export function filterExploreMissions(
 
   if (geo) {
     list = list.filter((m) => parseDistanceMi(m.dist) <= advanced.distance);
+  }
+
+  return list;
+}
+
+function cardCauseKey(card: MissionCard): CauseKey {
+  if (!card.categorySlug) return "All";
+  return SLUG_TO_CAUSE[card.categorySlug] ?? "All";
+}
+
+export function missionCardMatchesCause(card: MissionCard, cause: CauseKey): boolean {
+  if (cause === "All") return true;
+  return cardCauseKey(card) === cause;
+}
+
+function cardStartsAt(card: MissionCard): Date | null {
+  const d = new Date(card.mission.startsAt);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+export function filterExploreMissionCards(
+  search: string,
+  quick: QuickFilterId[],
+  advanced: AdvancedFilters,
+  causeChip: CauseKey,
+  source: MissionCard[],
+  geo: boolean = false
+): MissionCard[] {
+  let list = [...source];
+
+  if (causeChip !== "All") {
+    list = list.filter((c) => cardCauseKey(c) === causeChip);
+  }
+
+  const q = search.trim().toLowerCase();
+  if (q) {
+    list = list.filter((c) => {
+      const m = c.mission;
+      return (
+        m.title.toLowerCase().includes(q) ||
+        (c.organizationName ?? "").toLowerCase().includes(q) ||
+        (c.categoryName ?? "").toLowerCase().includes(q) ||
+        (m.city ?? "").toLowerCase().includes(q) ||
+        (m.locationLabel ?? "").toLowerCase().includes(q)
+      );
+    });
+  }
+
+  if (quick.includes("weekend")) {
+    list = list.filter((c) => {
+      const d = cardStartsAt(c);
+      if (!d) return false;
+      const day = d.getDay();
+      return day === 0 || day === 6;
+    });
+  }
+  if (quick.includes("under-2-hours")) {
+    list = list.filter(
+      (c) =>
+        (c.mission.estimatedHours != null && c.mission.estimatedHours <= 2) ||
+        c.mission.difficulty === "Easy"
+    );
+  }
+  if (quick.includes("beginner-friendly")) {
+    list = list.filter((c) => c.mission.isBeginnerFriendly || c.mission.difficulty === "Easy");
+  }
+  if (quick.includes("with-friends")) {
+    list = list.filter((c) => (c.spotsLeft ?? c.mission.volunteerCapacity ?? 0) >= 4);
+  }
+  if (quick.includes("certificates")) {
+    list = list.filter((c) => {
+      const cause = cardCauseKey(c);
+      return ["Tutoring", "Cleanup", "Food", "Garden"].includes(cause);
+    });
+  }
+  if (quick.includes("free-today")) {
+    const today = new Date();
+    list = list.filter((c) => {
+      const d = cardStartsAt(c);
+      if (!d) return false;
+      return (
+        d.getFullYear() === today.getFullYear() &&
+        d.getMonth() === today.getMonth() &&
+        d.getDate() === today.getDate()
+      );
+    });
+  }
+
+  if (advanced.causes.length) {
+    list = list.filter((c) => advanced.causes.includes(cardCauseKey(c) as Exclude<CauseKey, "All">));
+  }
+  if (advanced.when === "week") {
+    const now = new Date();
+    const end = new Date(now);
+    end.setDate(end.getDate() + 7);
+    list = list.filter((c) => {
+      const d = cardStartsAt(c);
+      return d != null && d >= now && d < end;
+    });
+  }
+  if (advanced.when === "month") {
+    const now = new Date();
+    const end = new Date(now);
+    end.setMonth(end.getMonth() + 1);
+    list = list.filter((c) => {
+      const d = cardStartsAt(c);
+      return d != null && d >= now && d < end;
+    });
+  }
+  if (advanced.when === "today") {
+    const today = new Date();
+    list = list.filter((c) => {
+      const d = cardStartsAt(c);
+      if (!d) return false;
+      return (
+        d.getFullYear() === today.getFullYear() &&
+        d.getMonth() === today.getMonth() &&
+        d.getDate() === today.getDate()
+      );
+    });
+  }
+  if (advanced.difficulty) {
+    list = list.filter((c) => c.mission.difficulty === advanced.difficulty);
+  }
+  if (advanced.perks) {
+    list = list.filter((c) => {
+      const cause = cardCauseKey(c);
+      return ["Tutoring", "Food", "Garden"].includes(cause);
+    });
+  }
+  if (advanced.accessibility) {
+    list = list.filter((c) => c.mission.isBeginnerFriendly || c.mission.difficulty === "Easy");
+  }
+
+  // Distance-based filters need geo data; real missions omit distance.
+  if (geo) {
+    list = list.filter(() => true);
   }
 
   return list;

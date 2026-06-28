@@ -293,12 +293,6 @@ export default function PublicNav() {
               {l.label}
             </Link>
           ))}
-          {account &&
-            acctLinks.map((l) => (
-              <Link key={l.href} href={l.href} onClick={closeMenu} aria-current={pathname === l.href ? "page" : undefined}>
-                {l.label}
-              </Link>
-            ))}
         </nav>
 
         <div className="mobile-nav-drawer-footer">

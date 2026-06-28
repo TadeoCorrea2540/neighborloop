@@ -2,13 +2,9 @@
 
 /** Shared chrome for the header dropdown menus (notifications + messages). */
 import type { CSSProperties, ReactNode } from "react";
+import Icon, { type IconName } from "../icons";
 
 export const panelStyle: CSSProperties = {
-  position: "absolute",
-  top: "calc(100% + 12px)",
-  right: -6,
-  width: 384,
-  maxWidth: "calc(100vw - 32px)",
   background: "#fff",
   border: "1px solid var(--line-2)",
   borderRadius: 18,
@@ -20,6 +16,7 @@ export const panelStyle: CSSProperties = {
 export function Caret() {
   return (
     <span
+      className="hdr-pop-caret"
       aria-hidden
       style={{
         position: "absolute", top: -6, right: 20, width: 12, height: 12, background: "#fff",
@@ -32,17 +29,46 @@ export function Caret() {
 
 export function MenuHeader({ title, action }: { title: string; action?: ReactNode }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "13px 16px", borderBottom: "1px solid var(--line)" }}>
+    <div className="hdr-pop-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "13px 16px", borderBottom: "1px solid var(--line)" }}>
       <span style={{ fontWeight: 800, fontSize: 15 }}>{title}</span>
       {action}
     </div>
   );
 }
 
-export function MenuEmpty({ emoji, title, hint }: { emoji: string; title: string; hint: string }) {
+export function MenuEmpty({
+  emoji,
+  icon,
+  title,
+  hint,
+}: {
+  emoji?: string;
+  icon?: IconName;
+  title: string;
+  hint: string;
+}) {
   return (
     <div style={{ padding: "38px 26px", textAlign: "center" }}>
-      <div style={{ fontSize: 30, marginBottom: 8 }}>{emoji}</div>
+      <div style={{ marginBottom: 8, display: "flex", justifyContent: "center" }}>
+        {icon ? (
+          <span
+            style={{
+              width: 52,
+              height: 52,
+              borderRadius: 14,
+              background: "#f1f3f8",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "var(--muted-2)",
+            }}
+          >
+            <Icon name={icon} size={26} />
+          </span>
+        ) : (
+          <div style={{ fontSize: 30 }}>{emoji}</div>
+        )}
+      </div>
       <div style={{ fontSize: 14.5, fontWeight: 700 }}>{title}</div>
       <p style={{ fontSize: 13, color: "var(--muted-3)", margin: "5px 0 0", lineHeight: 1.45 }}>{hint}</p>
     </div>

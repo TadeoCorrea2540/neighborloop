@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { applyToMissionAction, withdrawApplicationAction } from "@/app/(volunteer)/actions";
 import AuthToast from "@/components/auth/auth-toast";
+import Icon from "@/components/icons";
 import SaveButton from "@/components/volunteer/save-button";
 import type { ApplicationStatus } from "@/types/database";
 import type { AttendanceStatus } from "@/lib/data/attendance";
@@ -45,6 +46,27 @@ const ghostBtn: React.CSSProperties = {
   background: "#fff",
   cursor: "pointer",
 };
+
+function QrCheckInNote() {
+  return (
+    <div
+      style={{
+        marginTop: 16,
+        fontSize: 12,
+        color: "var(--muted-3)",
+        textAlign: "center",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+        lineHeight: 1.4,
+      }}
+    >
+      <Icon name="lock" size={14} aria-hidden />
+      <span>You&apos;ll get a QR check-in code after joining</span>
+    </div>
+  );
+}
 
 export default function MissionActions({
   missionId,
@@ -162,9 +184,7 @@ export default function MissionActions({
         <div style={{ marginTop: 11 }}>
           <SaveButton missionId={missionId} initialSaved={initialSaved} variant="full" />
         </div>
-        <div style={{ marginTop: 16, fontSize: 12, color: "var(--muted-3)", textAlign: "center" }}>
-          🔒 You’ll get a QR check-in code after joining
-        </div>
+        <QrCheckInNote />
       </>
     );
   }
@@ -233,7 +253,17 @@ export default function MissionActions({
                 boxShadow: "0 12px 24px -12px rgba(255,111,94,.8)",
               }}
             >
-              🏅 View your certificate
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                }}
+              >
+                <Icon name="award" size={16} aria-hidden />
+                View your certificate
+              </span>
             </Link>
           ) : (
             <div
@@ -370,9 +400,7 @@ export default function MissionActions({
         <SaveButton missionId={missionId} initialSaved={initialSaved} variant="full" />
       </div>
 
-      <div style={{ marginTop: 16, fontSize: 12, color: "var(--muted-3)", textAlign: "center" }}>
-        🔒 You’ll get a QR check-in code after joining
-      </div>
+      <QrCheckInNote />
 
       {toast && <AuthToast key={seq} message={toast.msg} tone={toast.tone} onClose={() => setToast(null)} />}
     </>

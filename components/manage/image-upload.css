@@ -1,0 +1,188 @@
+/* Reusable image upload — mobile-safe file picker */
+
+.iu-wrap {
+  margin-bottom: 16px;
+  min-width: 0;
+}
+
+.iu-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #3a425e;
+  margin-bottom: 8px;
+}
+
+.iu-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+}
+
+.iu-preview {
+  flex-shrink: 0;
+  width: 140px;
+  height: 80px;
+  border-radius: 12px;
+  background: #fbfcfe;
+  border: 1px solid rgba(24, 32, 59, 0.12);
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-3);
+}
+
+.iu-preview--circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+}
+
+.iu-body {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.iu-input-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.iu-pick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted-1);
+  background: #fff;
+  border: 1px solid rgba(24, 32, 59, 0.14);
+  padding: 10px 14px;
+  border-radius: 12px;
+  min-height: 44px;
+  cursor: pointer;
+  max-width: 100%;
+  transition: border-color 0.15s, background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.iu-pick:hover {
+  border-color: rgba(255, 111, 94, 0.28);
+  background: #fffaf8;
+}
+
+.iu-filename {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: var(--muted-2);
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.iu-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--muted-3);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.iu-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.iu-btn-upload {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: none;
+  min-height: 44px;
+  cursor: pointer;
+  background: var(--coral);
+  box-shadow: var(--shadow-coral);
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.iu-btn-upload:hover:not(:disabled) {
+  background: var(--coral-deep);
+}
+
+.iu-btn-upload:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.iu-btn-remove {
+  font-size: 13px;
+  font-weight: 600;
+  color: #c0392b;
+  background: transparent;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(192, 57, 43, 0.3);
+  min-height: 44px;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.iu-btn-remove:hover:not(:disabled) {
+  background: #fff5f4;
+}
+
+.iu-btn-remove:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+@media (max-width: 720px) {
+  .iu-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .iu-preview {
+    width: 100%;
+    max-width: 200px;
+    height: 112px;
+    align-self: center;
+  }
+
+  .iu-preview--circle {
+    width: 88px;
+    height: 88px;
+    max-width: none;
+    align-self: flex-start;
+  }
+
+  .iu-pick {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .iu-actions {
+    flex-direction: column;
+  }
+
+  .iu-btn-upload,
+  .iu-btn-remove {
+    width: 100%;
+    text-align: center;
+  }
+}

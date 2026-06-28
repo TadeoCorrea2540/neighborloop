@@ -1,13 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import {
-  MISSIONS,
-  CauseKey,
-  causeArt,
-  spotStyle,
-  Mission,
-} from "@/lib/data";
+import { CauseKey } from "@/lib/data";
+import type { MissionCard } from "@/lib/data/mission-cards";
+import { missionCardMatchesCause } from "@/lib/explore-mobile-data";
+import ExploreMissionCard from "@/components/explore/explore-mission-card";
 
 const MOBILE_CAUSES: { label: string; key: CauseKey }[] = [
   { label: "All", key: "All" },
@@ -29,56 +26,16 @@ const CAUSE_INFO: Record<string, string> = {
   Garden: "Plant and green your neighborhood",
 };
 
-function MissionCard({ m, compact }: { m: Mission; compact?: boolean }) {
-  const ss = spotStyle(m.spots);
-  return (
-    <Link href={`/missions/${m.slug}`} className="home-mission-card lift">
-      <div
-        className="home-mission-card-media"
-        style={{ background: causeArt(m) }}
-      >
-        <span className="home-mission-card-badge">{m.cause}</span>
-      </div>
-      <div className="home-mission-card-body">
-        <div className="home-mission-card-title">{m.title}</div>
-        {!compact && (
-          <div className="home-mission-card-org">{m.org}</div>
-        )}
-        <div className="home-mission-card-meta">
-          <span>{m.date}</span>
-          <span>{m.dist}</span>
-          <span>{m.diff}</span>
-        </div>
-        <div className="home-mission-card-footer">
-          <span style={{ fontSize: 12, color: "var(--muted-3)" }}>
-            {m.org}
-          </span>
-          <span
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              padding: "4px 9px",
-              borderRadius: 999,
-              ...ss,
-            }}
-          >
-            {m.spots} spots left
-          </span>
-        </div>
-      </div>
-    </Link>
-  );
-}
-
 export default function MobileMissions({
   cause,
   onCauseChange,
+  cards,
 }: {
   cause: CauseKey;
   onCauseChange: (c: CauseKey) => void;
+  cards: MissionCard[];
 }) {
-  const filtered =
-    cause === "All" ? MISSIONS : MISSIONS.filter((m) => m.cause === cause);
+  const filtered = cards.filter((c) => missionCardMatchesCause(c, cause));
   const featured = filtered[0];
   const rest = filtered.slice(1, 5);
   const activeLabel =
@@ -121,7 +78,7 @@ export default function MobileMissions({
 
       {featured && (
         <div className="home-missions-mobile-featured">
-          <MissionCard m={featured} />
+          <ExploreMissionCard card={featured} layout="feed" showCta />
         </div>
       )}
 
@@ -129,11 +86,17 @@ export default function MobileMissions({
         <>
           <p className="home-missions-scroll-hint">Swipe for more missions →</p>
           <div className="home-missions-scroll">
-            {rest.map((m) => (
-              <MissionCard key={m.slug} m={m} compact />
+            {rest.map((card, i) => (
+              <div key={card.mission.id} className="home-missions-scroll-item">
+                <ExploreMissionCard card={card} index={i} layout="compact" />
+              </div>
             ))}
           </div>
         </>
+      )}
+
+      {count === 0 && (
+        <p className="home-missions-empty">No live missions in this category yet. Check Explore for all missions.</p>
       )}
 
       <div className="home-missions-explore">

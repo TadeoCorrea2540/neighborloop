@@ -16,6 +16,10 @@ export interface AIMissionAnswers {
   purpose: string;
   /** Q2 — Where and when will it happen? */
   whereWhen: string;
+  /** Q2b — Exact street address (optional, collected on the where/when step). */
+  exactAddress: string;
+  /** Q2c — Whether the exact address is public or private. */
+  addressVisibility: "private" | "public";
   /** Q3 — What will volunteers do, and what should they bring/know? */
   tasksRequirements: string;
   /** Q4 — How many volunteers, and what impact? */
@@ -41,6 +45,8 @@ export interface AIMissionDraft {
   perks: string[];
   safetyNotes: string[];
   impactGoal: string;
+  exactAddress: string | null;
+  showExactAddressPublicly: boolean;
   privateMeetingInstructions: string | null;
   suggestedStartsAt: string | null;
   suggestedEndsAt: string | null;
@@ -136,6 +142,8 @@ export function sanitizeDraft(raw: unknown, allowedCategorySlugs: string[]): AIM
     perks: strList(o.perks),
     safetyNotes: strList(o.safetyNotes),
     impactGoal: str(o.impactGoal, 400),
+    exactAddress: nullableStr(o.exactAddress, 240),
+    showExactAddressPublicly: boolish(o.showExactAddressPublicly),
     privateMeetingInstructions: nullableStr(o.privateMeetingInstructions, 600),
     suggestedStartsAt: isoOrNull(o.suggestedStartsAt),
     suggestedEndsAt: isoOrNull(o.suggestedEndsAt),

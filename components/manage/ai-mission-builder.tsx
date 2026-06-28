@@ -7,16 +7,18 @@
  * publishes; the normal mission form + actions remain the only write path.
  */
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Icon from "@/components/icons";
 import { generateMissionDraftAction } from "@/app/manage/missions/ai-actions";
 import type { AIMissionAnswers, AIMissionDraft } from "@/lib/ai/mission-draft-schema";
+import { FormPillGroup } from "@/components/manage/form-choice";
 import "./ai-mission-builder.css";
 
 type Category = { id: string; name: string; slug: string };
 type Stage = "form" | "loading" | "review" | "error";
 
 const QUESTIONS: {
-  key: keyof AIMissionAnswers;
+  key: "purpose" | "whereWhen" | "tasksRequirements" | "volunteersImpact";
   step: string;
   label: string;
   helper: string;
@@ -34,9 +36,9 @@ const QUESTIONS: {
     key: "whereWhen",
     step: "Where & when",
     label: "Where and when will it happen?",
-    helper:
-      "Add the public location, date, time, and whether it's in person or virtual. Avoid private home addresses unless they should only be shared after approval.",
-    placeholder: "Saturday, June 26 at 10 AM, at the community center in San Nicolás. In person.",
+    helper: "Add the public location, date, time, and whether it's in person or virtual.",
+    placeholder:
+      "Saturday, June 26 at 10 AM, at the community center in San Nicolás. In person.",
   },
   {
     key: "tasksRequirements",
@@ -62,7 +64,14 @@ const LOADING_STEPS = [
   "Preparing your draft",
 ];
 
-const EMPTY: AIMissionAnswers = { purpose: "", whereWhen: "", tasksRequirements: "", volunteersImpact: "" };
+const EMPTY: AIMissionAnswers = {
+  purpose: "",
+  whereWhen: "",
+  exactAddress: "",
+  addressVisibility: "private",
+  tasksRequirements: "",
+  volunteersImpact: "",
+};
 
 export default function AIMissionBuilder({
   categories,
@@ -78,7 +87,10 @@ export default function AIMissionBuilder({
   const [draft, setDraft] = useState<AIMissionDraft | null>(null);
   const [error, setError] = useState("");
   const [loadingStep, setLoadingStep] = useState(0);
+  const [portalReady, setPortalReady] = useState(false);
   const firstFieldRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => setPortalReady(true), []);
 
   const reset = () => {
     setStage("form");
@@ -120,8 +132,34 @@ export default function AIMissionBuilder({
 
   const q = QUESTIONS[step];
   const value = answers[q.key];
-  const canNext = value.trim().length >= 12;
+  const canNext =
+    q.key === "whereWhen"
+      ? answers.whereWhen.trim().length >= 12
+      : value.trim().length >= 12;
   const isLast = step === QUESTIONS.length - 1;
+  const addressVisibility = answers.addressVisibility;
+
+  function goBack() {
+    if (step === 0) close();
+    else setStep((s) => s - 1);
+  }
+
+  const formStepActions = (
+    <div className="amb-actions">
+      <button type="button" className="amb-btn amb-btn--ghost" onClick={goBack}>
+        {step === 0 ? "Cancel" : "Back"}
+      </button>
+      {isLast ? (
+        <button type="button" className="amb-btn amb-btn--primary" disabled={!canNext} onClick={generate}>
+          <Icon name="sparkles" size={15} /> Generate draft
+        </button>
+      ) : (
+        <button type="button" className="amb-btn amb-btn--primary" disabled={!canNext} onClick={() => setStep((s) => s + 1)}>
+          Next
+        </button>
+      )}
+    </div>
+  );
 
   async function generate() {
     setStage("loading");
@@ -162,7 +200,8 @@ export default function AIMissionBuilder({
         <span className="amb-trigger-arrow" aria-hidden>→</span>
       </button>
 
-      {open && (
+      {open && portalReady &&
+        createPortal(
         <div className="amb-overlay" role="dialog" aria-modal="true" aria-label="AI Mission Builder" onMouseDown={close}>
           <div className="amb-panel" onMouseDown={(e) => e.stopPropagation()}>
             {/* header */}
@@ -207,11 +246,54 @@ export default function AIMissionBuilder({
                     value={value}
                     onChange={(e) => setAnswers((a) => ({ ...a, [q.key]: e.target.value }))}
                     placeholder={q.placeholder}
-                    rows={5}
+                    rows={q.key === "whereWhen" ? 4 : 5}
                   />
+                  {q.key === "whereWhen" && (
+                    <div className="amb-address-block">
+                      <label className="amb-address-label" htmlFor="amb-exact-address">
+                        Exact street address <span className="amb-address-optional">(optional)</span>
+                      </label>
+                      <p className="amb-address-helper">
+                        Add the precise address for day-of directions. You can keep it private or show it publicly on your mission page.
+                      </p>
+                      <input
+                        id="amb-exact-address"
+                        className="amb-input"
+                        value={answers.exactAddress}
+                        onChange={(e) => setAnswers((a) => ({ ...a, exactAddress: e.target.value }))}
+                        placeholder="1234 Garden St, San Francisco, CA"
+                      />
+                      <div className="amb-address-visibility">
+                        <span id="amb-address-visibility-label" className="amb-address-label">
+                          Address visibility
+                        </span>
+                        <FormPillGroup
+                          name="amb_address_visibility"
+                          value={addressVisibility}
+                          onChange={(v) =>
+                            setAnswers((a) => ({
+                              ...a,
+                              addressVisibility: v as AIMissionAnswers["addressVisibility"],
+                            }))
+                          }
+                          options={[
+                            { value: "private", label: "Private" },
+                            { value: "public", label: "Public" },
+                          ]}
+                          labelledBy="amb-address-visibility-label"
+                        />
+                        <p className="amb-address-note">
+                          {addressVisibility === "public"
+                            ? "Anyone can see this exact address on Explore and the mission page — including visitors who are not logged in."
+                            : "Only a general public location is shown until volunteers are approved."}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   {!canNext && value.trim().length > 0 && (
                     <div className="amb-hint">Add one or two more details so we can create a useful draft.</div>
                   )}
+                  <div className="amb-step-actions">{formStepActions}</div>
                 </div>
               )}
 
@@ -299,11 +381,27 @@ export default function AIMissionBuilder({
                     </Field>
                   </div>
 
+                  <div className="amb-grid2">
+                    <Field label="Exact address (private details)">
+                      <input className="amb-input" value={draft.exactAddress ?? ""} onChange={(e) => patch({ exactAddress: e.target.value || null })} placeholder="1234 Garden St, San Francisco, CA" />
+                    </Field>
+                    <Field label="Show exact address publicly?">
+                      <FormPillGroup
+                        name="amb_review_address_visibility"
+                        value={draft.showExactAddressPublicly ? "public" : "private"}
+                        onChange={(v) => patch({ showExactAddressPublicly: v === "public" })}
+                        options={[
+                          { value: "private", label: "Private" },
+                          { value: "public", label: "Public" },
+                        ]}
+                      />
+                    </Field>
+                  </div>
+
                   {draft.privateMeetingInstructions && (
                     <div className="amb-private">
-                      <div className="amb-private-head"><Icon name="info" size={14} /> Private meeting details (keep off the public listing)</div>
+                      <div className="amb-private-head"><Icon name="info" size={14} /> Meeting instructions (private details)</div>
                       <p>{draft.privateMeetingInstructions}</p>
-                      <span className="amb-private-note">Add this under the mission’s private details after saving — it won’t be filled into public fields.</span>
                     </div>
                   )}
                 </div>
@@ -311,52 +409,36 @@ export default function AIMissionBuilder({
             </div>
 
             {/* footer actions */}
-            <div className="amb-foot">
-              {stage === "form" && (
-                <>
-                  <button
-                    type="button"
-                    className="amb-btn amb-btn--ghost"
-                    onClick={() => (step === 0 ? close() : setStep((s) => s - 1))}
-                  >
-                    {step === 0 ? "Cancel" : "Back"}
-                  </button>
-                  {isLast ? (
-                    <button type="button" className="amb-btn amb-btn--primary" disabled={!canNext} onClick={generate}>
-                      <Icon name="sparkles" size={15} /> Generate draft
-                    </button>
-                  ) : (
-                    <button type="button" className="amb-btn amb-btn--primary" disabled={!canNext} onClick={() => setStep((s) => s + 1)}>
-                      Next
-                    </button>
-                  )}
-                </>
-              )}
+            <div className={`amb-foot${stage === "form" ? " amb-foot--form" : ""}`}>
+              {stage === "form" && formStepActions}
 
               {stage === "loading" && (
-                <button type="button" className="amb-btn amb-btn--ghost" onClick={close}>Cancel</button>
+                <div className="amb-actions">
+                  <button type="button" className="amb-btn amb-btn--ghost" onClick={close}>Cancel</button>
+                </div>
               )}
 
               {stage === "error" && (
-                <>
+                <div className="amb-actions">
                   <button type="button" className="amb-btn amb-btn--ghost" onClick={() => setStage("form")}>Back to questions</button>
                   <button type="button" className="amb-btn amb-btn--primary" onClick={generate}>Try again</button>
-                </>
+                </div>
               )}
 
               {stage === "review" && (
-                <>
+                <div className="amb-actions">
                   <button type="button" className="amb-btn amb-btn--ghost" onClick={generate}>
                     <Icon name="trending-up" size={15} /> Regenerate
                   </button>
                   <button type="button" className="amb-btn amb-btn--primary" onClick={apply}>
                     Use this draft
                   </button>
-                </>
+                </div>
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

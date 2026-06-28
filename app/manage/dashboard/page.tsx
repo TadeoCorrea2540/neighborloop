@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import Link from "next/link";
 import { requireOrganizer } from "@/lib/auth/require-organizer";
 import { getOrganizerDashboardSummary } from "@/lib/data/organizer-dashboard";
@@ -17,6 +18,7 @@ import ApplicantPreviewPanel from "@/components/organization/dashboard/applicant
 import OrganizationImpactSnapshot from "@/components/organization/dashboard/organization-impact-snapshot";
 import RecentActivityFeed, { type ActivityFeedItem } from "@/components/organization/dashboard/recent-activity-feed";
 import OrganizationDashboardEmptyState from "@/components/organization/dashboard/organization-dashboard-empty-state";
+import DashboardScrollTop from "@/components/manage/dashboard-scroll-top";
 import type { OrganizerMission, OrganizerApplication } from "@/types/domain";
 
 export const dynamic = "force-dynamic";
@@ -194,6 +196,9 @@ export default async function OrgDashboard() {
 
   return (
     <OrganizationDashboardStagger>
+      <Suspense fallback={null}>
+        <DashboardScrollTop />
+      </Suspense>
       <OrganizationDashboardHero
         orgName={org.name}
         verificationStatus={org.verificationStatus}

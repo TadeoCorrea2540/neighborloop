@@ -3,14 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { CauseKey, Mission } from "@/lib/data";
 import {
   AdvancedFilters,
   DEFAULT_ADVANCED,
   QuickFilterId,
-  countActiveFilters,
-  filterExploreMissions,
   cardToMission,
+  countActiveFilters,
+  filterExploreMissionCards,
 } from "@/lib/explore-mobile-data";
 import type { MissionCard } from "@/lib/data/mission-cards";
 import { saveMissionAction, unsaveMissionAction } from "@/app/(volunteer)/actions";
@@ -19,7 +18,6 @@ import MobileMissionSearch from "./mobile-mission-search";
 import QuickFilterRail from "./quick-filter-rail";
 import ExploreFilterSheet from "./explore-filter-sheet";
 import FeaturedMatchCard from "./featured-match-card";
-import ExploreMissionSwipeStack from "./explore-mission-swipe-stack";
 import MobileMapPreview, { ExploreMapSheet } from "./mobile-map-preview";
 import MissionFeedCard from "./mission-feed-card";
 import ExploreEmptyState, { ExploreSkeleton } from "./explore-empty-state";
@@ -37,22 +35,18 @@ export default function ExploreMobileExperience({ cards = [] }: { cards?: Missio
   const [draftAdvanced, setDraftAdvanced] = useState<AdvancedFilters>(DEFAULT_ADVANCED);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
-  const [preview, setPreview] = useState<Mission | null>(null);
+  const [preview, setPreview] = useState<MissionCard | null>(null);
   const [saved, setSaved] = useState<Set<string>>(
     () => new Set(cards.filter((c) => c.isSaved).map((c) => c.mission.slug))
   );
   const [toast, setToast] = useState(false);
-  const [causeChip] = useState<CauseKey>("All");
 
-  // Real missions, adapted to the mock shape this UI renders. slug→id for saves.
-  const missions = useMemo(() => cards.map(cardToMission), [cards]);
   const slugToId = useMemo(
     () => new Map(cards.map((c) => [c.mission.slug, c.mission.id])),
     [cards]
   );
 
-  // geo=false: real missions have no distance, so skip distance/near-me filters.
-  const filtered = filterExploreMissions(search, quickFilters, advanced, causeChip, missions, false);
+  const filtered = filterExploreMissionCards(search, quickFilters, advanced, "All", cards, false);
   const filterCount = countActiveFilters(quickFilters, advanced);
 
   useEffect(() => {
@@ -79,8 +73,7 @@ export default function ExploreMobileExperience({ cards = [] }: { cards?: Missio
   }, [filterSheetOpen]);
 
   const featured = filtered[0];
-  const swipeMissions = filtered.slice(1, 4);
-  const feedMissions = filtered.slice(4);
+  const listMissions = filtered.slice(1);
 
   const toggleQuick = (id: QuickFilterId) => {
     setQuickFilters((prev) =>
@@ -171,41 +164,34 @@ export default function ExploreMobileExperience({ cards = [] }: { cards?: Missio
         <>
           {featured && (
             <FeaturedMatchCard
-              mission={featured}
-              saved={saved.has(featured.slug)}
+              card={featured}
+              saved={saved.has(featured.mission.slug)}
               onOpen={() => setPreview(featured)}
-              onSave={(e) => toggleSave(featured.slug, e)}
+              onSave={(e) => toggleSave(featured.mission.slug, e)}
             />
           )}
 
-          <ExploreMissionSwipeStack
-            missions={swipeMissions}
-            saved={saved}
-            onOpen={setPreview}
-            onSave={toggleSave}
-          />
-
-          <MobileMapPreview count={filtered.length} onOpenMap={() => setMapOpen(true)} />
-
-          {feedMissions.length > 0 && (
+          {listMissions.length > 0 && (
             <section className="exp-feed exp-mobile-only" aria-labelledby="exp-feed-heading">
               <h2 id="exp-feed-heading" className="exp-section-heading exp-feed-heading">
                 All missions
               </h2>
               <div className="exp-feed-list">
-                {feedMissions.map((m, i) => (
+                {listMissions.map((card, i) => (
                   <MissionFeedCard
-                    key={m.slug}
-                    mission={m}
+                    key={card.mission.id}
+                    card={card}
                     index={i}
-                    saved={saved.has(m.slug)}
-                    onOpen={() => setPreview(m)}
-                    onSave={(e) => toggleSave(m.slug, e)}
+                    saved={saved.has(card.mission.slug)}
+                    onOpen={() => setPreview(card)}
+                    onSave={(e) => toggleSave(card.mission.slug, e)}
                   />
                 ))}
               </div>
             </section>
           )}
+
+          <MobileMapPreview count={filtered.length} onOpenMap={() => setMapOpen(true)} />
         </>
       )}
 
@@ -218,13 +204,13 @@ export default function ExploreMobileExperience({ cards = [] }: { cards?: Missio
         onReset={() => setDraftAdvanced(DEFAULT_ADVANCED)}
       />
 
-      <ExploreMapSheet open={mapOpen} missions={filtered} onClose={() => setMapOpen(false)} />
+      <ExploreMapSheet open={mapOpen} missions={filtered.map(cardToMission)} onClose={() => setMapOpen(false)} />
 
       <ExploreMissionPreviewSheet
-        mission={preview}
-        saved={preview ? saved.has(preview.slug) : false}
+        card={preview}
+        saved={preview ? saved.has(preview.mission.slug) : false}
         onClose={() => setPreview(null)}
-        onSave={() => preview && toggleSave(preview.slug)}
+        onSave={() => preview && toggleSave(preview.mission.slug)}
       />
 
       <MobileFilterActionBar

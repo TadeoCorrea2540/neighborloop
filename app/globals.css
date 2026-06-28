@@ -265,8 +265,20 @@ select {
 .hdr-trigger:active { transform: translateY(1px); }
 .hdr-trigger[data-open="true"] { background: var(--bg-chip); }
 .hdr-pop {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: -6px;
+  width: 384px;
+  max-width: calc(100vw - 32px);
   animation: hdrPop 0.16s cubic-bezier(0.22, 1, 0.36, 1) both;
   transform-origin: top right;
+}
+.hdr-pop-backdrop {
+  display: none;
+}
+.hdr-pop-body {
+  max-height: min(70vh, 480px);
+  overflow-y: auto;
 }
 .hdr-row { transition: background 0.13s; }
 .hdr-row:hover { background: var(--bg-tint); }
@@ -278,6 +290,58 @@ select {
 }
 .hdr-viewall { transition: color 0.15s, background 0.15s; }
 .hdr-viewall:hover { background: #fff0ec; color: var(--coral-deep); }
+
+@media (max-width: 720px) {
+  .hdr-pop-backdrop {
+    display: block;
+    position: fixed;
+    z-index: 199;
+    background: rgba(24, 32, 59, 0.28);
+    animation: hdrBackdrop 0.18s ease both;
+  }
+
+  .hdr-pop {
+    transform-origin: top center;
+    border-radius: 16px;
+    box-shadow:
+      0 28px 64px -20px rgba(24, 32, 59, 0.42),
+      0 10px 24px -12px rgba(24, 32, 59, 0.2);
+  }
+
+  .hdr-pop-caret {
+    display: none;
+  }
+
+  .hdr-pop-header {
+    padding: 14px 16px !important;
+  }
+
+  .hdr-pop-header > span:first-child {
+    font-size: 16px !important;
+  }
+
+  .hdr-pop-body {
+    max-height: none;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .hdr-pop {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hdr-row {
+    padding: 14px 16px !important;
+  }
+}
+
+@keyframes hdrBackdrop {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 
 /* ---------- "How it works" animated SVG icons ---------- */
 .hiw-card {

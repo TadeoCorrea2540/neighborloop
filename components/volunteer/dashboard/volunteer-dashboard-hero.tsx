@@ -46,27 +46,21 @@ export default function VolunteerDashboardHero({
             </span>
           )}
         </div>
-        <div className="vol-dash-hero-actions">
-          <Link
-            href="/explore"
-            className="btn-coral"
-            style={{
-              color: "#fff",
-              fontWeight: 700,
-              fontSize: 14,
-              padding: "12px 20px",
-              borderRadius: 12,
-              boxShadow: "0 12px 24px -12px rgba(255,111,94,.8)",
-              textDecoration: "none",
-              minHeight: 44,
-              display: "inline-flex",
-              alignItems: "center",
-            }}
-          >
-            Find a mission
-          </Link>
-          <Link href="/impact" className="vol-btn-ghost">
-            View my impact
+        <div className="vol-dash-hero-cta">
+          <div className="vol-dash-hero-actions">
+            <Link href="/explore" className="btn-coral vol-dash-hero-btn">
+              Find a mission
+            </Link>
+            <Link href="/impact" className="vol-btn-ghost vol-dash-hero-btn">
+              View my impact
+            </Link>
+          </div>
+          <Link href="/my-missions" className="vol-dash-upcoming-pill">
+            <span className="vol-dash-upcoming-pill-shine" aria-hidden="true" />
+            <span className="vol-dash-upcoming-pill-flare vol-dash-upcoming-pill-flare--l" aria-hidden="true" />
+            <span className="vol-dash-upcoming-pill-flare vol-dash-upcoming-pill-flare--r" aria-hidden="true" />
+            <Icon name="sparkles" size={14} strokeWidth={2.2} />
+            <span>Upcoming Missions</span>
           </Link>
         </div>
       </div>

@@ -1,22 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Mission, causeArt, spotStyle } from "@/lib/data";
-import { mockMatchScore } from "@/lib/explore-mobile-data";
-import { missionPurpose } from "@/lib/volunteers-mobile-data";
+import type { MissionCard } from "@/lib/data/mission-cards";
+import { fmtMissionDate, locationLabel, spotsLabel } from "@/lib/explore-card-helpers";
+import { MissionDateLabel, MissionLocationLabel } from "@/components/mission-meta-label";
 
 export default function ExploreMissionSwipeStack({
-  missions,
+  cards,
   saved,
   onOpen,
   onSave,
 }: {
-  missions: Mission[];
+  cards: MissionCard[];
   saved: Set<string>;
-  onOpen: (m: Mission) => void;
+  onOpen: (card: MissionCard) => void;
   onSave: (slug: string, e: React.MouseEvent) => void;
 }) {
-  const stack = missions.slice(0, 3);
+  const stack = cards.slice(0, 3);
   const [index, setIndex] = useState(0);
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
@@ -25,7 +25,7 @@ export default function ExploreMissionSwipeStack({
   useEffect(() => {
     setIndex(0);
     setDragX(0);
-  }, [missions]);
+  }, [cards]);
 
   const goNext = useCallback(() => {
     if (stack.length <= 1) return;
@@ -43,7 +43,7 @@ export default function ExploreMissionSwipeStack({
 
   return (
     <section className="exp-swipe exp-mobile-only" aria-labelledby="exp-swipe-heading">
-      <div className="exp-section-kicker">For you</div>
+      <div className="exp-section-kicker">Browse</div>
       <h2 id="exp-swipe-heading" className="exp-section-heading">
         Swipe to preview
       </h2>
@@ -65,7 +65,8 @@ export default function ExploreMissionSwipeStack({
           setDragX(0);
         }}
       >
-        {stack.map((m, i) => {
+        {stack.map((card, i) => {
+          const m = card.mission;
           const offset = (i - index + stack.length) % stack.length;
           const isActive = offset === 0;
           const isPeek = offset === 1;
@@ -75,12 +76,11 @@ export default function ExploreMissionSwipeStack({
             : isPeek
               ? "translateY(12px) scale(0.96)"
               : "translateY(22px) scale(0.92)";
-
-          const ss = spotStyle(m.spots);
+          const spots = spotsLabel(card);
 
           return (
             <button
-              key={m.slug}
+              key={m.id}
               type="button"
               className={`exp-swipe-card${isActive ? " exp-swipe-card--active" : ""}`}
               style={{
@@ -89,21 +89,20 @@ export default function ExploreMissionSwipeStack({
                 transform,
                 pointerEvents: isActive ? "auto" : "none",
               }}
-              onClick={() => isActive && onOpen(m)}
+              onClick={() => isActive && onOpen(card)}
             >
-              <div className="exp-swipe-media" style={{ background: causeArt(m) }}>
-                <span className="exp-swipe-match">{mockMatchScore(m, i)}% match</span>
-              </div>
+              <span className="exp-swipe-accent exp-brand-accent" aria-hidden="true" />
+              {card.coverImageUrl ? (
+                <div className="exp-swipe-cover" style={{ backgroundImage: `url('${card.coverImageUrl}')` }} aria-hidden="true" />
+              ) : null}
               <div className="exp-swipe-body">
-                <span className="exp-swipe-cause">{m.cause}</span>
+                {card.categoryName && <span className="exp-swipe-cause">{card.categoryName}</span>}
                 <h3>{m.title}</h3>
-                <p>{missionPurpose(m)}</p>
+                <p>{card.organizationName ?? "Organization"}</p>
                 <div className="exp-swipe-meta">
-                  <span>{m.date.split("·")[0]?.trim()}</span>
-                  <span>{m.dist}</span>
-                  <span className="exp-tag exp-tag--spots" style={ss}>
-                    {m.spots} left
-                  </span>
+                  <MissionDateLabel>{fmtMissionDate(m.startsAt)}</MissionDateLabel>
+                  <MissionLocationLabel virtual={m.isVirtual}>{locationLabel(card)}</MissionLocationLabel>
+                  <span className="exp-tag exp-tag--spots">{spots}</span>
                 </div>
                 <button
                   type="button"
@@ -121,9 +120,9 @@ export default function ExploreMissionSwipeStack({
 
       {stack.length > 1 && (
         <div className="exp-swipe-dots" role="tablist" aria-label="Select mission">
-          {stack.map((m, i) => (
+          {stack.map((card, i) => (
             <button
-              key={m.slug}
+              key={card.mission.id}
               type="button"
               role="tab"
               aria-selected={i === index}

@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import PublicNav from "@/components/public-nav";
 import ExploreMobileExperience from "@/components/explore/explore-mobile-experience";
-import SaveButton from "@/components/volunteer/save-button";
+import ExploreMissionCard from "@/components/explore/explore-mission-card";
+import ExploreResultsEmpty from "@/components/explore/explore-results-empty";
+import { useSession } from "@/components/session-provider";
 import "./explore-mobile.css";
+import "./explore-mission-cards.css";
 import { ALL_CATEGORY, type UICategory } from "@/lib/categories";
-import { MISSION_PLACEHOLDER_BG } from "@/lib/data";
 import type { MissionCard } from "@/lib/data/mission-cards";
 
 export interface ExploreParams {
@@ -21,27 +22,6 @@ export interface ExploreParams {
   sort: string;
 }
 
-function fmtDate(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "Date TBA";
-  return d.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
-const STATUS_LABEL: Record<string, string> = {
-  pending: "Applied · pending",
-  approved: "You’re in",
-  waitlisted: "Waitlisted",
-  declined: "Not selected",
-  withdrawn: "Withdrawn",
-  cancelled: "Cancelled",
-};
-
 export default function ExploreClient({
   cards,
   categories,
@@ -53,11 +33,10 @@ export default function ExploreClient({
 }) {
   const router = useRouter();
   const search = useSearchParams();
+  const account = useSession();
   const chips = [ALL_CATEGORY, ...categories];
   const [exView, setExView] = useState<"list" | "map">("list");
   const [q, setQ] = useState(params.q);
-  // Keep the UI responsive while the server re-queries; track the optimistic
-  // selection so the chosen chip highlights instantly.
   const [isPending, startTransition] = useTransition();
   const [optimistic, setOptimistic] = useState<ExploreParams | null>(null);
   const view = optimistic ?? params;
@@ -68,7 +47,6 @@ export default function ExploreClient({
       if (v == null || v === "") sp.delete(k);
       else sp.set(k, v);
     }
-    // optimistic snapshot so chips/pills reflect the click immediately
     setOptimistic({
       category: sp.get("category") || "all",
       q: sp.get("q") || "",
@@ -83,7 +61,6 @@ export default function ExploreClient({
     });
   }
 
-  // Clear the optimistic snapshot once the server has caught up to it.
   const paramsKey = JSON.stringify(params);
   useEffect(() => {
     setOptimistic(null);
@@ -149,7 +126,6 @@ export default function ExploreClient({
           style={{ display: "grid", gridTemplateColumns: "250px 1fr", minHeight: 600, maxWidth: 1280, margin: "0 auto" }}
           className="two-pane"
         >
-          {/* filter rail */}
           <div style={{ borderRight: "1px solid rgba(24,32,59,.06)", padding: "24px 20px", background: "#fbfcfe" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
               <span style={{ fontWeight: 800, fontSize: 16 }}>Filters</span>
@@ -221,7 +197,6 @@ export default function ExploreClient({
             </div>
           </div>
 
-          {/* results */}
           <div style={{ padding: "22px 26px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
               <form
@@ -253,7 +228,6 @@ export default function ExploreClient({
               </div>
             </div>
 
-            {/* cause chips */}
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
               {chips.map((c) => {
                 const activeKey = view.category || "all";
@@ -264,7 +238,7 @@ export default function ExploreClient({
                     onClick={() => setParam({ category: c.key === "all" ? null : c.key })}
                     style={chipStyle(on, c.accent)}
                   >
-                    {c.emoji} {c.label}
+                    {c.label}
                   </span>
                 );
               })}
@@ -290,32 +264,11 @@ export default function ExploreClient({
                 <div style={{ fontSize: 13.5 }}>For now, browse the list — {cards.length} missions.</div>
               </div>
             ) : cards.length === 0 ? (
-              <div
-                style={{
-                  border: "1px dashed rgba(24,32,59,.16)",
-                  borderRadius: 18,
-                  padding: "52px 24px",
-                  textAlign: "center",
-                  background: "#fbfcfe",
-                }}
-              >
-                <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
-                <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 4 }}>
-                  No missions match those filters yet
-                </div>
-                <div style={{ fontSize: 14, color: "var(--muted-2)", maxWidth: 360, margin: "0 auto 16px" }}>
-                  Try another cause, date, or location.
-                </div>
-                {hasFilters && (
-                  <span
-                    onClick={() => router.push("/explore")}
-                    className="btn-coral"
-                    style={{ display: "inline-block", color: "#fff", fontWeight: 700, fontSize: 14, padding: "10px 18px", borderRadius: 12, cursor: "pointer" }}
-                  >
-                    Explore all missions
-                  </span>
-                )}
-              </div>
+              <ExploreResultsEmpty
+                filtered={hasFilters}
+                isOrganizer={account?.role === "organizer"}
+                onReset={hasFilters ? () => router.push("/explore") : undefined}
+              />
             ) : (
               <div>
                 <div style={{ fontSize: 14, color: "var(--muted-2)", marginBottom: 14 }}>
@@ -323,114 +276,10 @@ export default function ExploreClient({
                   {hasFilters ? "match your filters" : "near you"}
                   {isPending && <span style={{ marginLeft: 8, color: "var(--coral-deep)", fontWeight: 600 }}>· Updating…</span>}
                 </div>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(2,1fr)",
-                    gap: 18,
-                    opacity: isPending ? 0.55 : 1,
-                    transition: "opacity .15s ease",
-                    pointerEvents: isPending ? "none" : "auto",
-                  }}
-                  className="card-grid-3"
-                >
-                  {cards.map((card) => {
-                    const m = card.mission;
-                    const spots =
-                      card.spotsLeft == null
-                        ? "Open spots"
-                        : card.isFull
-                        ? "Full"
-                        : `${card.spotsLeft} spots left`;
-                    return (
-                      <div
-                        key={m.id}
-                        style={{
-                          position: "relative",
-                          background: "#fff",
-                          border: "1px solid rgba(24,32,59,.07)",
-                          borderRadius: 18,
-                          overflow: "hidden",
-                          boxShadow: "0 12px 28px -22px rgba(24,32,59,.4)",
-                        }}
-                        className="lift"
-                      >
-                        <div style={{ position: "absolute", top: 12, right: 12, zIndex: 2 }}>
-                          <SaveButton missionId={m.id} initialSaved={card.isSaved} />
-                        </div>
-                        <Link href={`/missions/${m.slug}`} style={{ display: "block", textDecoration: "none", color: "inherit" }}>
-                          <div
-                            style={{
-                              height: 92,
-                              display: "flex",
-                              alignItems: "center",
-                              padding: "0 16px",
-                              gap: 10,
-                              fontSize: 30,
-                              background: card.coverImageUrl
-                                ? `linear-gradient(180deg, rgba(8,12,28,0) 40%, rgba(8,12,28,.45)), url('${card.coverImageUrl}') center/cover no-repeat`
-                                : MISSION_PLACEHOLDER_BG,
-                            }}
-                          >
-                            {card.applicationStatus && (
-                              <span
-                                style={{
-                                  marginLeft: "auto",
-                                  alignSelf: "flex-start",
-                                  marginTop: 12,
-                                  fontSize: 11,
-                                  fontWeight: 700,
-                                  background: "rgba(255,255,255,.92)",
-                                  color: "var(--ink)",
-                                  padding: "4px 9px",
-                                  borderRadius: 99,
-                                }}
-                              >
-                                {STATUS_LABEL[card.applicationStatus] ?? card.applicationStatus}
-                              </span>
-                            )}
-                          </div>
-                          <div style={{ padding: 14 }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
-                              {card.categoryName && (
-                                <span style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-1)", background: "#f1f3f8", padding: "3px 9px", borderRadius: 99 }}>
-                                  {card.categoryName}
-                                </span>
-                              )}
-                              {m.isBeginnerFriendly && (
-                                <span style={{ fontSize: 11, fontWeight: 700, color: "#1fae82", background: "#dff6ea", padding: "3px 9px", borderRadius: 99 }}>
-                                  Beginner-friendly
-                                </span>
-                              )}
-                            </div>
-                            <div style={{ fontWeight: 700, fontSize: 15.5, lineHeight: 1.25, marginBottom: 2 }}>{m.title}</div>
-                            <div style={{ fontSize: 12.5, color: "var(--muted-3)" }}>{card.organizationName ?? "Organization"}</div>
-                            <div style={{ fontSize: 12.5, color: "var(--muted-1)", fontWeight: 600, margin: "9px 0 0" }}>
-                              📅 {fmtDate(m.startsAt)}
-                            </div>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
-                              <span style={{ fontSize: 12, color: "var(--muted-1)" }}>
-                                📍 {m.isVirtual ? "Virtual" : m.locationLabel || m.city || "Nearby"}
-                                {m.estimatedHours ? ` · ${m.estimatedHours}h` : ""}
-                              </span>
-                              <span
-                                style={{
-                                  fontSize: 11,
-                                  fontWeight: 700,
-                                  padding: "4px 9px",
-                                  borderRadius: 99,
-                                  background: card.isFull ? "#f1f3f8" : "#dff6ea",
-                                  color: card.isFull ? "var(--muted-2)" : "#1fae82",
-                                }}
-                              >
-                                {spots}
-                              </span>
-                            </div>
-                          </div>
-                        </Link>
-                      </div>
-                    );
-                  })}
+                <div className={["exp-card-grid", isPending ? "exp-card-grid--pending" : ""].filter(Boolean).join(" ")}>
+                  {cards.map((card, i) => (
+                    <ExploreMissionCard key={card.mission.id} card={card} index={i} />
+                  ))}
                 </div>
               </div>
             )}

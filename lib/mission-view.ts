@@ -12,7 +12,8 @@
  */
 
 import "server-only";
-import { causeArt, type Mission, type MissionDetail } from "@/lib/data";
+import { type Mission, type MissionDetail } from "@/lib/data";
+import { getMissionCards, type MissionCard } from "@/lib/data/mission-cards";
 import { publicMediaUrl } from "@/lib/storage/urls";
 import { BUCKETS } from "@/lib/storage/storage-paths";
 import { iconKeyToEmoji } from "@/lib/categories";
@@ -48,8 +49,19 @@ export interface MissionView {
   missionId: string;
   mission: Mission;
   detail: MissionDetail;
-  recs: Mission[];
+  recs: MissionCard[];
   source: "live";
+  coverImageUrl: string | null;
+  categoryName: string | null;
+  isBeginnerFriendly: boolean;
+  isVirtual: boolean;
+  estimatedHours: number | null;
+  locationDisplay: string;
+  orgVerified: boolean;
+  orgSlug: string | null;
+  summary: string;
+  perks: string[];
+  capacityUnlimited: boolean;
 }
 
 interface CatLite {
@@ -99,33 +111,26 @@ function toMissionDetail(
   s: MissionSummary,
   mission: Mission,
   orgName: string,
-  approvedCount: number
+  categoryName: string | null,
+  approvedCount: number,
+  coverImageUrl: string | null
 ): MissionDetail {
   const capacity = s.volunteerCapacity;
-  // Real spots from approved applications. Unlimited capacity → open-ish bar.
+  const capacityUnlimited = capacity == null;
   const spotsTotal = capacity != null ? Math.max(capacity, 1) : Math.max(approvedCount + 8, 8);
   const spotsLeft = capacity != null ? Math.max(0, capacity - approvedCount) : spotsTotal - approvedCount;
   return {
     whatYoullDo: s.summary,
-    bullets:
-      s.perks.length > 0
-        ? s.perks
-        : [
-            "Show up ready to lend a hand",
-            "Work as part of a small, supportive team",
-            "Leave the community better than you found it",
-          ],
-    impactGoal: `Help ${orgName} reach more neighbors and make ${mission.cause.toLowerCase()} efforts go further this month.`,
-    skills: s.skills.length > 0 ? s.skills : ["Reliable", "Team player", "No experience needed"],
-    // No DB column for safety notes yet — generic guidance.
+    bullets: s.perks,
+    impactGoal: categoryName
+      ? `Join ${orgName} to support ${categoryName.toLowerCase()} efforts in the community.`
+      : `Join ${orgName} to make a meaningful difference in the community.`,
+    skills: s.skills,
     safety:
-      "Please dress for the weather and wear comfortable, closed-toe shoes. Any supplies or training needed are provided on site.",
-    coverGrad: (() => {
-      const url = publicMediaUrl(BUCKETS.missionMedia, s.coverImagePath);
-      return url
-        ? `linear-gradient(180deg, rgba(8,12,28,0) 45%, rgba(8,12,28,.4)), url('${url}') center/cover no-repeat`
-        : causeArt(mission);
-    })(),
+      "Dress for the weather and wear comfortable, closed-toe shoes. Supplies and on-site guidance are provided by the organizer.",
+    coverGrad: coverImageUrl
+      ? `linear-gradient(180deg, rgba(8,12,28,0) 45%, rgba(8,12,28,.4)), url('${coverImageUrl}') center/cover no-repeat`
+      : "",
     date: mission.date,
     time: formatTime(s.startsAt),
     spotsLeft,
@@ -150,16 +155,34 @@ export async function loadLiveMissionView(slug: string): Promise<MissionView | n
       categories.map((c) => [c.id, { name: c.name, iconKey: c.iconKey, accent: c.accentColor ?? "#ff8a5c" }])
     );
     const orgName = org?.name ?? "Organization";
+    const coverImageUrl = publicMediaUrl(BUCKETS.missionMedia, summary.coverImagePath);
+    const cat = summary.categoryId ? cats.get(summary.categoryId) : undefined;
 
     const mission = toMissionCard(summary, cats, orgName);
-    const detail = toMissionDetail(summary, mission, orgName, approved);
-    // Org names aren't shown on rec cards, so skip per-rec org lookups.
-    const recs = published
-      .filter((m) => m.slug !== summary.slug)
-      .slice(0, 3)
-      .map((m) => toMissionCard(m, cats, ""));
+    const detail = toMissionDetail(summary, mission, orgName, cat?.name ?? null, approved, coverImageUrl);
+    const recSummaries = published.filter((m) => m.slug !== summary.slug).slice(0, 3);
+    const recs = await getMissionCards(recSummaries);
 
-    return { missionId: summary.id, mission, detail, recs, source: "live" };
+    return {
+      missionId: summary.id,
+      mission,
+      detail,
+      recs,
+      source: "live",
+      coverImageUrl,
+      categoryName: cat?.name ?? null,
+      isBeginnerFriendly: summary.isBeginnerFriendly,
+      isVirtual: summary.isVirtual,
+      estimatedHours: summary.estimatedHours,
+      locationDisplay: summary.isVirtual
+        ? "Virtual"
+        : summary.locationLabel || summary.city || "Nearby",
+      orgVerified: org?.verificationStatus === "verified",
+      orgSlug: org?.slug ?? null,
+      summary: summary.summary,
+      perks: summary.perks,
+      capacityUnlimited: summary.volunteerCapacity == null,
+    };
   } catch {
     return null;
   }

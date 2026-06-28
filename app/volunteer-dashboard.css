@@ -55,7 +55,150 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  align-items: stretch;
+}
+
+.vol-dash-hero-actions .vol-dash-hero-btn {
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 44px;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.vol-dash-hero-actions .btn-coral.vol-dash-hero-btn {
+  color: #fff;
+  box-shadow: 0 12px 24px -12px rgba(255, 111, 94, 0.8);
+}
+
+.vol-dash-hero-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.vol-dash-upcoming-pill {
+  display: none;
+  position: relative;
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  border: none;
+  text-decoration: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(122, 28, 48, 0.18);
+  background: linear-gradient(90deg, #ffc0a8 0%, #ff8a5c 28%, #ff5e7a 72%, #e84d68 100%);
+  background-size: 220% 100%;
+  box-shadow:
+    0 14px 30px -12px rgba(255, 94, 122, 0.58),
+    0 0 0 1px rgba(255, 255, 255, 0.55) inset,
+    0 -6px 16px -8px rgba(255, 210, 190, 0.42) inset;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+.vol-dash-upcoming-pill::after {
+  content: "";
+  position: absolute;
+  bottom: -3px;
+  left: 50%;
+  width: 72%;
+  height: 10px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse, rgba(255, 138, 92, 0.42), transparent 72%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.vol-dash-upcoming-pill:active {
+  transform: scale(0.985);
+  filter: brightness(1.04) saturate(1.05);
+}
+
+.vol-dash-upcoming-pill > span:last-child,
+.vol-dash-upcoming-pill > svg {
+  position: relative;
+  z-index: 2;
+}
+
+.vol-dash-upcoming-pill-shine {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.vol-dash-upcoming-pill-shine::after {
+  content: "";
+  position: absolute;
+  top: -40%;
+  left: -80%;
+  width: 55%;
+  height: 180%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.42), transparent);
+  transform: rotate(14deg);
+  animation: volUpcomingShine 4s ease-in-out infinite;
+}
+
+.vol-dash-upcoming-pill-flare {
+  position: absolute;
+  top: 50%;
+  width: 3px;
+  height: 3px;
+  margin-top: -1.5px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.9);
+  opacity: 0.9;
+  z-index: 2;
+  animation: volUpcomingFlare 2.4s ease-in-out infinite;
+}
+
+.vol-dash-upcoming-pill-flare--l {
+  left: 16px;
+}
+
+.vol-dash-upcoming-pill-flare--r {
+  right: 16px;
+  animation-delay: 0.7s;
+}
+
+@keyframes volUpcomingPulse {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes volUpcomingShine {
+  0%, 100% { left: -80%; opacity: 0; }
+  15% { opacity: 1; }
+  50% { left: 120%; opacity: 1; }
+  65%, 100% { opacity: 0; }
+}
+
+@keyframes volUpcomingFlare {
+  0%, 100% { opacity: 0.35; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.15); }
 }
 
 .vol-dash-hero-chip {
@@ -584,14 +727,25 @@
   .vol-dash-hero-inner {
     flex-direction: column;
   }
+  .vol-dash-hero-cta {
+    width: 100%;
+    align-self: stretch;
+  }
   .vol-dash-hero-actions {
     width: 100%;
   }
-  .vol-dash-hero-actions .btn-coral,
-  .vol-dash-hero-actions .vol-btn-ghost {
-    flex: 1;
-    min-height: 44px;
-    justify-content: center;
+  .vol-dash-hero-actions .vol-dash-hero-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0 12px;
+  }
+  .vol-dash-upcoming-pill {
+    display: flex;
+    width: 100%;
+    box-sizing: border-box;
+    animation:
+      volUpcomingEnter 0.85s cubic-bezier(0.22, 1, 0.36, 1) both,
+      volUpcomingPulse 5s ease-in-out 0.85s infinite;
   }
   .vol-stat-grid {
     display: flex;
@@ -647,8 +801,26 @@
   }
 }
 
+@keyframes volUpcomingEnter {
+  from {
+    opacity: 0;
+    transform: scaleX(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .vol-dash-hero-glow {
+    animation: none;
+  }
+  .vol-dash-upcoming-pill {
+    animation: none;
+  }
+  .vol-dash-upcoming-pill-shine::after,
+  .vol-dash-upcoming-pill-flare {
     animation: none;
   }
   .vol-stat-card:hover,

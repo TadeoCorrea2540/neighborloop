@@ -160,7 +160,11 @@ export default function OrgShell({
             zIndex: 10,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <Link href="/" className="org-mobile-brand" aria-label="NeighborLoop home">
+            <Logo size={22} />
+            <span className="org-mobile-brand-text">neighborloop</span>
+          </Link>
+          <div className="org-main-header-actions" style={{ display: "flex", alignItems: "center", gap: 6 }}>
             {userId ? (
               <>
                 <NotificationsMenu initialCount={notificationCount} userId={userId} />

@@ -39,7 +39,6 @@ type RawAudit = {
 
 // Map a UI category to the event_type prefixes / entity types it covers.
 function applyCategory<T>(query: T, category: AuditCategory): T {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const q = query as any;
   switch (category) {
     case "verification":

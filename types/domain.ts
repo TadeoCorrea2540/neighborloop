@@ -192,6 +192,7 @@ export interface MissionFull {
   safetyNotes: string | null;
   applicationMode: string;
   publishedAt: string | null;
+  showExactAddressPublicly: boolean;
 }
 
 export function toMissionFull(row: MissionRow): MissionFull {
@@ -225,6 +226,7 @@ export function toMissionFull(row: MissionRow): MissionFull {
     safetyNotes: row.safety_notes,
     applicationMode: row.application_mode,
     publishedAt: row.published_at,
+    showExactAddressPublicly: row.show_exact_address_publicly ?? false,
   };
 }
 

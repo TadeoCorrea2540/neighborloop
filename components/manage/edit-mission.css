@@ -1,0 +1,511 @@
+/* Edit Mission — mission control shell */
+
+.me-page {
+  max-width: 960px;
+  margin: 0 auto;
+  animation: mePageIn 0.45s ease both;
+}
+
+@keyframes mePageIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* —— Header —— */
+.me-header {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, #fffaf7 0%, #fff 52%, #fffdfb 100%);
+  border: 1px solid rgba(255, 111, 94, 0.12);
+  border-radius: 20px;
+  padding: 22px 24px 20px;
+  margin-bottom: 18px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 20px 48px -32px rgba(255, 111, 94, 0.28);
+}
+
+.me-header-glow {
+  position: absolute;
+  top: -40%;
+  right: -8%;
+  width: 280px;
+  height: 200px;
+  background: radial-gradient(ellipse, rgba(255, 111, 94, 0.14) 0%, transparent 68%);
+  pointer-events: none;
+}
+
+.me-breadcrumb {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 12.5px;
+  margin-bottom: 14px;
+}
+
+.me-breadcrumb a {
+  color: var(--muted-3);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.me-breadcrumb a:hover {
+  color: var(--coral-deep);
+}
+
+.me-breadcrumb-sep {
+  color: var(--muted-4);
+}
+
+.me-breadcrumb-current {
+  color: var(--muted-1);
+  font-weight: 600;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.me-header-main {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.me-eyebrow {
+  margin: 0 0 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--coral-deep);
+}
+
+.me-title {
+  margin: 0 0 8px;
+  font-size: clamp(1.35rem, 3.5vw, 1.65rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.me-meta {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--muted-2);
+  line-height: 1.45;
+}
+
+.me-badge {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.me-badge--published {
+  background: #dff6ea;
+  color: #147a57;
+  border-color: rgba(20, 122, 87, 0.15);
+}
+
+.me-badge--draft,
+.me-badge--pending {
+  background: #fff0dd;
+  color: #b9651b;
+  border-color: rgba(185, 101, 27, 0.12);
+}
+
+.me-badge--closed {
+  background: #e8f2fc;
+  color: #2b6cb0;
+  border-color: rgba(43, 108, 176, 0.12);
+}
+
+.me-badge--cancelled {
+  background: #ffeae6;
+  color: #c0392b;
+  border-color: rgba(192, 57, 43, 0.12);
+}
+
+.me-quick-actions {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.me-action-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--muted-1);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(24, 32, 59, 0.1);
+  padding: 10px 14px;
+  border-radius: 12px;
+  text-decoration: none;
+  min-height: 44px;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.me-action-link:hover {
+  border-color: rgba(255, 111, 94, 0.28);
+  background: #fff;
+  box-shadow: 0 4px 14px -8px rgba(255, 111, 94, 0.35);
+}
+
+.me-action-link:active {
+  transform: translateY(1px);
+}
+
+.me-action-badge {
+  font-size: 11px;
+  font-weight: 800;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--coral);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* —— Layout: form + status sidebar —— */
+.me-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.me-form {
+  padding-bottom: 88px;
+}
+
+@media (min-width: 721px) {
+  .me-form {
+    padding-bottom: 96px;
+  }
+}
+
+@media (min-width: 900px) {
+  .me-layout {
+    grid-template-columns: minmax(0, 1fr) 292px;
+    gap: 20px;
+  }
+
+  .me-form {
+    order: 1;
+  }
+
+  .me-status-panel {
+    order: 2;
+    position: sticky;
+    top: 20px;
+  }
+}
+
+/* —— Status lifecycle panel —— */
+.me-status {
+  background: linear-gradient(180deg, #fff 0%, #fffdfb 100%);
+  border-radius: 18px;
+  border: 1px solid rgba(24, 32, 59, 0.07);
+  padding: 20px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  animation: meFadeUp 0.42s ease 0.04s both;
+}
+
+@keyframes meFadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.me-status-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.me-status-label {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.me-status-pill {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 999px;
+}
+
+.me-status-pill--published { background: #dff6ea; color: #147a57; }
+.me-status-pill--draft { background: #f1f3f8; color: #5a6685; }
+.me-status-pill--pending { background: #fff0dd; color: #b9651b; }
+.me-status-pill--paused { background: #fff0dd; color: #b9651b; }
+.me-status-pill--closed { background: #e2effd; color: #2b6cb0; }
+.me-status-pill--cancelled { background: #ffeae6; color: #c0392b; }
+.me-status-pill--archived { background: #f1f3f8; color: #5a6685; }
+
+.me-status-hint {
+  font-size: 13px;
+  color: var(--muted-3);
+  line-height: 1.45;
+  margin: 0 0 16px;
+}
+
+.me-status-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.me-status-btn {
+  width: 100%;
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 11px 16px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  min-height: 44px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s, opacity 0.15s;
+  text-align: center;
+}
+
+.me-status-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.me-status-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.me-status-btn--primary {
+  background: #1fae82;
+  color: #fff;
+  box-shadow: 0 6px 16px -8px rgba(31, 174, 130, 0.55);
+}
+
+.me-status-btn--primary:hover:not(:disabled) {
+  background: #199a72;
+}
+
+.me-status-btn--neutral {
+  background: #fff;
+  color: var(--muted-1);
+  border-color: rgba(24, 32, 59, 0.12);
+}
+
+.me-status-btn--neutral:hover:not(:disabled) {
+  background: #fafbfd;
+  border-color: rgba(24, 32, 59, 0.18);
+}
+
+.me-status-btn--danger {
+  background: #fff8f7;
+  color: #c0392b;
+  border-color: rgba(192, 57, 43, 0.18);
+}
+
+.me-status-btn--danger:hover:not(:disabled) {
+  background: #ffeae6;
+  border-color: rgba(192, 57, 43, 0.28);
+}
+
+.me-status-public {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--blue);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.me-status-public:hover {
+  color: var(--coral-deep);
+}
+
+.me-status-empty {
+  font-size: 13px;
+  color: var(--muted-3);
+  margin: 0;
+  line-height: 1.45;
+}
+
+/* —— Private details (integrated section) —— */
+.mf-private-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.mf-private-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mf-private-pill {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--coral-deep);
+  background: #fff0ec;
+  border: 1px solid rgba(255, 111, 94, 0.2);
+  padding: 4px 9px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.mf-private-bridge {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px dashed rgba(255, 111, 94, 0.22);
+  font-size: 13px;
+  color: var(--muted-2);
+  line-height: 1.5;
+}
+
+.mf-private-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
+.mf-private-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+/* Edit form sticky save bar */
+.me-form .mf-actions--edit {
+  position: sticky;
+  bottom: 0;
+  z-index: 25;
+  margin-top: 12px;
+  padding: 14px 20px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(24, 32, 59, 0.08);
+  box-shadow: 0 -12px 32px -20px rgba(24, 32, 59, 0.2);
+}
+
+@media (min-width: 721px) {
+  .me-form .mf-actions--edit {
+    margin-top: 24px;
+    padding: 16px 22px;
+    border: 1px solid rgba(24, 32, 59, 0.08);
+    border-radius: 16px;
+    box-shadow:
+      0 8px 32px -16px rgba(24, 32, 59, 0.14),
+      0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  }
+}
+
+.me-form .mf-actions--edit .mf-btn-coral {
+  flex: 1;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .me-form {
+    padding-bottom: 0;
+  }
+
+  .me-header {
+    padding: 18px 16px 16px;
+    border-radius: 16px;
+    margin-bottom: 14px;
+  }
+
+  .me-header-main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .me-quick-actions {
+    gap: 8px;
+  }
+
+  .me-action-link {
+    flex: 1 1 calc(50% - 4px);
+    justify-content: center;
+    min-width: 0;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .me-status {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .me-status-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .me-status-btn {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: calc(50% - 4px);
+  }
+
+  .mf-private-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .me-form .mf-actions--edit {
+    margin: 12px -28px -24px;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    border-radius: 0;
+    border: none;
+    border-top: 1px solid rgba(24, 32, 59, 0.08);
+    box-shadow: 0 -12px 32px -20px rgba(24, 32, 59, 0.2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .me-page,
+  .me-status,
+  .me-header {
+    animation: none;
+  }
+
+  .me-action-link,
+  .me-status-btn {
+    transition: none;
+  }
+}

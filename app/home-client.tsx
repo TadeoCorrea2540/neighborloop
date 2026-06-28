@@ -13,21 +13,23 @@ import VolunteerOrganizerSplit from "@/components/home/volunteer-organizer-split
 import MobileFinalCTA from "@/components/home/mobile-final-cta";
 import MobileStickyCTA from "@/components/home/mobile-sticky-cta";
 import {
-  MISSIONS,
   CauseKey,
-  causeArt,
-  spotStyle,
   LIVE,
 } from "@/lib/data";
 import { ALL_CATEGORY, type UICategory } from "@/lib/categories";
+import type { MissionCard } from "@/lib/data/mission-cards";
+import ExploreMissionCard from "@/components/explore/explore-mission-card";
 import "./home.css";
+import "./explore/explore-mission-cards.css";
 
 const fmt = (n: number) => n.toLocaleString();
 
 export default function HomeClient({
   categories,
+  missionCards,
 }: {
   categories: UICategory[];
+  missionCards: MissionCard[];
 }) {
   // Mobile missions keep their own mock cause filter (CauseKey).
   const [cause, setCause] = useState<CauseKey>("All");
@@ -39,11 +41,9 @@ export default function HomeClient({
   const [selectedKey, setSelectedKey] = useState<string>("all");
   const active = chips.find((c) => c.key === selectedKey) ?? ALL_CATEGORY;
   const featured =
-    active.causeKey === "All"
-      ? MISSIONS
-      : active.causeKey
-      ? MISSIONS.filter((m) => m.cause === active.causeKey)
-      : [];
+    selectedKey === "all"
+      ? missionCards.slice(0, 9)
+      : missionCards.filter((c) => c.categorySlug === selectedKey).slice(0, 9);
 
   const chipBase: React.CSSProperties = {
     display: "inline-flex",
@@ -67,7 +67,7 @@ export default function HomeClient({
 
       {/* ── mobile-first sections ── */}
       <MobileHero />
-      <MobileMissions cause={cause} onCauseChange={setCause} />
+      <MobileMissions cause={cause} onCauseChange={setCause} cards={missionCards} />
       <MobileHowItWorks />
       <MobileImpactBlock />
       <VolunteerOrganizerSplit />
@@ -218,7 +218,7 @@ export default function HomeClient({
                     : chipBase
                 }
               >
-                {c.emoji} {c.label}
+                {c.label}
               </span>
             );
           })}
@@ -233,7 +233,6 @@ export default function HomeClient({
               background: "var(--bg-tint)",
             }}
           >
-            <div style={{ fontSize: 32, marginBottom: 8 }}>{active.emoji}</div>
             <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 4 }}>
               No open missions in {active.label} yet
             </div>
@@ -243,30 +242,10 @@ export default function HomeClient({
             </div>
           </div>
         ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20 }} className="card-grid-3">
-          {featured.map((m) => {
-            const ss = spotStyle(m.spots);
-            return (
-              <Link key={m.slug} href={`/missions/${m.slug}`} className="lift" style={{ background: "#fff", border: "1px solid var(--line)", borderRadius: 20, overflow: "hidden", boxShadow: "0 14px 30px -22px rgba(24,32,59,.4)", display: "block" }}>
-                <div style={{ height: 128, position: "relative", background: causeArt(m) }}>
-                  <span style={{ position: "absolute", top: 12, left: 12, background: "rgba(255,255,255,.92)", borderRadius: 999, fontSize: 12, fontWeight: 700, padding: "5px 11px" }}>{m.cause}</span>
-                  <span style={{ position: "absolute", top: 12, right: 12, width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,.92)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>♡</span>
-                </div>
-                <div style={{ padding: "16px 17px 18px" }}>
-                  <div style={{ fontWeight: 700, fontSize: 16.5, lineHeight: 1.25 }}>{m.title}</div>
-                  <div style={{ fontSize: 13, color: "var(--muted-3)", margin: "3px 0 12px" }}>{m.org}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 14, fontSize: 12.5, color: "var(--muted-1)", marginBottom: 14 }}>
-                    <span>📅 {m.date}</span>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--muted-1)" }}>📍 {m.dist} · {m.diff}</span>
-                    <span style={{ fontSize: 12, fontWeight: 700, padding: "5px 10px", borderRadius: 999, ...ss }}>{m.spots} spots</span>
-                  </div>
-                  <div className="btn-coral" style={{ marginTop: 14, color: "#fff", textAlign: "center", fontWeight: 700, fontSize: 14, padding: 11, borderRadius: 12 }}>Join mission</div>
-                </div>
-              </Link>
-            );
-          })}
+        <div className="home-mission-grid card-grid-3">
+          {featured.map((card, i) => (
+            <ExploreMissionCard key={card.mission.id} card={card} index={i} showCta />
+          ))}
         </div>
         )}
       </section>

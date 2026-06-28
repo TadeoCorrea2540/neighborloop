@@ -19,8 +19,16 @@ import {
 } from "@/app/manage/missions/actions";
 import ImageUpload from "@/components/manage/image-upload";
 import AIMissionBuilder from "@/components/manage/ai-mission-builder";
+import BrandedDateTimeField from "@/components/manage/branded-datetime-field";
+import { FormPillGroup, FormRadioGroup, FormToggle } from "@/components/manage/form-choice";
+import {
+  MissionPrivateDetailsSection,
+  emptyPrivateDetails,
+  type MissionPrivateDetailsState,
+} from "@/components/manage/mission-private-details-section";
 import type { AIMissionDraft } from "@/lib/ai/mission-draft-schema";
 import type { MissionFull } from "@/types/domain";
+import "./mission-form.css";
 
 interface CategoryOption {
   id: string;
@@ -30,27 +38,18 @@ interface CategoryOption {
 
 type Mode = "create" | "edit";
 
-// ---- styling tokens (match the rest of /manage) ----
-const labelStyle: React.CSSProperties = { fontSize: 13, fontWeight: 700, color: "#3a425e", display: "block", marginBottom: 6 };
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  boxSizing: "border-box",
-  border: "1px solid rgba(24,32,59,.14)",
-  borderRadius: 12,
-  padding: "11px 13px",
-  fontSize: 14,
-  outline: "none",
-  background: "#fbfcfe",
-};
-const sectionCard: React.CSSProperties = {
-  background: "#fff",
-  borderRadius: 18,
-  border: "1px solid rgba(24,32,59,.06)",
-  padding: 22,
-  marginBottom: 18,
-};
-const sectionTitle: React.CSSProperties = { fontSize: 16, fontWeight: 800, margin: "0 0 4px" };
-const sectionHint: React.CSSProperties = { fontSize: 13, color: "var(--muted-3)", margin: "0 0 16px" };
+const DIFFICULTY_OPTIONS = [
+  { value: "", label: "Not specified" },
+  { value: "easy", label: "Easy", hint: "Light activity, minimal training" },
+  { value: "moderate", label: "Moderate", hint: "Some physical or mental effort" },
+  { value: "challenging", label: "Challenging", hint: "Demanding work or skills" },
+];
+
+const APPLICATION_OPTIONS = [
+  { value: "request", label: "Request to join", hint: "You approve each volunteer" },
+  { value: "open", label: "Open — auto-approve", hint: "Volunteers join instantly" },
+  { value: "external", label: "External link", hint: "Sign-ups happen off-platform" },
+];
 
 // datetime-local helpers — keep the user's wall-clock time.
 function toLocalInput(iso: string | null): string {
@@ -75,6 +74,7 @@ interface FormState {
   city: string;
   country_code: string;
   volunteer_capacity: string;
+  capacity_mode: "limited" | "open";
   minimum_age: string;
   difficulty: string;
   is_beginner_friendly: boolean;
@@ -93,7 +93,7 @@ function initialState(mission: MissionFull | null): FormState {
       title: "", summary: "", description: "", category_id: "",
       starts_at: "", ends_at: "", timezone: tz, estimated_hours: "",
       is_virtual: false, location_label: "", city: "", country_code: "",
-      volunteer_capacity: "", minimum_age: "", difficulty: "", is_beginner_friendly: true,
+      volunteer_capacity: "", capacity_mode: "limited", minimum_age: "", difficulty: "", is_beginner_friendly: true,
       application_mode: "request", skills: "", materials_needed: "", perks: "", safety_notes: "",
     };
   }
@@ -111,6 +111,7 @@ function initialState(mission: MissionFull | null): FormState {
     city: mission.city ?? "",
     country_code: mission.countryCode ?? "",
     volunteer_capacity: mission.volunteerCapacity?.toString() ?? "",
+    capacity_mode: mission.volunteerCapacity == null ? "open" : "limited",
     minimum_age: mission.minimumAge?.toString() ?? "",
     difficulty: mission.difficulty ?? "",
     is_beginner_friendly: mission.isBeginnerFriendly,
@@ -122,7 +123,7 @@ function initialState(mission: MissionFull | null): FormState {
   };
 }
 
-function buildFormData(s: FormState): FormData {
+function buildFormData(s: FormState, privateDetails: MissionPrivateDetailsState): FormData {
   const fd = new FormData();
   const strings: (keyof FormState)[] = [
     "title", "summary", "description", "category_id",
@@ -137,6 +138,20 @@ function buildFormData(s: FormState): FormData {
   }
   if (s.is_virtual) fd.set("is_virtual", "on");
   if (s.is_beginner_friendly) fd.set("is_beginner_friendly", "on");
+
+  const pdStrings: (keyof MissionPrivateDetailsState)[] = [
+    "exact_address",
+    "private_meeting_instructions",
+    "private_contact_name",
+    "private_contact_phone",
+    "private_contact_email",
+  ];
+  for (const k of pdStrings) {
+    const v = privateDetails[k];
+    if (typeof v === "string" && v.trim()) fd.set(k, v.trim());
+  }
+  if (privateDetails.show_exact_address_publicly) fd.set("show_exact_address_publicly", "on");
+
   return fd;
 }
 
@@ -145,24 +160,56 @@ export default function MissionForm({
   mission,
   categories,
   coverImageUrl = null,
+  initialPrivateDetails = null,
 }: {
   mode: Mode;
   mission: MissionFull | null;
   categories: CategoryOption[];
   coverImageUrl?: string | null;
+  initialPrivateDetails?: MissionPrivateDetailsState | null;
 }) {
   const router = useRouter();
   const [s, setS] = useState<FormState>(() => initialState(mission));
+  const [privateDetails, setPrivateDetails] = useState<MissionPrivateDetailsState>(
+    () => initialPrivateDetails ?? emptyPrivateDetails()
+  );
   const [pending, start] = useTransition();
   const [toast, setToast] = useState<{ msg: string; tone: "error" | "success" } | null>(null);
   const [seq, setSeq] = useState(0);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormState, string>>>({});
+  const [createDraftId, setCreateDraftId] = useState<string | null>(null);
   const show = (msg: string, tone: "error" | "success") => {
     setToast({ msg, tone });
     setSeq((n) => n + 1);
   };
 
-  const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
+  const set = <K extends keyof FormState>(k: K, v: FormState[K]) => {
     setS((prev) => ({ ...prev, [k]: v }));
+    setFieldErrors((prev) => {
+      if (!prev[k]) return prev;
+      const next = { ...prev };
+      delete next[k];
+      return next;
+    });
+  };
+
+  const setPrivate = <K extends keyof MissionPrivateDetailsState>(
+    k: K,
+    v: MissionPrivateDetailsState[K]
+  ) => {
+    setPrivateDetails((prev) => {
+      const next = { ...prev, [k]: v };
+      if (k === "show_exact_address_publicly" && v === true && next.exact_address.trim()) {
+        setS((sPrev) => ({ ...sPrev, location_label: next.exact_address.trim() }));
+      }
+      if (k === "exact_address" && typeof v === "string" && next.show_exact_address_publicly && v.trim()) {
+        setS((sPrev) => ({ ...sPrev, location_label: v.trim() }));
+      }
+      return next;
+    });
+  };
+
+  const addressIsPublic = privateDetails.show_exact_address_publicly;
 
   // Fill the form from an approved AI draft. Everything stays editable, and
   // nothing is saved — the organizer still hits Save/Publish below.
@@ -180,9 +227,9 @@ export default function MissionForm({
       difficulty: d.difficulty ?? prev.difficulty,
       is_beginner_friendly: d.isBeginnerFriendly,
       estimated_hours: d.estimatedHours != null ? String(d.estimatedHours) : prev.estimated_hours,
-      volunteer_capacity: d.volunteerCapacity != null ? String(d.volunteerCapacity) : prev.volunteer_capacity,
+      volunteer_capacity: d.volunteerCapacity != null ? String(d.volunteerCapacity) : "",
+      capacity_mode: d.volunteerCapacity != null ? "limited" : "open",
       is_virtual: d.isVirtual,
-      location_label: d.publicLocationLabel ?? prev.location_label,
       city: d.city ?? prev.city,
       skills: d.requiredSkills.length ? d.requiredSkills.join(", ") : prev.skills,
       materials_needed: d.materialsNeeded.length ? d.materialsNeeded.join(", ") : prev.materials_needed,
@@ -190,13 +237,18 @@ export default function MissionForm({
       safety_notes: d.safetyNotes.length ? d.safetyNotes.join("\n") : prev.safety_notes,
       starts_at: d.suggestedStartsAt ? toLocalInput(d.suggestedStartsAt) : prev.starts_at,
       ends_at: d.suggestedEndsAt ? toLocalInput(d.suggestedEndsAt) : prev.ends_at,
+      location_label:
+        d.showExactAddressPublicly && d.exactAddress
+          ? d.exactAddress
+          : d.publicLocationLabel ?? prev.location_label,
     }));
-    show(
-      d.privateMeetingInstructions
-        ? "Draft added below — review and edit. Tip: add the suggested private meeting details under private details after saving."
-        : "Draft added below — review and edit, then save when you’re ready.",
-      "success"
-    );
+    setPrivateDetails((prev) => ({
+      ...prev,
+      exact_address: d.exactAddress ?? prev.exact_address,
+      show_exact_address_publicly: d.showExactAddressPublicly ?? prev.show_exact_address_publicly,
+      private_meeting_instructions: d.privateMeetingInstructions ?? prev.private_meeting_instructions,
+    }));
+    show("Draft added below — review private details and address visibility, then save when you’re ready.", "success");
   }
 
   const previewWhen = useMemo(() => {
@@ -219,33 +271,101 @@ export default function MissionForm({
     return false;
   }
 
+  function validate(publishAfter: boolean): boolean {
+    const errors: Partial<Record<keyof FormState, string>> = {};
+    const missingLabels: string[] = [];
+
+    const mark = (key: keyof FormState, label: string, message: string) => {
+      errors[key] = message;
+      missingLabels.push(label);
+    };
+
+    if (!s.title.trim()) mark("title", "mission title", "Add a mission title.");
+    if (!s.summary.trim()) mark("summary", "short summary", "Add a short summary.");
+
+    if (!s.starts_at) mark("starts_at", "start date & time", "Add a start date before publishing this mission.");
+    else if (!/T\d{2}:\d{2}/.test(s.starts_at)) {
+      mark("starts_at", "start time", "Choose a start time for this mission.");
+    }
+
+    if (publishAfter) {
+      if (!s.description.trim()) mark("description", "description", "Add a description before publishing.");
+      if (!s.category_id) mark("category_id", "category", "Choose a category before publishing.");
+      if (!s.is_virtual) {
+        if (!s.location_label.trim()) mark("location_label", "location", "Add a public location before publishing.");
+        if (!s.city.trim()) mark("city", "city", "Add a city before publishing.");
+      }
+    }
+
+    if (s.ends_at && s.starts_at) {
+      const start = new Date(s.starts_at).getTime();
+      const end = new Date(s.ends_at).getTime();
+      if (!Number.isNaN(start) && !Number.isNaN(end) && end < start) {
+        errors.ends_at = "End time must be after the start time.";
+        missingLabels.push("end time");
+      }
+    }
+
+    setFieldErrors(errors);
+    if (missingLabels.length > 0) {
+      const unique = Array.from(new Set(missingLabels));
+      show(
+        publishAfter
+          ? `Before publishing, add: ${unique.join(", ")}.`
+          : unique[0] === "end time"
+            ? errors.ends_at!
+            : errors.title ?? errors.summary ?? errors.starts_at ?? "Please fix the highlighted fields.",
+        "error"
+      );
+      return false;
+    }
+    if (Object.keys(errors).length > 0) {
+      show(errors.ends_at ?? "Please fix the highlighted fields.", "error");
+      return false;
+    }
+    return true;
+  }
+
   function submit(publishAfter: boolean) {
-    if (!s.title.trim()) return show("Please add a mission title.", "error");
-    if (!s.summary.trim()) return show("Please add a short summary.", "error");
-    if (!s.starts_at) return show("Please choose a start date & time.", "error");
+    if (!validate(publishAfter)) return;
 
     start(async () => {
-      const fd = buildFormData(s);
+      const fd = buildFormData(s, privateDetails);
       if (mode === "create") {
-        const res = await createMissionDraftAction(fd);
-        if (!res.ok) {
-          if (routeOnGuard(res.code)) return;
-          return show(res.error, "error");
+        let missionId = createDraftId;
+
+        if (createDraftId) {
+          const updateRes = await updateMissionAction(createDraftId, fd);
+          if (!updateRes.ok) {
+            if (routeOnGuard(updateRes.code)) return;
+            return show(updateRes.error, "error");
+          }
+        } else {
+          const createRes = await createMissionDraftAction(fd);
+          if (!createRes.ok) {
+            if (routeOnGuard(createRes.code)) return;
+            return show(createRes.error, "error");
+          }
+          missionId = createRes.missionId;
+          setCreateDraftId(createRes.missionId);
         }
+
+        if (!missionId) return;
+
         if (publishAfter) {
           const { publishMissionAction } = await import("@/app/manage/missions/actions");
-          const pub = await publishMissionAction(res.missionId);
+          const pub = await publishMissionAction(missionId);
           if (!pub.ok) {
-            // Draft saved but publish blocked — send them to edit with the reason.
             show(pub.error, "error");
-            router.push(`/manage/missions/${res.missionId}/edit`);
             return;
           }
           show("Mission published — it’s live on Explore.", "success");
-        } else {
-          show("Draft saved.", "success");
+          router.push("/manage/dashboard?published=1");
+          router.refresh();
+          return;
         }
-        router.push(`/manage/missions/${res.missionId}/edit`);
+        show("Draft saved.", "success");
+        router.push(`/manage/missions/${missionId}/edit`);
         router.refresh();
         return;
       }
@@ -257,42 +377,43 @@ export default function MissionForm({
         return show(res.error, "error");
       }
       show("Changes saved.", "success");
-      router.refresh();
+      router.push("/manage/dashboard");
     });
   }
 
   return (
-    <div>
+    <div className="mf-page">
       {mode === "create" && <AIMissionBuilder categories={categories} onApply={applyDraft} />}
 
-      {/* Basics */}
-      <div style={sectionCard}>
-        <h3 style={sectionTitle}>Basics</h3>
-        <p style={sectionHint}>What is this mission and who is it for?</p>
+      <section className="mf-section">
+        <h3 className="mf-section-title">Basics</h3>
+        <p className="mf-section-hint">What is this mission and who is it for?</p>
 
-        <div style={{ marginBottom: 16 }}>
-          <label style={labelStyle} htmlFor="title">Mission title</label>
-          <input id="title" style={inputStyle} value={s.title} onChange={(e) => set("title", e.target.value)} placeholder="Community Garden Planting Day" maxLength={140} />
+        <div className="mf-field">
+          <label className="mf-label" htmlFor="title">Mission title</label>
+          <input id="title" className={`mf-input${fieldErrors.title ? " mf-input--error" : ""}`} value={s.title} onChange={(e) => set("title", e.target.value)} placeholder="Community Garden Planting Day" maxLength={140} aria-invalid={Boolean(fieldErrors.title)} />
+          {fieldErrors.title ? <p className="mf-error" role="alert">{fieldErrors.title}</p> : null}
         </div>
-        <div style={{ marginBottom: 16 }}>
-          <label style={labelStyle} htmlFor="summary">Short summary</label>
-          <input id="summary" style={inputStyle} value={s.summary} onChange={(e) => set("summary", e.target.value)} placeholder="One line shown on cards & search" maxLength={200} />
+        <div className="mf-field">
+          <label className="mf-label" htmlFor="summary">Short summary</label>
+          <input id="summary" className={`mf-input${fieldErrors.summary ? " mf-input--error" : ""}`} value={s.summary} onChange={(e) => set("summary", e.target.value)} placeholder="One line shown on cards & search" maxLength={200} aria-invalid={Boolean(fieldErrors.summary)} />
+          {fieldErrors.summary ? <p className="mf-error" role="alert">{fieldErrors.summary}</p> : null}
         </div>
-        <div style={{ marginBottom: 16 }}>
-          <label style={labelStyle} htmlFor="description">Description</label>
-          <textarea id="description" style={{ ...inputStyle, minHeight: 120, resize: "vertical", lineHeight: 1.5 }} value={s.description} onChange={(e) => set("description", e.target.value)} placeholder="Describe the work, the impact, and what a volunteer's day looks like. (Required to publish.)" />
+        <div className="mf-field">
+          <label className="mf-label" htmlFor="description">Description</label>
+          <textarea id="description" className={`mf-textarea${fieldErrors.description ? " mf-input--error" : ""}`} value={s.description} onChange={(e) => set("description", e.target.value)} placeholder="Describe the work, the impact, and what a volunteer's day looks like. (Required to publish.)" aria-invalid={Boolean(fieldErrors.description)} />
+          {fieldErrors.description ? <p className="mf-error" role="alert">{fieldErrors.description}</p> : null}
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }} className="form-2col">
-          <div>
-            <label style={labelStyle} htmlFor="category_id">Category</label>
-            <select id="category_id" style={inputStyle} value={s.category_id} onChange={(e) => set("category_id", e.target.value)}>
-              <option value="">Choose a category…</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
-          <div />
+        <div className="mf-field">
+          <span id="mf-category-label" className="mf-label">Category</span>
+          <FormPillGroup
+            name="category_id"
+            value={s.category_id}
+            onChange={(v) => set("category_id", v)}
+            options={categories.map((c) => ({ value: c.id, label: c.name }))}
+            labelledBy="mf-category-label"
+          />
+          {fieldErrors.category_id ? <p className="mf-error" role="alert">{fieldErrors.category_id}</p> : null}
         </div>
 
         {mode === "edit" && mission ? (
@@ -306,161 +427,168 @@ export default function MissionForm({
             />
           </div>
         ) : (
-          <p style={{ fontSize: 12.5, color: "var(--muted-3)", marginTop: 6 }}>
-            🖼️ You can add a cover image after saving, from the edit page. Until then a category gradient is used.
+          <p className="mf-note" style={{ marginTop: 6 }}>
+            You can add a cover image after saving, from the edit page. Until then a category gradient is used.
           </p>
         )}
-      </div>
+      </section>
 
-      {/* When */}
-      <div style={sectionCard}>
-        <h3 style={sectionTitle}>When</h3>
-        <p style={sectionHint}>Times use your timezone ({s.timezone}).</p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }} className="form-2col">
-          <div>
-            <label style={labelStyle} htmlFor="starts_at">Starts</label>
-            <input id="starts_at" type="datetime-local" style={inputStyle} value={s.starts_at} onChange={(e) => set("starts_at", e.target.value)} />
+      <section className="mf-section">
+        <h3 className="mf-section-title">When</h3>
+        <p className="mf-section-hint">Times use your timezone ({s.timezone}).</p>
+        <div className="mf-grid mf-grid--2">
+          <BrandedDateTimeField id="starts_at" label="Starts" value={s.starts_at} onChange={(v) => set("starts_at", v)} error={fieldErrors.starts_at} />
+          <BrandedDateTimeField id="ends_at" label="Ends" value={s.ends_at} onChange={(v) => set("ends_at", v)} optional error={fieldErrors.ends_at} />
+        </div>
+        <div className="mf-grid mf-grid--2" style={{ marginTop: 14 }}>
+          <div className="mf-field">
+            <label className="mf-label" htmlFor="timezone">Timezone</label>
+            <input id="timezone" className="mf-input" value={s.timezone} onChange={(e) => set("timezone", e.target.value)} placeholder="UTC" />
           </div>
-          <div>
-            <label style={labelStyle} htmlFor="ends_at">Ends <span style={{ fontWeight: 500, color: "var(--muted-3)" }}>(optional)</span></label>
-            <input id="ends_at" type="datetime-local" style={inputStyle} value={s.ends_at} onChange={(e) => set("ends_at", e.target.value)} />
+          <div className="mf-field">
+            <label className="mf-label" htmlFor="estimated_hours">Estimated hours <span className="mf-label-hint">(optional)</span></label>
+            <input id="estimated_hours" type="number" min={0} step="0.5" className="mf-input" value={s.estimated_hours} onChange={(e) => set("estimated_hours", e.target.value)} placeholder="3" />
           </div>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 14 }} className="form-2col">
-          <div>
-            <label style={labelStyle} htmlFor="timezone">Timezone</label>
-            <input id="timezone" style={inputStyle} value={s.timezone} onChange={(e) => set("timezone", e.target.value)} placeholder="UTC" />
-          </div>
-          <div>
-            <label style={labelStyle} htmlFor="estimated_hours">Estimated hours <span style={{ fontWeight: 500, color: "var(--muted-3)" }}>(optional)</span></label>
-            <input id="estimated_hours" type="number" min={0} step="0.5" style={inputStyle} value={s.estimated_hours} onChange={(e) => set("estimated_hours", e.target.value)} placeholder="3" />
-          </div>
-        </div>
-      </div>
+      </section>
 
-      {/* Where */}
-      <div style={sectionCard}>
-        <h3 style={sectionTitle}>Where</h3>
-        <p style={sectionHint}>City & location are required to publish an in-person mission.</p>
-        <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", marginBottom: 14 }}>
-          <input type="checkbox" checked={s.is_virtual} onChange={(e) => set("is_virtual", e.target.checked)} style={{ width: 18, height: 18 }} />
-          <span style={{ fontSize: 14, fontWeight: 600, color: "#3a425e" }}>This is a virtual / remote mission</span>
-        </label>
+      <section className="mf-section">
+        <h3 className="mf-section-title">Where</h3>
+        <p className="mf-section-hint">City & location are required to publish an in-person mission.</p>
+        <div className="mf-field">
+          <FormToggle id="is_virtual" checked={s.is_virtual} onChange={(v) => set("is_virtual", v)} label="This is a virtual / remote mission" hint="Skip public address fields when volunteers join online." />
+        </div>
         {!s.is_virtual && (
           <>
-            <div style={{ marginBottom: 14 }}>
-              <label style={labelStyle} htmlFor="location_label">Location</label>
-              <input id="location_label" style={inputStyle} value={s.location_label} onChange={(e) => set("location_label", e.target.value)} placeholder="Mission Community Garden" />
+            <div className="mf-field">
+              <label className="mf-label" htmlFor="location_label">
+                Location {addressIsPublic ? <span className="mf-label-hint">(using public exact address)</span> : null}
+              </label>
+              <input
+                id="location_label"
+                className={`mf-input${fieldErrors.location_label ? " mf-input--error" : ""}`}
+                value={s.location_label}
+                onChange={(e) => set("location_label", e.target.value)}
+                placeholder="Mission Community Garden"
+                disabled={addressIsPublic && Boolean(privateDetails.exact_address.trim())}
+                aria-invalid={Boolean(fieldErrors.location_label)}
+              />
+              {fieldErrors.location_label ? <p className="mf-error" role="alert">{fieldErrors.location_label}</p> : null}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }} className="form-2col">
-              <div>
-                <label style={labelStyle} htmlFor="city">City</label>
-                <input id="city" style={inputStyle} value={s.city} onChange={(e) => set("city", e.target.value)} placeholder="San Francisco" />
+            <div className="mf-grid mf-grid--2">
+              <div className="mf-field">
+                <label className="mf-label" htmlFor="city">City</label>
+                <input id="city" className={`mf-input${fieldErrors.city ? " mf-input--error" : ""}`} value={s.city} onChange={(e) => set("city", e.target.value)} placeholder="San Francisco" aria-invalid={Boolean(fieldErrors.city)} />
+                {fieldErrors.city ? <p className="mf-error" role="alert">{fieldErrors.city}</p> : null}
               </div>
-              <div>
-                <label style={labelStyle} htmlFor="country_code">Country code <span style={{ fontWeight: 500, color: "var(--muted-3)" }}>(optional)</span></label>
-                <input id="country_code" style={inputStyle} value={s.country_code} onChange={(e) => set("country_code", e.target.value)} placeholder="US" maxLength={8} />
+              <div className="mf-field">
+                <label className="mf-label" htmlFor="country_code">Country code <span className="mf-label-hint">(optional)</span></label>
+                <input id="country_code" className="mf-input" value={s.country_code} onChange={(e) => set("country_code", e.target.value)} placeholder="US" maxLength={8} />
               </div>
             </div>
           </>
         )}
-        <p style={{ fontSize: 12.5, color: "var(--muted-3)", margin: "12px 0 0" }}>
-          🔒 Exact address & contact details are added separately as <strong>private details</strong> — never shown publicly.
+        <p className="mf-note">
+          The public location above helps volunteers decide whether to apply. Exact address, day-of contact, and visibility are in <strong>Private details</strong> below.
         </p>
-      </div>
+      </section>
 
-      {/* Logistics */}
-      <div style={sectionCard}>
-        <h3 style={sectionTitle}>Logistics</h3>
-        <p style={sectionHint}>Capacity, requirements, and what volunteers should know.</p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }} className="form-2col">
-          <div>
-            <label style={labelStyle} htmlFor="volunteer_capacity">Volunteers needed</label>
-            <input id="volunteer_capacity" type="number" min={1} style={inputStyle} value={s.volunteer_capacity} onChange={(e) => set("volunteer_capacity", e.target.value)} placeholder="12" />
-          </div>
-          <div>
-            <label style={labelStyle} htmlFor="minimum_age">Minimum age</label>
-            <input id="minimum_age" type="number" min={0} max={120} style={inputStyle} value={s.minimum_age} onChange={(e) => set("minimum_age", e.target.value)} placeholder="0" />
-          </div>
-          <div>
-            <label style={labelStyle} htmlFor="difficulty">Difficulty</label>
-            <select id="difficulty" style={inputStyle} value={s.difficulty} onChange={(e) => set("difficulty", e.target.value)}>
-              <option value="">Not specified</option>
-              <option value="easy">Easy</option>
-              <option value="moderate">Moderate</option>
-              <option value="challenging">Challenging</option>
-            </select>
-          </div>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 14 }} className="form-2col">
-          <div>
-            <label style={labelStyle} htmlFor="application_mode">How volunteers join</label>
-            <select id="application_mode" style={inputStyle} value={s.application_mode} onChange={(e) => set("application_mode", e.target.value)}>
-              <option value="request">Request to join (you approve)</option>
-              <option value="open">Open — auto-approve</option>
-              <option value="external">External link / off-platform</option>
-            </select>
-          </div>
-          <div style={{ display: "flex", alignItems: "flex-end" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", paddingBottom: 11 }}>
-              <input type="checkbox" checked={s.is_beginner_friendly} onChange={(e) => set("is_beginner_friendly", e.target.checked)} style={{ width: 18, height: 18 }} />
-              <span style={{ fontSize: 14, fontWeight: 600, color: "#3a425e" }}>Beginner friendly</span>
-            </label>
-          </div>
-        </div>
-        <div style={{ marginTop: 14 }}>
-          <label style={labelStyle} htmlFor="skills">Skills <span style={{ fontWeight: 500, color: "var(--muted-3)" }}>(comma-separated)</span></label>
-          <input id="skills" style={inputStyle} value={s.skills} onChange={(e) => set("skills", e.target.value)} placeholder="Outdoors, Teamwork" />
-        </div>
-        <div style={{ marginTop: 14 }}>
-          <label style={labelStyle} htmlFor="materials_needed">Materials to bring <span style={{ fontWeight: 500, color: "var(--muted-3)" }}>(comma-separated)</span></label>
-          <input id="materials_needed" style={inputStyle} value={s.materials_needed} onChange={(e) => set("materials_needed", e.target.value)} placeholder="Water bottle, Sun hat" />
-        </div>
-        <div style={{ marginTop: 14 }}>
-          <label style={labelStyle} htmlFor="perks">Perks <span style={{ fontWeight: 500, color: "var(--muted-3)" }}>(comma-separated)</span></label>
-          <input id="perks" style={inputStyle} value={s.perks} onChange={(e) => set("perks", e.target.value)} placeholder="Snacks provided, Volunteer certificate" />
-        </div>
-        <div style={{ marginTop: 14 }}>
-          <label style={labelStyle} htmlFor="safety_notes">Safety notes</label>
-          <textarea id="safety_notes" style={{ ...inputStyle, minHeight: 70, resize: "vertical" }} value={s.safety_notes} onChange={(e) => set("safety_notes", e.target.value)} placeholder="Bring water and sun protection. Tools and gloves provided on site." />
-        </div>
-      </div>
+      {!s.is_virtual ? (
+        <section className="mf-section mf-section--private" id="mf-private-details">
+          <MissionPrivateDetailsSection values={privateDetails} onChange={setPrivate} />
+        </section>
+      ) : null}
 
-      {/* actions */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", justifyContent: "flex-end" }}>
+      <section className="mf-section">
+        <h3 className="mf-section-title">Logistics</h3>
+        <p className="mf-section-hint">Capacity, requirements, and what volunteers should know.</p>
+        <div className="mf-grid mf-grid--2">
+          <div className="mf-field">
+            <span id="mf-capacity-label" className="mf-label">Volunteers needed</span>
+            <FormPillGroup
+              name="capacity_mode"
+              value={s.capacity_mode}
+              onChange={(v) => {
+                const mode = v as FormState["capacity_mode"];
+                set("capacity_mode", mode);
+                if (mode === "open") set("volunteer_capacity", "");
+              }}
+              options={[
+                { value: "limited", label: "Limited spots" },
+                { value: "open", label: "Open" },
+              ]}
+              labelledBy="mf-capacity-label"
+            />
+            {s.capacity_mode === "limited" ? (
+              <input
+                id="volunteer_capacity"
+                type="number"
+                min={1}
+                className="mf-input mf-input--compact"
+                value={s.volunteer_capacity}
+                onChange={(e) => set("volunteer_capacity", e.target.value)}
+                placeholder="12"
+                aria-label="Number of volunteers"
+              />
+            ) : (
+              <p className="mf-capacity-open-hint">No limit on volunteers — anyone approved can join.</p>
+            )}
+          </div>
+          <div className="mf-field">
+            <label className="mf-label" htmlFor="minimum_age">Minimum age</label>
+            <input id="minimum_age" type="number" min={0} max={120} className="mf-input" value={s.minimum_age} onChange={(e) => set("minimum_age", e.target.value)} placeholder="0" />
+          </div>
+        </div>
+
+        <div className="mf-field" style={{ marginTop: 14 }}>
+          <span id="mf-difficulty-label" className="mf-label">Difficulty</span>
+          <FormRadioGroup name="difficulty" value={s.difficulty} onChange={(v) => set("difficulty", v)} options={DIFFICULTY_OPTIONS} labelledBy="mf-difficulty-label" />
+        </div>
+
+        <div className="mf-field" style={{ marginTop: 14 }}>
+          <span id="mf-join-label" className="mf-label">How volunteers join</span>
+          <FormRadioGroup name="application_mode" value={s.application_mode} onChange={(v) => set("application_mode", v)} options={APPLICATION_OPTIONS} labelledBy="mf-join-label" />
+        </div>
+
+        <div className="mf-field" style={{ marginTop: 8 }}>
+          <FormToggle id="is_beginner_friendly" checked={s.is_beginner_friendly} onChange={(v) => set("is_beginner_friendly", v)} label="Beginner friendly" hint="Great for first-time volunteers." />
+        </div>
+
+        <div className="mf-field" style={{ marginTop: 14 }}>
+          <label className="mf-label" htmlFor="skills">Skills <span className="mf-label-hint">(comma-separated)</span></label>
+          <input id="skills" className="mf-input" value={s.skills} onChange={(e) => set("skills", e.target.value)} placeholder="Outdoors, Teamwork" />
+        </div>
+        <div className="mf-field">
+          <label className="mf-label" htmlFor="materials_needed">Materials to bring <span className="mf-label-hint">(comma-separated)</span></label>
+          <input id="materials_needed" className="mf-input" value={s.materials_needed} onChange={(e) => set("materials_needed", e.target.value)} placeholder="Water bottle, Sun hat" />
+        </div>
+        <div className="mf-field">
+          <label className="mf-label" htmlFor="perks">Perks <span className="mf-label-hint">(comma-separated)</span></label>
+          <input id="perks" className="mf-input" value={s.perks} onChange={(e) => set("perks", e.target.value)} placeholder="Snacks provided, Volunteer certificate" />
+        </div>
+        <div className="mf-field">
+          <label className="mf-label" htmlFor="safety_notes">Safety notes</label>
+          <textarea id="safety_notes" className="mf-textarea mf-textarea--sm" value={s.safety_notes} onChange={(e) => set("safety_notes", e.target.value)} placeholder="Bring water and sun protection. Tools and gloves provided on site." />
+        </div>
+      </section>
+
+      <div className={`mf-actions${mode === "edit" ? " mf-actions--edit" : ""}`}>
         {mode === "create" && (
-          <span style={{ fontSize: 12.5, color: "var(--muted-3)", marginRight: "auto" }}>
+          <span className="mf-preview">
             Preview: {s.title || "Untitled mission"} · {previewWhen}
           </span>
         )}
         {mode === "create" ? (
           <>
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => submit(false)}
-              style={{ fontSize: 14, fontWeight: 700, color: "var(--muted-1)", background: "#fff", border: "1px solid rgba(24,32,59,.14)", padding: "12px 20px", borderRadius: 12, cursor: pending ? "not-allowed" : "pointer", opacity: pending ? 0.7 : 1 }}
-            >
+            <button type="button" disabled={pending} onClick={() => submit(false)} className="mf-btn-ghost">
               {pending ? "Saving…" : "Save as draft"}
             </button>
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => submit(true)}
-              className="btn-coral"
-              style={{ fontSize: 14, fontWeight: 700, color: "#fff", padding: "12px 22px", borderRadius: 12, border: "none", cursor: pending ? "not-allowed" : "pointer", opacity: pending ? 0.7 : 1, boxShadow: "0 14px 28px -12px rgba(255,111,94,.8)" }}
-            >
-              {pending ? "Working…" : "🚀 Save & publish"}
+            <button type="button" disabled={pending} onClick={() => submit(true)} className="mf-btn-coral btn-coral">
+              {pending ? "Working…" : "Save & publish"}
             </button>
           </>
         ) : (
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() => submit(false)}
-            className="btn-coral"
-            style={{ fontSize: 14, fontWeight: 700, color: "#fff", padding: "12px 24px", borderRadius: 12, border: "none", cursor: pending ? "not-allowed" : "pointer", opacity: pending ? 0.7 : 1, boxShadow: "0 14px 28px -12px rgba(255,111,94,.8)" }}
-          >
+          <button type="button" disabled={pending} onClick={() => submit(false)} className="mf-btn-coral btn-coral">
             {pending ? "Saving…" : "Save changes"}
           </button>
         )}

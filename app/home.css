@@ -352,6 +352,24 @@
   gap: 8px;
 }
 
+.home-mission-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.home-missions-scroll-item {
+  flex: 0 0 min(78vw, 300px);
+  scroll-snap-align: start;
+}
+
+.home-missions-empty {
+  padding: 0 20px 12px;
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted-2);
+}
+
 .home-missions-scroll {
   display: flex;
   gap: 14px;

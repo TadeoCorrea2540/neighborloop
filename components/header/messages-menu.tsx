@@ -13,6 +13,7 @@ import DefaultAvatar from "@/components/default-avatar";
 import { panelStyle, Caret, MenuHeader, MenuEmpty, MenuSkeleton, Badge } from "./menu-ui";
 import Icon from "../icons";
 import { useFocusPoll } from "./use-focus-poll";
+import { useMobileHeaderPop } from "./use-mobile-pop-style";
 import { BADGE_REFRESH_EVENT, MESSAGES_READ_EVENT } from "@/lib/badge-events";
 
 function timeAgo(iso: string | null): string {
@@ -35,6 +36,7 @@ export default function MessagesMenu({
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<ConversationListItem[] | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const { panelStyle: mobilePanelStyle, backdropStyle: mobileBackdropStyle } = useMobileHeaderPop(open);
 
   useEffect(() => setCount(initialCount), [initialCount]);
 
@@ -105,16 +107,18 @@ export default function MessagesMenu({
       </button>
 
       {open && (
-        <div className="hdr-pop" style={panelStyle} role="menu">
-          <Caret />
-          <MenuHeader title="Messages" />
+        <>
+          <div className="hdr-pop-backdrop" style={mobileBackdropStyle} onClick={() => setOpen(false)} aria-hidden />
+          <div className="hdr-pop" style={{ ...panelStyle, ...mobilePanelStyle }} role="menu">
+            <Caret />
+            <MenuHeader title="Messages" />
 
-          <div style={{ maxHeight: "min(70vh, 480px)", overflowY: "auto" }}>
+            <div className="hdr-pop-body">
             {items === null ? (
               <MenuSkeleton rows={3} />
             ) : items.length === 0 ? (
               <MenuEmpty
-                emoji="💬"
+                icon="message"
                 title="No messages yet"
                 hint={viewer === "volunteer" ? "Message an organizer from a mission you’ve applied to." : "Conversations with your volunteers will appear here."}
               />
@@ -138,16 +142,20 @@ export default function MessagesMenu({
                         <span style={{ fontSize: 11.5, color: "var(--muted-3)", flexShrink: 0 }}>{timeAgo(c.lastMessageAt)}</span>
                         {c.unread && <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--coral)", flexShrink: 0 }} />}
                       </div>
-                      <div style={{ fontSize: 12.8, color: "var(--muted-3)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        🎯 {c.missionTitle}{c.lastPreview ? ` · ${c.lastPreview}` : ""}
+                      <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12.8, color: "var(--muted-3)", marginTop: 2, minWidth: 0 }}>
+                        <Icon name="target" size={13} style={{ color: "var(--muted-3)", flexShrink: 0 }} />
+                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {c.missionTitle}{c.lastPreview ? ` · ${c.lastPreview}` : ""}
+                        </span>
                       </div>
                     </div>
                   </div>
                 );
               })
             )}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

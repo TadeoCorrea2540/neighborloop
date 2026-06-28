@@ -22,8 +22,8 @@ export default async function CreateMissionPage() {
         <Link href="/manage/missions" style={{ color: "var(--muted-3)" }}>Missions</Link> /{" "}
         <span style={{ color: "var(--muted-1)", fontWeight: 600 }}>New mission</span>
       </div>
-      <h2 style={{ fontSize: 25, fontWeight: 800, margin: "0 0 6px", letterSpacing: "-.02em" }}>Create a mission</h2>
-      <p style={{ margin: "0 0 22px", color: "var(--muted-2)", fontSize: 14 }}>
+      <h2 className="mf-create-title">Create a mission</h2>
+      <p className="mf-create-intro">
         Save it as a private draft, or publish straight to Explore. You can edit anything later.
       </p>
       <MissionForm mode="create" mission={null} categories={categories.map((c) => ({ id: c.id, name: c.name, slug: c.slug }))} />

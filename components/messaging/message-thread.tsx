@@ -13,6 +13,7 @@ import { getBrowserSupabase } from "@/lib/supabase/browser";
 import { sendMessageAction, markConversationReadAction } from "@/app/messages/actions";
 import { emitBadgeRefresh, emitMessagesRead } from "@/lib/badge-events";
 import AuthToast from "@/components/auth/auth-toast";
+import Icon from "@/components/icons";
 import { useFocusPoll } from "@/components/header/use-focus-poll";
 import type { MessageItem } from "@/lib/data/messages";
 import type { ConversationDetail } from "@/lib/data/conversations";
@@ -129,8 +130,11 @@ export default function MessageThread({
         <Link href={backHref} style={{ fontSize: 18, color: "var(--muted-1)", textDecoration: "none" }}>←</Link>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 800, fontSize: 15.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{conversation.counterpartName}</div>
-          <div style={{ fontSize: 12.5, color: "var(--muted-3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            🎯 {conversation.missionTitle}{conversation.applicationStatus ? ` · ${conversation.applicationStatus}` : ""}
+          <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12.5, color: "var(--muted-3)", minWidth: 0 }}>
+            <Icon name="target" size={13} style={{ color: "var(--muted-3)", flexShrink: 0 }} />
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {conversation.missionTitle}{conversation.applicationStatus ? ` · ${conversation.applicationStatus}` : ""}
+            </span>
           </div>
         </div>
         {conversation.missionSlug && (

@@ -34,7 +34,11 @@ export type IconName =
   | "globe"
   | "megaphone"
   | "x-circle"
-  | "info";
+  | "info"
+  | "arrow-left"
+  | "share"
+  | "lock"
+  | "image";
 
 const PATHS: Record<IconName, ReactNode> = {
   home: (
@@ -214,6 +218,32 @@ const PATHS: Record<IconName, ReactNode> = {
       <circle cx="12" cy="12" r="9" />
       <path d="M12 16.2v-4.4" />
       <path d="M12 8.1h.01" />
+    </>
+  ),
+  "arrow-left": (
+    <>
+      <path d="M19 12H5" />
+      <path d="m11 6-6 6 6 6" />
+    </>
+  ),
+  share: (
+    <>
+      <path d="M12 16.8V8.2" />
+      <path d="m8.2 5.4 3.8-2.2 3.8 2.2" />
+      <path d="M6.4 14.2v3.4a1.4 1.4 0 0 0 1.4 1.4h8.4a1.4 1.4 0 0 0 1.4-1.4v-3.4" />
+    </>
+  ),
+  lock: (
+    <>
+      <rect x="5.2" y="11" width="13.6" height="9.8" rx="2.2" />
+      <path d="M8.4 11V8.2a3.6 3.6 0 0 1 7.2 0V11" />
+    </>
+  ),
+  image: (
+    <>
+      <rect x="4.8" y="6.4" width="14.4" height="11.2" rx="2.2" />
+      <circle cx="9.4" cy="10.2" r="1.5" />
+      <path d="m6.6 15.8 3.6-3.8 2.4 2.2 2.2-2 3.2 3.6" />
     </>
   ),
 };

@@ -227,6 +227,7 @@ export type Database = {
           title: string
           updated_at: string
           volunteer_capacity: number | null
+          show_exact_address_publicly: boolean
         }
         Insert: {
           application_mode?: string
@@ -261,6 +262,7 @@ export type Database = {
           title: string
           updated_at?: string
           volunteer_capacity?: number | null
+          show_exact_address_publicly?: boolean
         }
         Update: {
           application_mode?: string
@@ -295,6 +297,7 @@ export type Database = {
           title?: string
           updated_at?: string
           volunteer_capacity?: number | null
+          show_exact_address_publicly?: boolean
         }
         Relationships: [
           {

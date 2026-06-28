@@ -2,12 +2,13 @@
 
 /**
  * A small, self-animating toast for action feedback (save / apply / withdraw /
- * auth). Anchored bottom-center so it never collides with the sticky nav,
- * slides up, and auto-dismisses. Inline-styled to match NeighborLoop tokens.
+ * auth). Portaled to document.body so page transforms never clip it; errors
+ * anchor top-center; success floats above sticky action bars.
  *
  * Re-mount it with a changing `key` to re-trigger for repeat messages.
  */
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 const TONES = {
   error: { accent: "#f1543f", tint: "#fff0ec" },
@@ -40,6 +41,18 @@ export default function AuthToast({
 }) {
   const t = TONES[tone];
   const [shown, setShown] = useState(false);
+  const [portalReady, setPortalReady] = useState(false);
+  const [mobile, setMobile] = useState(false);
+
+  useEffect(() => setPortalReady(true), []);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 720px)");
+    const apply = () => setMobile(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
 
   useEffect(() => {
     const enter = requestAnimationFrame(() => setShown(true));
@@ -56,18 +69,27 @@ export default function AuthToast({
     setTimeout(onClose, 220);
   }
 
-  return (
+  if (!portalReady) return null;
+
+  const errorOnTop = tone === "error";
+  const slideY = shown ? "0" : errorOnTop ? "-14px" : "14px";
+  const actionBarOffset = mobile
+    ? "calc(80px + env(safe-area-inset-bottom, 0px))"
+    : "calc(76px + env(safe-area-inset-bottom, 0px))";
+
+  return createPortal(
     <div
       role={tone === "error" ? "alert" : "status"}
       aria-live={tone === "error" ? "assertive" : "polite"}
       style={{
         position: "fixed",
         left: "50%",
-        bottom: 24,
-        zIndex: 1000,
+        top: errorOnTop ? "max(16px, env(safe-area-inset-top))" : undefined,
+        bottom: errorOnTop ? undefined : actionBarOffset,
+        zIndex: 1100,
         width: "max-content",
         maxWidth: "calc(100vw - 32px)",
-        transform: `translateX(-50%) translateY(${shown ? "0" : "14px"})`,
+        transform: `translateX(-50%) translateY(${slideY})`,
         opacity: shown ? 1 : 0,
         transition: "transform .26s cubic-bezier(.2,.85,.25,1), opacity .26s ease",
         pointerEvents: shown ? "auto" : "none",
@@ -120,6 +142,7 @@ export default function AuthToast({
           ✕
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

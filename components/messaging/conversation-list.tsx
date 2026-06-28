@@ -1,6 +1,7 @@
 /** Inbox list (presentational, server-importable). Role-aware primary label. */
 import Link from "next/link";
 import DefaultAvatar from "@/components/default-avatar";
+import Icon from "@/components/icons";
 import type { ConversationListItem } from "@/lib/data/conversations";
 
 function timeAgo(iso: string | null): string {
@@ -45,8 +46,11 @@ export default function ConversationList({
                 <span style={{ fontWeight: 700, fontSize: 14.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{primary}</span>
                 {c.unread && <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--coral)", flexShrink: 0 }} />}
               </div>
-              <div style={{ fontSize: 12.5, color: "var(--muted-3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                🎯 {c.missionTitle}{c.lastPreview ? ` · ${c.lastPreview}` : ""}
+              <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12.5, color: "var(--muted-3)", minWidth: 0 }}>
+                <Icon name="target" size={13} style={{ color: "var(--muted-3)", flexShrink: 0 }} />
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {c.missionTitle}{c.lastPreview ? ` · ${c.lastPreview}` : ""}
+                </span>
               </div>
             </div>
             <span style={{ fontSize: 12, color: "var(--muted-3)", flexShrink: 0 }}>{timeAgo(c.lastMessageAt)}</span>
