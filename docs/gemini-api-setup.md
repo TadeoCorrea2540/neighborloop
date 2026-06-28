@@ -14,8 +14,8 @@ Add the key to `.env.local` (git-ignored — never commit real keys):
 
 ```bash
 GEMINI_API_KEY=your_key_here
-# optional, defaults to gemini-2.0-flash
-# GEMINI_MODEL=gemini-2.0-flash
+# optional, defaults to gemini-2.5-flash
+# GEMINI_MODEL=gemini-2.5-flash
 ```
 
 `.env.example` already documents these as placeholders.
@@ -40,8 +40,10 @@ The feature is optional. If `GEMINI_API_KEY` is missing:
 
 ## Model
 
-Defaults to `gemini-2.0-flash` (fast, supports JSON responses). Override with
-`GEMINI_MODEL`. The request uses `responseMimeType: application/json` and a
+Defaults to `gemini-2.5-flash` (fast, supports JSON responses). Override with
+`GEMINI_MODEL` (e.g. `gemini-2.5-flash-lite`). Note: `gemini-2.0-flash` has a
+free-tier request limit of 0 on some keys — if you see HTTP 429 quota errors,
+switch to `gemini-2.5-flash`. The request uses `responseMimeType: application/json` and a
 strict prompt; the response is parsed and sanitized before use.
 
 ## Cost / rate limits

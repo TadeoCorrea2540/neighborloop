@@ -19,7 +19,7 @@ export class GeminiConfigError extends Error {}
 /** Thrown for network / API / parse failures — surfaced as "try again". */
 export class GeminiGenerationError extends Error {}
 
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 const ENDPOINT = (model: string, key: string) =>
   `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
 
