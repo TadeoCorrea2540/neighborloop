@@ -66,7 +66,10 @@ OUTPUT: Respond with a SINGLE JSON object only (no markdown, no prose) using exa
 
 function buildUserPrompt(a: AIMissionAnswers, categories: { slug: string; name: string }[]): string {
   const cats = categories.map((c) => `- ${c.slug} (${c.name})`).join("\n") || "(none configured)";
+  const today = new Date().toISOString().slice(0, 10);
   return [
+    `Today's date is ${today}. If the organizer gives a date without a year, resolve it to the NEXT upcoming occurrence — never a past date. "suggestedStartsAt" must be today or in the future.`,
+    "",
     "Allowed categories (use the slug, or null):",
     cats,
     "",
@@ -148,5 +151,35 @@ export async function generateMissionDraft(
   if (!draft.title && !draft.description) {
     throw new GeminiGenerationError("Gemini did not return a usable draft.");
   }
+
+  // Safety net: a year-less date can still come back in the past. Shift the
+  // start (and the end, by the same whole-year delta to keep the duration)
+  // forward so a suggested date is never in the past.
+  const shift = pastYearShift(draft.suggestedStartsAt, Date.now());
+  if (shift > 0) {
+    draft.suggestedStartsAt = addYears(draft.suggestedStartsAt, shift);
+    draft.suggestedEndsAt = addYears(draft.suggestedEndsAt, shift);
+  }
   return draft;
+}
+
+/** Whole years to add to an ISO date so it is no longer before `nowMs` (0 if already future/invalid). */
+function pastYearShift(iso: string | null, nowMs: number): number {
+  if (!iso) return 0;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return 0;
+  let add = 0;
+  while (d.getTime() < nowMs && add < 10) {
+    d.setUTCFullYear(d.getUTCFullYear() + 1);
+    add++;
+  }
+  return add;
+}
+
+function addYears(iso: string | null, years: number): string | null {
+  if (!iso || years === 0) return iso;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  d.setUTCFullYear(d.getUTCFullYear() + years);
+  return d.toISOString();
 }
