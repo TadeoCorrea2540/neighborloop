@@ -750,8 +750,7 @@ a.vol-sidebar-nav-link--active:is(:link, :visited, :active) {
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     gap: 14px;
-    margin: 0 -28px;
-    padding: 2px 28px 8px;
+    padding: 0 0 8px;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
