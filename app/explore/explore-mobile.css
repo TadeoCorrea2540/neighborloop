@@ -1247,6 +1247,13 @@
   margin-left: 4px;
 }
 
+.exp-save-toast a:link,
+.exp-save-toast a:visited,
+.exp-save-toast a:active {
+  color: #ffd9c2;
+  -webkit-text-fill-color: currentColor;
+}
+
 @media (max-width: 768px) {
   .exp-desktop-only { display: none !important; }
   .exp-mobile-only { display: block; }

@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   title: "NeighborLoop — Turn free time into real-world impact",
   description:
     "Discover local volunteer missions, join in a tap, and watch your real-world impact stack up — hours, people helped, and badges earned.",
+  other: {
+    "format-detection": "telephone=no, date=no, email=no, address=no",
+  },
 };
 
 async function resolveAccount(): Promise<SessionAccount | null> {

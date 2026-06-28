@@ -294,6 +294,13 @@
   color: var(--coral-deep);
 }
 
+.auth-form-side--mobile .auth-forgot:link,
+.auth-form-side--mobile .auth-forgot:visited,
+.auth-form-side--mobile .auth-forgot:active {
+  color: var(--coral-deep);
+  -webkit-text-fill-color: currentColor;
+}
+
 @media (max-width: 768px) {
   .auth-desktop-only { display: none !important; }
   .auth-mobile-only { display: block; }

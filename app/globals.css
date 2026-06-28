@@ -56,12 +56,52 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+  -webkit-tap-highlight-color: rgba(255, 111, 94, 0.14);
+}
+
+a:link,
+a:visited,
+a:active {
+  color: inherit;
+  text-decoration: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"] {
+  font-family: inherit;
+  color: inherit;
+  -webkit-tap-highlight-color: rgba(255, 111, 94, 0.14);
 }
 
 button {
-  font-family: inherit;
   border: none;
   cursor: pointer;
+}
+
+[role="button"],
+[role="menuitem"],
+[role="option"],
+[role="tab"] {
+  color: inherit;
+  -webkit-tap-highlight-color: rgba(255, 111, 94, 0.14);
+}
+
+summary {
+  color: inherit;
+  cursor: pointer;
+}
+
+/* Disable iOS data-detector link styling inside the app shell */
+a[x-apple-data-detectors],
+a[x-apple-data-detectors]:link,
+a[x-apple-data-detectors]:visited,
+a[x-apple-data-detectors]:active {
+  color: inherit !important;
+  text-decoration: none !important;
+  -webkit-text-fill-color: currentColor !important;
 }
 
 input,
@@ -208,6 +248,91 @@ select {
   transform: translateY(1px);
 }
 
+/* iOS/Safari — lock CTA link colors on :link/:visited/:active */
+a.btn-coral:is(:link, :visited, :active),
+a.home-btn-primary:is(:link, :visited, :active),
+a.vol-btn-primary:is(:link, :visited, :active),
+a.org-btn-primary:is(:link, :visited, :active),
+a.exp-btn-primary:is(:link, :visited, :active),
+a.price-btn-primary:is(:link, :visited, :active),
+a.mobile-nav-cta:is(:link, :visited, :active),
+a.mobile-nav-drawer-btn-signup:is(:link, :visited, :active),
+a.vol-dash-upcoming-pill:is(:link, :visited, :active),
+a.mf-btn-coral:is(:link, :visited, :active),
+a.rpt-empty-cta:is(:link, :visited, :active),
+a.exp-results-empty-btn:is(:link, :visited, :active) {
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+}
+
+/* Ink / muted navigation & text links */
+a.nav-link:is(:link, :visited, :active),
+a.nav-acct-item:is(:link, :visited, :active),
+.mobile-nav-drawer-links a:is(:link, :visited, :active),
+a.mobile-nav-drawer-btn-login:is(:link, :visited, :active),
+a.vol-sidebar-nav-link:is(:link, :visited, :active),
+a.org-sidebar-nav-link:is(:link, :visited, :active),
+a.me-action-link:is(:link, :visited, :active),
+a.md-org-name:is(:link, :visited, :active),
+a.vol-btn-ghost:is(:link, :visited, :active),
+a.org-btn-ghost:is(:link, :visited, :active),
+a.badges-btn-ghost:is(:link, :visited, :active),
+a.mf-btn-ghost:is(:link, :visited, :active),
+a.auth-mobile-back:is(:link, :visited, :active),
+a.auth-mobile-brand:is(:link, :visited, :active),
+a.auth-card-link:is(:link, :visited, :active),
+a.hdr-trigger:is(:link, :visited, :active),
+a.home-split-card-link:is(:link, :visited, :active),
+a.org-verify-link:is(:link, :visited, :active),
+a.exp-results-empty-link:is(:link, :visited, :active),
+a.auth-forgot:is(:link, :visited, :active),
+a.nl-link:is(:link, :visited, :active) {
+  -webkit-text-fill-color: currentColor;
+}
+
+a.nav-link:is(:link, :visited, :active) {
+  color: var(--muted-1);
+}
+
+a.nav-acct-item:is(:link, :visited, :active),
+.mobile-nav-drawer-links a:is(:link, :visited, :active),
+a.mobile-nav-drawer-btn-login:is(:link, :visited, :active),
+a.vol-sidebar-nav-link:is(:link, :visited, :active),
+a.org-sidebar-nav-link:is(:link, :visited, :active),
+a.me-action-link:is(:link, :visited, :active),
+a.md-org-name:is(:link, :visited, :active),
+a.vol-btn-ghost:is(:link, :visited, :active),
+a.org-btn-ghost:is(:link, :visited, :active),
+a.badges-btn-ghost:is(:link, :visited, :active),
+a.mf-btn-ghost:is(:link, :visited, :active),
+a.auth-mobile-back:is(:link, :visited, :active),
+a.auth-mobile-brand:is(:link, :visited, :active),
+a.hdr-trigger:is(:link, :visited, :active),
+a.nl-link:is(:link, :visited, :active) {
+  color: var(--ink);
+}
+
+a.home-split-card-link:is(:link, :visited, :active),
+a.org-verify-link:is(:link, :visited, :active),
+a.exp-results-empty-link:is(:link, :visited, :active),
+a.auth-forgot:is(:link, :visited, :active),
+a.auth-card-link:is(:link, :visited, :active),
+a.nl-link-coral:is(:link, :visited, :active) {
+  color: var(--coral-deep);
+  -webkit-text-fill-color: currentColor;
+}
+
+.mobile-nav-drawer-links a[aria-current="page"]:is(:link, :visited, :active),
+a.vol-sidebar-nav-link--active:is(:link, :visited, :active) {
+  color: var(--coral-deep);
+  -webkit-text-fill-color: currentColor;
+}
+
+a.org-sidebar-nav-link--active:is(:link, :visited, :active) {
+  color: var(--ink);
+  -webkit-text-fill-color: currentColor;
+}
+
 .btn-ghost {
   transition: background 0.15s;
 }
@@ -223,6 +348,7 @@ select {
 }
 
 .nav-link {
+  color: var(--muted-1);
   transition: color 0.15s;
 }
 .nav-link:hover {
@@ -280,7 +406,10 @@ select {
   max-height: min(70vh, 480px);
   overflow-y: auto;
 }
-.hdr-row { transition: background 0.13s; }
+.hdr-row {
+  transition: background 0.13s;
+  color: var(--ink);
+}
 .hdr-row:hover { background: var(--bg-tint); }
 .hdr-skel {
   background: linear-gradient(90deg, #eef0f5 25%, #f6f8fc 37%, #eef0f5 63%);
@@ -288,7 +417,16 @@ select {
   animation: hdrShimmer 1.3s ease infinite;
   border-radius: 8px;
 }
-.hdr-viewall { transition: color 0.15s, background 0.15s; }
+.hdr-viewall {
+  color: var(--muted-1);
+  transition: color 0.15s, background 0.15s;
+}
+.hdr-viewall:link,
+.hdr-viewall:visited,
+.hdr-viewall:active {
+  color: var(--muted-1);
+  -webkit-text-fill-color: currentColor;
+}
 .hdr-viewall:hover { background: #fff0ec; color: var(--coral-deep); }
 
 @media (max-width: 720px) {
@@ -562,15 +700,26 @@ select {
   color: var(--ink);
 }
 
+.mobile-nav-drawer-links a:link,
+.mobile-nav-drawer-links a:visited,
+.mobile-nav-drawer-links a:active {
+  color: var(--ink);
+  -webkit-text-fill-color: currentColor;
+}
+
 .mobile-nav-drawer-links a:hover,
 .mobile-nav-drawer-links a:focus-visible {
   background: var(--bg-chip);
   outline: none;
 }
 
-.mobile-nav-drawer-links a[aria-current="page"] {
+.mobile-nav-drawer-links a[aria-current="page"],
+.mobile-nav-drawer-links a[aria-current="page"]:link,
+.mobile-nav-drawer-links a[aria-current="page"]:visited,
+.mobile-nav-drawer-links a[aria-current="page"]:active {
   color: var(--coral-deep);
   background: #fff0ec;
+  -webkit-text-fill-color: currentColor;
 }
 
 .mobile-nav-drawer-footer {
@@ -615,6 +764,13 @@ select {
   box-shadow: 0 10px 22px -10px rgba(255, 111, 94, 0.75);
 }
 
+.mobile-nav-drawer-btn-signup:link,
+.mobile-nav-drawer-btn-signup:visited,
+.mobile-nav-drawer-btn-signup:active {
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+}
+
 .mobile-nav-drawer-btn-signup:hover,
 .mobile-nav-drawer-btn-signup:focus-visible {
   background: var(--coral-deep);
@@ -625,6 +781,13 @@ select {
   color: var(--ink);
   background: #fff;
   border: 1px solid var(--line-3);
+}
+
+.mobile-nav-drawer-btn-login:link,
+.mobile-nav-drawer-btn-login:visited,
+.mobile-nav-drawer-btn-login:active {
+  color: var(--ink);
+  -webkit-text-fill-color: currentColor;
 }
 
 .mobile-nav-drawer-btn-login:hover,
@@ -677,6 +840,19 @@ select {
     padding: 0 12px;
     font-size: 13px;
   }
+}
+
+/* Reusable ink/coral links for unstyled Next.js <Link> instances */
+.nl-link {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.nl-link-coral {
+  color: var(--coral-deep);
+  font-weight: 700;
+  text-decoration: none;
 }
 
 /* ---------- print-friendly report ---------- */

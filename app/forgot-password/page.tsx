@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { requestPasswordResetAction } from "@/app/auth/actions";
 import { AuthCard, AuthField, AuthSubmit, AuthNotice } from "@/components/auth/auth-card";
+import "@/app/auth/auth-form.css";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");

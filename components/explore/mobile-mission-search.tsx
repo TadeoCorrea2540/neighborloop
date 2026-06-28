@@ -69,6 +69,7 @@ export default function MobileMissionSearch({
               key={s}
               type="button"
               role="option"
+              aria-selected={value === s}
               className="exp-search-suggestion"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => onSuggestion(s)}

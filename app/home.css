@@ -544,6 +544,13 @@
   color: var(--coral-deep);
 }
 
+.home-split-card-link:link,
+.home-split-card-link:visited,
+.home-split-card-link:active {
+  color: var(--coral-deep);
+  -webkit-text-fill-color: currentColor;
+}
+
 /* ---------- mobile final CTA ---------- */
 .home-cta-mobile {
   padding: 0 20px 32px;

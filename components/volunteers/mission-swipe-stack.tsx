@@ -299,7 +299,7 @@ export default function MissionSwipeStack({ missions }: { missions: Mission[] })
           <path d="M7 12.5l3.2 3.2L17 9" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         Saved for later
-        <Link href="/my-missions" onClick={() => setToast(false)}>
+        <Link href="/my-missions" className="nl-link-coral" onClick={() => setToast(false)}>
           View
         </Link>
       </div>

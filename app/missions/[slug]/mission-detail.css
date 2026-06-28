@@ -262,6 +262,13 @@ a.md-org-name:hover {
   color: var(--coral-deep);
 }
 
+a.md-org-name:link,
+a.md-org-name:visited,
+a.md-org-name:active {
+  color: var(--ink);
+  -webkit-text-fill-color: currentColor;
+}
+
 .md-verified {
   display: inline-flex;
   align-items: center;

@@ -395,6 +395,13 @@ button.exp-card-link {
   text-decoration: none;
 }
 
+.exp-results-empty-link:link,
+.exp-results-empty-link:visited,
+.exp-results-empty-link:active {
+  color: var(--coral-deep);
+  -webkit-text-fill-color: currentColor;
+}
+
 @media (max-width: 720px) {
   .exp-card-grid {
     grid-template-columns: 1fr;

@@ -48,6 +48,10 @@
   box-shadow: 0 8px 18px -8px rgba(255, 111, 94, 0.75);
 }
 
+.mm-tab:active {
+  color: inherit;
+}
+
 .mm-tab--active:hover {
   background: #ff6f5e;
   border-color: #ff6f5e;

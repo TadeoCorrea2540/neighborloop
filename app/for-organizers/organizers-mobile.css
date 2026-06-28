@@ -1189,9 +1189,16 @@
   background: transparent;
   font-weight: 700;
   font-size: 14.5px;
+  color: var(--ink);
   text-align: left;
   cursor: pointer;
   font-family: inherit;
+  -webkit-tap-highlight-color: rgba(255, 111, 94, 0.14);
+}
+
+.org-faq-q:hover,
+.org-faq-q:active {
+  color: var(--ink);
 }
 
 .org-faq-a {

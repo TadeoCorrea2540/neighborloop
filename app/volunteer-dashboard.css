@@ -546,6 +546,16 @@
   font-weight: 700;
 }
 
+a.vol-sidebar-nav-link:is(:link, :visited, :active) {
+  color: var(--muted-1);
+  -webkit-text-fill-color: currentColor;
+}
+
+a.vol-sidebar-nav-link--active:is(:link, :visited, :active) {
+  color: var(--coral-deep);
+  -webkit-text-fill-color: currentColor;
+}
+
 .vol-sidebar-nav-link--active::before {
   height: 22px;
   opacity: 1;
