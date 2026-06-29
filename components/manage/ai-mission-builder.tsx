@@ -133,6 +133,28 @@ export default function AIMissionBuilder({
     };
   }, [open]);
 
+  // Adapt panel height when the mobile keyboard opens (visualViewport API)
+  useEffect(() => {
+    if (!open) return;
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+
+    const update = () => {
+      document.documentElement.style.setProperty("--amb-visible-height", `${viewport.height}px`);
+      document.documentElement.style.setProperty("--amb-viewport-offset-top", `${viewport.offsetTop}px`);
+    };
+
+    update();
+    viewport.addEventListener("resize", update);
+    viewport.addEventListener("scroll", update);
+    return () => {
+      viewport.removeEventListener("resize", update);
+      viewport.removeEventListener("scroll", update);
+      document.documentElement.style.removeProperty("--amb-visible-height");
+      document.documentElement.style.removeProperty("--amb-viewport-offset-top");
+    };
+  }, [open]);
+
   // Block background scroll on iOS; allow scroll only inside .amb-body
   useLayoutEffect(() => {
     if (!open) return;
@@ -163,19 +185,31 @@ export default function AIMissionBuilder({
     return () => document.removeEventListener("touchmove", onTouchMove);
   }, [open, stage, step]);
 
-  // Keep focused fields visible when the iOS keyboard opens
+  // Keep focused fields visible inside the scroll region (all stages with inputs)
   useEffect(() => {
-    if (!open || stage !== "form") return;
+    if (!open) return;
     const scrollEl = bodyRef.current;
     if (!scrollEl) return;
+
+    const scrollFieldIntoView = (el: HTMLElement) => {
+      const scrollRect = scrollEl.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      const padding = 12;
+
+      if (elRect.bottom > scrollRect.bottom - padding) {
+        scrollEl.scrollTop += elRect.bottom - scrollRect.bottom + padding;
+      }
+      if (elRect.top < scrollRect.top + padding) {
+        scrollEl.scrollTop -= scrollRect.top + padding - elRect.top;
+      }
+    };
 
     const onFocusIn = (e: FocusEvent) => {
       const t = e.target;
       if (!(t instanceof HTMLElement) || !scrollEl.contains(t)) return;
       if (!t.matches("textarea, input")) return;
-      window.setTimeout(() => {
-        t.scrollIntoView({ block: "center", behavior: "smooth" });
-      }, 320);
+      window.requestAnimationFrame(() => scrollFieldIntoView(t));
+      window.setTimeout(() => scrollFieldIntoView(t), 320);
     };
 
     scrollEl.addEventListener("focusin", onFocusIn);
@@ -191,7 +225,9 @@ export default function AIMissionBuilder({
   }, [stage]);
 
   useEffect(() => {
-    if (open && stage === "form") firstFieldRef.current?.focus();
+    if (!open || stage !== "form") return;
+    const mobile = window.matchMedia("(max-width: 640px)").matches;
+    if (!mobile) firstFieldRef.current?.focus();
   }, [open, stage, step]);
 
   const q = QUESTIONS[step];
@@ -357,7 +393,6 @@ export default function AIMissionBuilder({
                   {!canNext && value.trim().length > 0 && (
                     <div className="amb-hint">Add one or two more details so we can create a useful draft.</div>
                   )}
-                  <div className="amb-step-actions">{formStepActions}</div>
                 </div>
               )}
 
@@ -472,8 +507,8 @@ export default function AIMissionBuilder({
               )}
             </div>
 
-            {/* footer actions */}
-            <div className={`amb-foot${stage === "form" ? " amb-foot--form" : ""}`}>
+            {/* footer actions — sticky on mobile, always visible */}
+            <div className="amb-foot">
               {stage === "form" && formStepActions}
 
               {stage === "loading" && (

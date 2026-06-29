@@ -129,6 +129,7 @@ body.amb-open {
   padding: 14px 18px 4px;
   flex-wrap: wrap;
   flex-shrink: 0;
+  border-bottom: 1px solid rgba(24, 32, 59, 0.05);
 }
 .amb-rail-dot {
   flex: 1;
@@ -153,6 +154,7 @@ body.amb-open {
   min-height: 0;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  scroll-padding-bottom: 24px;
 }
 
 .amb-step { animation: ambStep 0.28s cubic-bezier(0.22, 1, 0.36, 1) both; }
@@ -172,12 +174,17 @@ body.amb-open {
   padding: 12px 13px;
   /* 16px prevents iOS Safari from auto-zooming on focus */
   font-size: 16px;
+  line-height: 1.55;
   font-family: inherit;
   color: var(--ink);
   background: #fbfcfe;
   outline: none;
   resize: vertical;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.amb-textarea {
+  min-height: 140px;
 }
 .amb-textarea:focus,
 .amb-input:focus {
@@ -303,9 +310,6 @@ body.amb-open {
 }
 .amb-step-actions {
   display: none;
-  margin-top: 20px;
-  padding-top: 4px;
-  padding-bottom: 8px;
 }
 
 /* loading */
@@ -371,16 +375,21 @@ body.amb-open {
 .amb-private p { font-size: 13px; color: var(--muted-1); margin: 6px 0 0; line-height: 1.5; }
 .amb-private-note { display: block; font-size: 11.5px; color: var(--muted-3); margin-top: 6px; }
 
-/* footer */
+/* footer — sticky action bar inside the panel */
 .amb-foot {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 14px 18px;
+  padding: 14px 18px calc(14px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid rgba(24, 32, 59, 0.07);
-  background: #fff;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   flex-shrink: 0;
+  box-shadow: 0 -8px 24px -16px rgba(24, 32, 59, 0.12);
 }
 .amb-foot .amb-actions {
   width: 100%;
@@ -409,6 +418,14 @@ body.amb-open {
 }
 .amb-btn--primary:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
 
+.amb-btn:focus-visible,
+.amb-close:focus-visible,
+.amb-textarea:focus-visible,
+.amb-input:focus-visible {
+  outline: 2px solid var(--coral-deep);
+  outline-offset: 2px;
+}
+
 /* desktop — cap panel height so amb-body scrolls instead of clipping */
 @media (min-width: 641px) {
   .amb-panel {
@@ -416,46 +433,90 @@ body.amb-open {
   }
 }
 
-/* mobile: full-screen sheet, inline step actions */
+/* mobile: full-screen sheet with keyboard-aware height */
 @media (max-width: 640px) {
   .amb-overlay {
     padding: 0;
     align-items: stretch;
+    top: var(--amb-viewport-offset-top, 0);
+    height: var(--amb-visible-height, 100dvh);
+    max-height: var(--amb-visible-height, 100dvh);
+    bottom: auto;
+    left: 0;
+    right: 0;
   }
+
   .amb-panel {
     max-width: none;
-    max-height: 100dvh;
-    height: 100dvh;
+    width: 100%;
+    height: var(--amb-visible-height, 100dvh);
+    max-height: var(--amb-visible-height, 100dvh);
     border-radius: 0;
     min-height: 0;
   }
+
   .amb-head {
-    padding-top: max(16px, env(safe-area-inset-top));
+    padding: 12px 16px;
+    padding-top: max(12px, env(safe-area-inset-top));
   }
+
+  .amb-head-title {
+    font-size: 15px;
+  }
+
+  .amb-rail {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 8px 16px 6px;
+    gap: 4px;
+  }
+
+  .amb-rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  .amb-rail-dot {
+    flex: 0 0 auto;
+    min-width: 76px;
+    font-size: 10.5px;
+    padding-bottom: 6px;
+  }
+
   .amb-grid2 { grid-template-columns: 1fr; }
   .amb-q-label { font-size: 16.5px; }
+
   .amb-body {
-    padding: 16px 16px 12px;
+    padding: 14px 16px 8px;
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
+    scroll-padding-bottom: 16px;
   }
+
+  .amb-textarea {
+    min-height: 120px;
+  }
+
   .amb-foot {
-    padding: 12px 16px max(14px, env(safe-area-inset-bottom));
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
     box-shadow: 0 -10px 28px -18px rgba(24, 32, 59, 0.22);
   }
-  .amb-foot--form { display: none; }
-  .amb-step-actions { display: flex; }
+
   .amb-actions .amb-btn {
     flex: 1;
     min-height: 48px;
     border-radius: 14px;
     font-size: 15px;
   }
+
   .amb-actions .amb-btn--primary {
     flex: 1.15;
     box-shadow: 0 10px 22px -10px rgba(255, 94, 122, 0.9);
   }
+
   .amb-foot .amb-actions .amb-btn:only-child {
     flex: 1;
     max-width: none;
