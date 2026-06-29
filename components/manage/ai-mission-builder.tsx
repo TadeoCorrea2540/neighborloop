@@ -6,7 +6,7 @@
  * "Use this draft" hands the draft to the parent form. It never saves or
  * publishes; the normal mission form + actions remain the only write path.
  */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Icon from "@/components/icons";
 import { generateMissionDraftAction } from "@/app/manage/missions/ai-actions";
@@ -90,7 +90,6 @@ export default function AIMissionBuilder({
   const [portalReady, setPortalReady] = useState(false);
   const firstFieldRef = useRef<HTMLTextAreaElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
-  const touchLastY = useRef(0);
 
   useEffect(() => setPortalReady(true), []);
 
@@ -134,55 +133,53 @@ export default function AIMissionBuilder({
     };
   }, [open]);
 
-  // Prevent iOS rubber-band when the body has nothing to scroll (or at edges)
-  useEffect(() => {
+  // Block background scroll on iOS; allow scroll only inside .amb-body
+  useLayoutEffect(() => {
     if (!open) return;
     const scrollEl = bodyRef.current;
-    if (!scrollEl) return;
-
-    const onTouchStart = (e: TouchEvent) => {
-      touchLastY.current = e.touches[0]?.clientY ?? 0;
-    };
+    const panel = scrollEl?.closest(".amb-panel");
+    if (!scrollEl || !panel) return;
 
     const onTouchMove = (e: TouchEvent) => {
       const target = e.target as Node | null;
-      const insideBody = target && scrollEl.contains(target);
-      const insidePanel = target && scrollEl.closest(".amb-panel")?.contains(target);
+      if (!target) return;
 
-      if (!insidePanel) {
+      if (!panel.contains(target)) {
         e.preventDefault();
         return;
       }
 
-      if (!insideBody) {
-        e.preventDefault();
+      if (scrollEl.contains(target)) {
+        const canScroll = scrollEl.scrollHeight > scrollEl.clientHeight + 1;
+        if (!canScroll) e.preventDefault();
         return;
       }
 
-      const y = e.touches[0]?.clientY ?? touchLastY.current;
-      const dy = y - touchLastY.current;
-      touchLastY.current = y;
-      const { scrollTop, scrollHeight, clientHeight } = scrollEl;
-      const canScroll = scrollHeight > clientHeight + 1;
-
-      if (!canScroll) {
-        e.preventDefault();
-        return;
-      }
-
-      const atTop = scrollTop <= 0;
-      const atBottom = scrollTop + clientHeight >= scrollHeight - 1;
-      if ((atTop && dy > 0) || (atBottom && dy < 0)) {
-        e.preventDefault();
-      }
+      // Header, stepper, footer — no drag
+      e.preventDefault();
     };
 
-    scrollEl.addEventListener("touchstart", onTouchStart, { passive: true });
     document.addEventListener("touchmove", onTouchMove, { passive: false });
-    return () => {
-      scrollEl.removeEventListener("touchstart", onTouchStart);
-      document.removeEventListener("touchmove", onTouchMove);
+    return () => document.removeEventListener("touchmove", onTouchMove);
+  }, [open, stage, step]);
+
+  // Keep focused fields visible when the iOS keyboard opens
+  useEffect(() => {
+    if (!open || stage !== "form") return;
+    const scrollEl = bodyRef.current;
+    if (!scrollEl) return;
+
+    const onFocusIn = (e: FocusEvent) => {
+      const t = e.target;
+      if (!(t instanceof HTMLElement) || !scrollEl.contains(t)) return;
+      if (!t.matches("textarea, input")) return;
+      window.setTimeout(() => {
+        t.scrollIntoView({ block: "center", behavior: "smooth" });
+      }, 320);
     };
+
+    scrollEl.addEventListener("focusin", onFocusIn);
+    return () => scrollEl.removeEventListener("focusin", onFocusIn);
   }, [open, stage, step]);
 
   // rotate the loading micro-steps

@@ -652,6 +652,11 @@
   border-color: #18203b;
 }
 
+a.org-mission-action.org-mission-action--primary:is(:link, :visited, :active, :hover) {
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+}
+
 .org-mission-action--primary:hover {
   background: #2a3558;
 }
