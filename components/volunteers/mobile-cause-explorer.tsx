@@ -6,9 +6,11 @@ import { CAUSE_TILE_BG, MOBILE_VOL_CAUSES } from "@/lib/volunteers-mobile-data";
 export default function MobileCauseExplorer({
   cause,
   onCauseChange,
+  causeCounts,
 }: {
   cause: CauseKey;
   onCauseChange: (c: CauseKey) => void;
+  causeCounts: Record<Exclude<CauseKey, "All">, number>;
 }) {
   return (
     <section className="vol-causes vol-mobile-only" aria-labelledby="vol-causes-heading">
@@ -18,7 +20,7 @@ export default function MobileCauseExplorer({
       </h2>
       <p className="vol-causes-hint">Swipe for more →</p>
       <div className="vol-causes-rail" role="tablist" aria-label="Cause categories">
-        {MOBILE_VOL_CAUSES.map(({ label, key, count }, i) => (
+        {MOBILE_VOL_CAUSES.map(({ label, key }, i) => (
           <button
             key={key}
             type="button"
@@ -29,7 +31,10 @@ export default function MobileCauseExplorer({
             onClick={() => onCauseChange(key)}
           >
             <span className="vol-cause-tile-label">{label}</span>
-            <span className="vol-cause-tile-count">{count} missions</span>
+            <span className="vol-cause-tile-count">
+              {causeCounts[key as Exclude<CauseKey, "All">]} mission
+              {causeCounts[key as Exclude<CauseKey, "All">] === 1 ? "" : "s"}
+            </span>
           </button>
         ))}
       </div>

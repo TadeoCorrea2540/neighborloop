@@ -1,6 +1,6 @@
-import { CauseKey, MISSIONS, Mission } from "@/lib/data";
-
-export const VOL_NEARBY_COUNT = "3,194";
+import { CauseKey } from "@/lib/data";
+import type { MissionCard } from "@/lib/data/mission-cards";
+import { missionCardMatchesCause } from "@/lib/explore-mobile-data";
 
 export const PREFERENCE_CHIPS = [
   "This weekend",
@@ -18,14 +18,13 @@ export type PreferenceChip = (typeof PREFERENCE_CHIPS)[number];
 export const MOBILE_VOL_CAUSES: {
   label: string;
   key: CauseKey;
-  count: number;
 }[] = [
-  { label: "Food Support", key: "Food", count: 48 },
-  { label: "Animal Rescue", key: "Animals", count: 31 },
-  { label: "Tutoring", key: "Tutoring", count: 22 },
-  { label: "Cleanups", key: "Cleanup", count: 27 },
-  { label: "Community Care", key: "Elderly", count: 19 },
-  { label: "Environment", key: "Garden", count: 24 },
+  { label: "Food Support", key: "Food" },
+  { label: "Animal Rescue", key: "Animals" },
+  { label: "Tutoring", key: "Tutoring" },
+  { label: "Cleanups", key: "Cleanup" },
+  { label: "Community Care", key: "Elderly" },
+  { label: "Environment", key: "Garden" },
 ];
 
 /** Peach ↔ white, alternating */
@@ -142,28 +141,33 @@ export const MORE_FAQ: [string, string][] = [
   ],
 ];
 
-export const MISSION_PURPOSE: Record<string, string> = {
-  "saturday-food-bank-sort": "Sort donations and pack meals for families in need.",
-  "ocean-beach-cleanup": "Restore the shoreline with a local environmental team.",
-  "after-school-reading-buddy": "Help younger students build confidence through reading.",
-  "cat-shelter-care-crew": "Care for rescued cats and support adoption prep.",
-  "sunshine-senior-visits": "Share conversation and companionship with seniors.",
-  "community-garden-planting": "Plant and green shared neighborhood spaces.",
-  "winter-coat-donation-drive": "Sort and distribute warm clothing for winter.",
-  "park-trail-restoration": "Restore trails and keep outdoor spaces accessible.",
-};
-
-export function missionPurpose(m: Mission): string {
-  return MISSION_PURPOSE[m.slug] ?? `Support ${m.org} with a local ${m.cause.toLowerCase()} mission.`;
+export function filterVolunteerMissionCards(
+  cause: CauseKey,
+  cards: MissionCard[]
+): MissionCard[] {
+  if (cause === "All") return cards;
+  return cards.filter((c) => missionCardMatchesCause(c, cause));
 }
 
-export function filterMissions(cause: CauseKey): Mission[] {
-  return cause === "All" ? MISSIONS : MISSIONS.filter((m) => m.cause === cause);
+export function causeMissionCounts(
+  cards: MissionCard[]
+): Record<Exclude<CauseKey, "All">, number> {
+  const counts = {} as Record<Exclude<CauseKey, "All">, number>;
+  for (const { key } of MOBILE_VOL_CAUSES) {
+    counts[key as Exclude<CauseKey, "All">] = cards.filter((c) =>
+      missionCardMatchesCause(c, key)
+    ).length;
+  }
+  return counts;
 }
 
-export function preferenceMatchCount(selected: PreferenceChip[]): number {
-  if (selected.length === 0) return MISSIONS.length;
-  const base = 18;
+export function formatNearbyCount(count: number): string {
+  return count.toLocaleString();
+}
+
+export function preferenceMatchCount(selected: PreferenceChip[], total: number): number {
+  if (selected.length === 0) return total;
+  const base = Math.max(total, 4);
   const reduced = selected.length * 2;
-  return Math.max(4, Math.min(MISSIONS.length, base - reduced + 6));
+  return Math.max(0, Math.min(total, base - reduced + Math.min(6, total)));
 }

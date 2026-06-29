@@ -89,6 +89,8 @@ export default function AIMissionBuilder({
   const [loadingStep, setLoadingStep] = useState(0);
   const [portalReady, setPortalReady] = useState(false);
   const firstFieldRef = useRef<HTMLTextAreaElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const touchLastY = useRef(0);
 
   useEffect(() => setPortalReady(true), []);
 
@@ -104,19 +106,84 @@ export default function AIMissionBuilder({
     setOpen(false);
   }
 
-  // lock scroll + Escape to close while the modal is open
+  // Lock page scroll (iOS-safe) + Escape to close while the modal is open
   useEffect(() => {
     if (!open) return;
+    const scrollY = window.scrollY;
+    document.body.classList.add("amb-open");
     document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
     };
     window.addEventListener("keydown", onKey);
     return () => {
+      document.body.classList.remove("amb-open");
       document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.width = "";
+      window.scrollTo(0, scrollY);
       window.removeEventListener("keydown", onKey);
     };
   }, [open]);
+
+  // Prevent iOS rubber-band when the body has nothing to scroll (or at edges)
+  useEffect(() => {
+    if (!open) return;
+    const scrollEl = bodyRef.current;
+    if (!scrollEl) return;
+
+    const onTouchStart = (e: TouchEvent) => {
+      touchLastY.current = e.touches[0]?.clientY ?? 0;
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      const target = e.target as Node | null;
+      const insideBody = target && scrollEl.contains(target);
+      const insidePanel = target && scrollEl.closest(".amb-panel")?.contains(target);
+
+      if (!insidePanel) {
+        e.preventDefault();
+        return;
+      }
+
+      if (!insideBody) {
+        e.preventDefault();
+        return;
+      }
+
+      const y = e.touches[0]?.clientY ?? touchLastY.current;
+      const dy = y - touchLastY.current;
+      touchLastY.current = y;
+      const { scrollTop, scrollHeight, clientHeight } = scrollEl;
+      const canScroll = scrollHeight > clientHeight + 1;
+
+      if (!canScroll) {
+        e.preventDefault();
+        return;
+      }
+
+      const atTop = scrollTop <= 0;
+      const atBottom = scrollTop + clientHeight >= scrollHeight - 1;
+      if ((atTop && dy > 0) || (atBottom && dy < 0)) {
+        e.preventDefault();
+      }
+    };
+
+    scrollEl.addEventListener("touchstart", onTouchStart, { passive: true });
+    document.addEventListener("touchmove", onTouchMove, { passive: false });
+    return () => {
+      scrollEl.removeEventListener("touchstart", onTouchStart);
+      document.removeEventListener("touchmove", onTouchMove);
+    };
+  }, [open, stage, step]);
 
   // rotate the loading micro-steps
   useEffect(() => {
@@ -233,7 +300,7 @@ export default function AIMissionBuilder({
             )}
 
             {/* body */}
-            <div className="amb-body">
+            <div className="amb-body" ref={bodyRef}>
               {stage === "form" && (
                 <div className="amb-step" key={step}>
                   <div className="amb-step-meta">Step {step + 1} of {QUESTIONS.length}</div>

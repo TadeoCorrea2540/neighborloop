@@ -2,27 +2,27 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { Mission, causeArt, spotStyle } from "@/lib/data";
-import { missionPurpose } from "@/lib/volunteers-mobile-data";
+import type { MissionCard } from "@/lib/data/mission-cards";
+import {
+  fmtMissionDate,
+  locationLabel,
+  spotsLabel,
+} from "@/lib/explore-card-helpers";
+import SaveButton from "@/components/volunteer/save-button";
 
 export default function MissionPreviewSheet({
-  mission,
-  saved,
+  card,
   onClose,
-  onSave,
 }: {
-  mission: Mission | null;
-  saved: boolean;
+  card: MissionCard | null;
   onClose: () => void;
-  onSave: () => void;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (!mission) return;
+    if (!card) return;
     const prevFocus = document.activeElement as HTMLElement | null;
     document.body.style.overflow = "hidden";
-    // move focus into the sheet for keyboard + screen-reader users
     const focusId = requestAnimationFrame(() => closeRef.current?.focus());
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -34,11 +34,18 @@ export default function MissionPreviewSheet({
       cancelAnimationFrame(focusId);
       prevFocus?.focus?.();
     };
-  }, [mission, onClose]);
+  }, [card, onClose]);
 
-  if (!mission) return null;
+  if (!card) return null;
 
-  const ss = spotStyle(mission.spots);
+  const m = card.mission;
+  const coverStyle = card.coverImageUrl
+    ? { backgroundImage: `url('${card.coverImageUrl}')` }
+    : {
+        background: card.categoryAccentColor
+          ? `linear-gradient(135deg, ${card.categoryAccentColor}, ${card.categoryAccentColor}cc)`
+          : "linear-gradient(135deg,#ffd9c2,#ff9e7d)",
+      };
 
   return (
     <>
@@ -59,36 +66,25 @@ export default function MissionPreviewSheet({
         >
           ×
         </button>
-        <div
-          className="vol-sheet-media"
-          style={{ background: causeArt(mission) }}
-        >
-          <span className="vol-stack-badge">{mission.cause}</span>
+        <div className="vol-sheet-media vol-sheet-media--cover" style={coverStyle}>
+          {card.categoryName && (
+            <span className="vol-stack-badge">{card.categoryName}</span>
+          )}
         </div>
         <h3 id="vol-sheet-title" className="vol-sheet-title">
-          {mission.title}
+          {m.title}
         </h3>
-        <p className="vol-sheet-desc">{missionPurpose(mission)}</p>
+        <p className="vol-sheet-org">{card.organizationName ?? "Organization"}</p>
+        {m.summary && <p className="vol-sheet-desc">{m.summary}</p>}
         <ul className="vol-sheet-meta">
-          <li>{mission.date}</li>
-          <li>{mission.dist}</li>
-          <li>{mission.diff}</li>
-          <li>
-            <span style={{ ...ss, padding: "4px 9px", borderRadius: 999, fontSize: 11, fontWeight: 700 }}>
-              {mission.spots} spots left
-            </span>
-          </li>
+          <li>{fmtMissionDate(m.startsAt)}</li>
+          <li>{locationLabel(card)}</li>
+          {m.difficulty && <li>{m.difficulty}</li>}
+          <li>{spotsLabel(card)}</li>
         </ul>
         <div className="vol-sheet-actions">
-          <button
-            type="button"
-            className={`vol-sheet-save${saved ? " vol-sheet-save--on" : ""}`}
-            onClick={onSave}
-            aria-pressed={saved}
-          >
-            {saved ? "Saved ✓" : "Save mission"}
-          </button>
-          <Link href={`/missions/${mission.slug}`} className="vol-btn-primary" onClick={onClose}>
+          <SaveButton missionId={m.id} initialSaved={card.isSaved} variant="full" />
+          <Link href={`/missions/${m.slug}`} className="vol-btn-primary" onClick={onClose}>
             View mission
           </Link>
         </div>

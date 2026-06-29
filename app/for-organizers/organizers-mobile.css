@@ -1246,9 +1246,11 @@
   line-height: 1.5;
 }
 
-.org-final-cta-inner .org-btn-primary {
+.org-final-cta-inner .org-btn-primary,
+.org-final-cta-inner a.org-btn-primary:is(:link, :visited, :active) {
   background: #fff;
   color: var(--coral-deep);
+  -webkit-text-fill-color: currentColor;
   box-shadow: none;
 }
 

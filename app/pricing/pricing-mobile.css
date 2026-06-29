@@ -297,9 +297,11 @@
   line-height: 1.5;
 }
 
-.price-final-inner .price-btn-primary {
+.price-final-inner .price-btn-primary,
+.price-final-inner a.price-btn-primary:is(:link, :visited, :active) {
   background: #fff;
   color: var(--coral-deep);
+  -webkit-text-fill-color: currentColor;
   box-shadow: none;
 }
 

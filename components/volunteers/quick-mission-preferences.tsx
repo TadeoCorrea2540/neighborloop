@@ -9,9 +9,11 @@ import {
 export default function QuickMissionPreferences({
   selected,
   onChange,
+  totalCount,
 }: {
   selected: PreferenceChip[];
   onChange: (next: PreferenceChip[]) => void;
+  totalCount: number;
 }) {
   const toggle = (chip: PreferenceChip) => {
     onChange(
@@ -21,7 +23,7 @@ export default function QuickMissionPreferences({
     );
   };
 
-  const count = preferenceMatchCount(selected);
+  const count = preferenceMatchCount(selected, totalCount);
 
   return (
     <section className="vol-prefs vol-mobile-only" aria-labelledby="vol-prefs-heading">
